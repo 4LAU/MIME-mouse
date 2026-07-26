@@ -151,18 +151,52 @@ is dominated by the 192-slot grid's quantized duration, with the direction-chang
 degeneracy second. The conclusion that P3 could not reach its 0.70 gate is
 unchanged; the cause is better understood.
 
-Still unmeasured: the dense-125Hz family (CANDI's 0.752, the older CFM and DDPM
-line) emits one value per 8 ms slot and rounds, so it never carries the exact
-structure real paths do. Those numbers have not been read through this panel.
+CANDI read through the same panel, research/w3_candi_control.py, row
+W3_groundwork_...426caf73. Fresh n=2000 at the published convention (steps 200,
+guide 0.15, perp 0.85, rotate, seed 42), checkpoint md5 verified unchanged:
+
+  arm             published  contract   rebuilt   control
+  rounded            0.7520    0.9520    0.9493    0.9185
+  unrounded               -    0.7525    0.7677    0.8290
+  real (holdout)          -    0.4778    0.4851    0.4990
+
+Two things fall out.
+
+The published 0.752 reproduces on the UNROUNDED arm, 0.7525, not the rounded
+one. research/phase_a_baseline.py's --no-round help text says the default
+matches the published config; it does not, and research/phase1_score.py's
+docstring (no_round=True) is the correct account. Rounding costs 0.20. Worse,
+experiments/candi.py:296 rounds unconditionally with no way to turn it off, so
+the module you would actually call to serve CANDI produces the 0.95 arm, not the
+published one.
+
+And CANDI's number is the one the control does move. 0.7525 becomes 0.8290, so
+about 0.077 of it was the exact-arithmetic effect rather than motion. That
+matters for the family comparison, because the event-stream arms corrected for
+arrival read 0.7085 (additive) and 0.7080 (rotate) in the same control column.
+Under the contract scorer the two families look close (0.728 against 0.752);
+read fairly they are not, and the event-stream family is ahead by about 0.12.
+The ranking is the same in the rebuilt column, so it does not depend on the
+nudge.
+
+The older CFM and DDPM line is dense-125Hz too and has not been read through the
+panel. It is far off the pace either way, so it is low priority.
 
 ## Numbers are not currently comparable across model families
 
 CANDI applies endpoint correction as standard (CANDI_CORRECT=rotate,
-experiments/candi.py:235), so its 0.504 and 0.513 headline numbers are measured
-on paths that arrive and include the cost of arriving. Every event-stream
-number, including W0's 0.539 fallback and W1's 0.654 one-shot baseline, pays
-none of that cost and is flattered by roughly the tax above. Do not compare
-across families without stating which side pays.
+experiments/candi.py:235), so its numbers are measured on paths that arrive and
+include the cost of arriving. Every event-stream number, including W0's 0.539
+fallback and W1's 0.654 one-shot baseline, pays none of that cost and is
+flattered by roughly the tax above. Do not compare across families without
+stating which side pays.
+
+CORRECTED 2026-07-26: this paragraph used to attribute the 0.504 and 0.513
+headline to CANDI. It is not a CANDI number. EXPERIMENTS.md:2839 records it as
+the 33-dim judge's set-level selection result, and EXPERIMENTS.md:2319 names the
+generator behind that candidate pool as event_polar_4m_fc_v2.pt. The headline
+belongs to the event-stream family with selection on top. CANDI's own best is
+0.752, and the panel above reads it at 0.829.
 
 ## W3 P1 verdict, 2026-07-21
 
