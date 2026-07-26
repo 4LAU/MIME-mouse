@@ -1,0 +1,31 @@
+{
+  "cfg_w": 0.0,
+  "n": 1999,
+  "seed": 42,
+  "auc": 0.6546479843223263,
+  "coverage": {
+    "covered": 0.4833675366765595,
+    "uncovered": 0.9024762952759227
+  },
+  "spread_ratios": {
+    "mean_velocity": 0.918499727296221,
+    "std_velocity": 1.1230786762663225,
+    "max_velocity": 1.3393396692179262,
+    "velocity_skewness": 0.9833596987267328,
+    "mean_acceleration": 0.4220107767598663,
+    "std_acceleration": 1.3268245916775656,
+    "max_acceleration": 1.4832305854704733,
+    "mean_jerk": 0.5761256566715565,
+    "std_jerk": 1.3770677154176005,
+    "path_efficiency": 0.7711652410678886,
+    "max_deviation": 0.9171695946376318,
+    "curvature_mean": 0.03715344809141924,
+    "curvature_std": 0.07326329905826959,
+    "num_direction_changes": 0.9628860567658235,
+    "movement_duration": 0.9294097339802424,
+    "time_to_peak_velocity": 0.904434336169888,
+    "angular_velocity_mean": 1.0824816699974489,
+    "angular_velocity_std": 1.0177046608441025
+  },
+  "wall_sec": 144.219388961792
+}
