@@ -66,6 +66,7 @@ _SPEED_REPLACE = os.environ.get("CANDI_SPEED_REPLACE", "")
 _MIN_SPEED = float(os.environ.get("CANDI_MIN_SPEED", "0.0"))
 _SPEED_RAMP = float(os.environ.get("CANDI_SPEED_RAMP", "0.0"))
 _DH_AMP = float(os.environ.get("CANDI_DH_AMP", "0.0"))
+_ROUND = os.environ.get("CANDI_ROUND", "0") not in ("0", "", "false", "False")
 _PERP_HP = float(os.environ.get("CANDI_PERP_HP", "1.0"))
 _PERP_HP_WIN = int(os.environ.get("CANDI_PERP_HP_WIN", "21"))
 _FLOW_NOISE = float(os.environ.get("CANDI_FLOW_NOISE", "0.0"))
@@ -288,6 +289,22 @@ def _build_trajectory(cum_x, cum_y, stall_np, seq_len, total_dist, dx, dy,
 
     out_x = cum_x * total_dist + start_x
     out_y = cum_y * total_dist + start_y
+
+    # Real mouse coordinates are whole pixels, so quantizing here looks like
+    # the obvious thing to do, and it is wrong for this model. Measured on
+    # candi_polar_flow_best.pt at the published convention (steps 200, guide
+    # 0.15, perp 0.85, rotate), n=2000, research/w3_candi_control_results.json:
+    #
+    #   fractional output   0.7525    the published 0.752
+    #   rounded output      0.9520
+    #
+    # Rounding a path the model produced in continuous displacement space
+    # leaves a staircase the detector reads immediately. Off by default; the
+    # knob exists so the arm stays reproducible, not because it is a tuning
+    # option worth trying. Never quantize during training either way.
+    if _ROUND:
+        out_x = np.round(out_x)
+        out_y = np.round(out_y)
 
     dt = 1.0 / _HZ
     result: Trajectory = [(start_x, start_y, 0.0)]
