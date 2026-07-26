@@ -1,0 +1,81 @@
+{
+  "pool": "pool_s42_k32.npz",
+  "K": 32,
+  "original_k32": 0.5833,
+  "seeds": {
+    "0": {
+      "_reference": {
+        "n": 2000,
+        "max_abs_z_vs_contract": 0.0578841606178,
+        "worst_feature": "curvature_mean",
+        "rebuild_vs_contract_auc": 0.49222137499999996,
+        "jitter_px": 1e-09,
+        "n_holdout": 2000,
+        "n_paths_shared": 2000
+      },
+      "product K=32": {
+        "contract": 0.5911111250000001,
+        "rebuilt": 0.607524125,
+        "control": 0.596748625
+      },
+      "real (holdout)": {
+        "contract": 0.47783137499999995,
+        "rebuilt": 0.48514425000000005,
+        "control": 0.49898462499999996
+      }
+    },
+    "1": {
+      "_reference": {
+        "n": 2000,
+        "max_abs_z_vs_contract": 0.0578841606178,
+        "worst_feature": "curvature_mean",
+        "rebuild_vs_contract_auc": 0.49222137499999996,
+        "jitter_px": 1e-09,
+        "n_holdout": 2000,
+        "n_paths_shared": 2000
+      },
+      "product K=32": {
+        "contract": 0.58537775,
+        "rebuilt": 0.601655625,
+        "control": 0.5929380000000001
+      },
+      "real (holdout)": {
+        "contract": 0.47783137499999995,
+        "rebuilt": 0.48514425000000005,
+        "control": 0.49898462499999996
+      }
+    },
+    "2": {
+      "_reference": {
+        "n": 2000,
+        "max_abs_z_vs_contract": 0.0578841606178,
+        "worst_feature": "curvature_mean",
+        "rebuild_vs_contract_auc": 0.49222137499999996,
+        "jitter_px": 1e-09,
+        "n_holdout": 2000,
+        "n_paths_shared": 2000
+      },
+      "product K=32": {
+        "contract": 0.573474625,
+        "rebuilt": 0.6035598750000001,
+        "control": 0.5770216250000001
+      },
+      "real (holdout)": {
+        "contract": 0.47783137499999995,
+        "rebuilt": 0.48514425000000005,
+        "control": 0.49898462499999996
+      }
+    }
+  },
+  "mean": {
+    "contract": 0.5833211666666667,
+    "rebuilt": 0.6042465416666668,
+    "control": 0.58890275
+  },
+  "sd": {
+    "contract": 0.007345460471960843,
+    "rebuilt": 0.0024445117298188762,
+    "control": 0.00854404526251566
+  },
+  "wall_sec": 134.69768977165222
+}
