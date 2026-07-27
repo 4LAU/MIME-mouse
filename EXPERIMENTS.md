@@ -3973,3 +3973,102 @@ class at the same position, so a speed-conditional sharpening is implementable
 where the conditioning already lives, and it is inference-only.
 
 Ledger: W3_groundwork_2026-07-27T020242+0000_0efb27ea
+
+## The endpoint correction is the defect, and it costs 0.014 to fix
+
+2026-07-26. The previous section proposed a speed-conditional sharpening of the
+dtheta head. Before touching the GPU, the mid-speed excess was traced to a
+speed class, because the head is conditioned on the speed class and the band was
+measured in px/s on the resample, which is a different axis.
+
+`research/w3_turn_by_class.py`. The median is unusable at small displacements:
+positions are integers, so a 1 px event can only turn by multiples of 45 degrees
+and the median collapses onto one lattice value. Mean and the share of perfectly
+straight continuations survive it. The arm appears twice, before and after
+`correct_additive`, because `w3_stall_pattern.py` had already caught that
+correction manufacturing a turn signature the raw model does not have.
+
+| speed class | px/event | human | raw model | corrected |
+|---|---|---|---|---|
+| 1 | 1.0 | 31.94 | 26.57 | 37.72 |
+| 2 to 11 | 1.0 to 1.4 | 31.16 | 30.89 | 41.08 |
+| 12 to 21 | 1.5 to 2.0 | 18.85 | 14.53 | 26.14 |
+| 32 | 3.0 | 10.36 | 10.47 | 18.07 |
+| straight share, class 32 | | 66.3% | 61.4% | 44.6% |
+
+The sampler is at or below the human almost everywhere. The correction puts the
+excess in. The whole mid-speed wobble is post-processing.
+
+`research/w3_lattice_arrival.py` priced it. Raw, uncorrected, the arm scores
+0.6500 and lands on the requested pixel 0.3% of the time. Corrected it scores
+0.7283 and lands 100%. Exact arrival costs 0.078, a third of the remaining gap
+to 0.50 and larger than any single lever found before it.
+
+Two gentler corrections were built and both failed, one of them instructively.
+Error diffusion in the step domain is arithmetically identical to the current
+correction: carrying the fractional error forward and rounding each step is the
+same operation as rounding the running total. It reproduced `correct_additive`
+to four decimals. Deferring the carry onto long steps scored worse (0.744 at a
+4 px floor, 0.764 at 8, 0.759 at 16) because nothing bounded the carry, so a
+long stretch of small steps could dump tens of pixels onto one event.
+
+`research/w3_aiming_price.py` separated the two explanations. Real human paths,
+given an invented target their own endpoint misses by a fixed amount, run
+through the same correction, no model anywhere:
+
+| injected miss px | additive | jog | 
+|---|---|---|
+| 0 | 0.4922 | 0.4922 |
+| 1 | 0.5281 | 0.5064 |
+| 2 | 0.5291 | 0.5184 |
+| 10 | 0.5717 | 0.5406 |
+| 40 | 0.6385 | 0.6117 |
+
+A single pixel of miss costs a real human path 0.036 under the current
+correction. Almost all the damage arrives with the first pixel, which is the
+signature of dithering rather than of magnitude: a sub-pixel drift added to
+every position and then rounded breaks the long straight lattice runs humans are
+full of.
+
+The arm's own miss is 58 px median, 30% of the requested distance, p90 465 px,
+over about 57 events. That is roughly a pixel of correction per event, and no
+operator is gentle at that size. So the 0.078 is mostly aim, not operator, and
+the model is not really aiming at all.
+
+`correct_jog` spends the error as `|err_x| + |err_y|` single-pixel changes,
+longest steps first, and leaves every other step byte identical to the model's
+own. Arrival is exact by construction because the steps are integers made to sum
+to the requested displacement.
+
+`research/w3_jog_verify.py`, 6000 cached trajectories, one path per spec, no
+candidate pool, no selection:
+
+```
+                         arrives      n   contract AUC
+additive (standing)       100.0%   6000         0.7283
+jog                       100.0%   6000         0.7144
+jog minus additive                             -0.0139
+```
+
+Bootstrap over paths, 12 resamples: gap mean -0.0111, sd 0.0052, 11 of 12
+resamples favour jog, worst +0.0044. Resampling with replacement duplicates
+paths and the RF exploits that, so the absolute bootstrap levels sit near 0.80
+and only the paired gap is meaningful.
+
+Not collapse. The contract's collapse flag and its feature list are identical
+for both arms. Five dispersion ratios move closer to the human, two move
+further: `angular_velocity_mean` 1.175 to 1.036, `angular_velocity_std` 1.089 to
+1.028, `num_direction_changes` 1.133 to 1.069, `path_efficiency` 0.824 to 0.921
+and `mean_velocity` 0.838 to 0.900 improve; `max_deviation` 0.997 to 1.211 and
+`curvature_std` 0.172 to 0.149 regress.
+
+The first version of the verification swept five seeds and got five identical
+numbers. The seed only feeds the feature jitter, the jitter is set to 0, and the
+contract pins its own RF seed at 42. Bootstrap over paths replaced it.
+
+Single-trajectory state of the art moves from 0.7283 to 0.7144. The next lever
+is aim: at a 1 px miss the jog correction costs 0.014 instead of the 0.064 it
+costs at 58, so generation that lands near the target is worth roughly another
+0.05 on top of this.
+
+Ledger: W3_groundwork_2026-07-27T045058+0000_f72bea9d
