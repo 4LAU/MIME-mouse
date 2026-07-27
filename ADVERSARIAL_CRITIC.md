@@ -1,6 +1,6 @@
 # Learned Whole-Path Critic
 
-Status: Phase 0 done and passed, Phase 1 not started. This document stands on top of the pilot work already done; it does not replace the gate or the safety rules, which still hold.
+Status as of 26 July 2026: CLOSED. Phase 0 passed, Phase 1 ran and failed, Phase 2 will not be funded. Everything below Phase 1 is kept as a record of what was designed, not as work that is queued.
 
 The line that used to sit here said no training had been run. That was wrong by the time anyone read it, and it cost a later session a day of rediscovery. What has actually been run:
 
@@ -8,7 +8,9 @@ The line that used to sit here said no training had been run. That was wrong by 
 - Phase 0b (research/phase0b_critic.py, 19 July). Same critic handed speed, acceleration, jerk, curvature and angular velocity as explicit channels, which removes the confound that a transformer cannot compute a second derivative from 4000 noisy samples. OOF AUC 0.792, above the RF. Passes.
 - Coverage check (research/w3_critic_coverage.py, 26 July). Phase 0b's headline is a single pooled number, and the gap is not pooled: it lives in a quarter of human movement (see research/w3_missing_paths.py). Retrained against the event-model arm Phase 1 would fine-tune, the critic reads 0.843 on that quarter against 0.544 on the rest, so it is aimed at the deficit. The two teachers agree on only 44 percent of which paths are missing, so the critic is contributing its own signal rather than echoing the examiner.
 
-Phase 1 below is the next thing to run.
+- Phase 1 (26 July). Ran deliberately against the recommendation on record, because the rig was cheap and the prediction deserved a direct test. The generator was fine-tuned through the full K=200 differentiable sampler to fool the frozen Phase 0b critic, with a flow-matching anchor against drift. One 90 minute burst, 617 steps. Training telemetry looked like success: the fool loss halved and the critic's logits moved firmly toward the human side. On a fresh 2000-trajectory sample the RF detector read 0.766 against a 0.757 baseline, no better. The critic itself, tested out of sample on the new model's own output, still separated at 0.80. The apparent training-time win did not survive a clean test even against the judge it was optimised on. Full account in EXPERIMENTS.md; the first attempt at this run was invalid on a gradient clip inherited from the old harness and is recorded there too.
+
+Phase 2 is not funded. Phase 1 is the fifth independent negative for fine-tuning this generator against a fixed target, after direct moment matching, two conditioning corrections, and the RL pilot. The design below is left in place because the next architecture will face the same stability questions, not because anyone should start it.
 
 ## Where this sits in the story
 

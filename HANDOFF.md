@@ -1,7 +1,45 @@
-# Handoff: W1 closed, W3 opens on the arrival tax
+# Handoff
 
-Read this whole file before touching anything. Repo is MIME-mouse on WSL2
-Ubuntu. Nothing is mid-flight; the GPU is idle and no runs are pending.
+The single session-start document for this repo. Read it before touching
+anything. Repo is MIME-mouse on WSL2 Ubuntu, branch
+w3-p3-representation-ceiling. Nothing is mid-flight; the GPU is idle and no
+runs are pending.
+
+Earlier handoffs and plans are in archive/ with a note on why each was
+overtaken. They are not instructions.
+
+## Start here: where things stand, 2026-07-26
+
+The mandate is research, not shipping. The goal is a generative model that
+returns ONE trajectory from A to B and scores 0.50. Anything that generates
+several candidates and picks among them is out of scope, so the selection
+product and its 0.58 are not the number being moved.
+
+  standing single-trajectory number   0.6986
+  what it means                       one path per request, decided before it
+                                      is scored, landing on the requested
+                                      whole pixel every time, no candidate pool
+  how to reproduce it                 research/w3_jog_on_resid.py with
+                                      --ckpt event_polar_4m_resid_v2.pt
+  scorer                              research/autoloop/scoring.py, NOT
+                                      evaluate.py (see Evaluation below)
+
+Everything bolted onto the current model family has now been measured and is
+flat: six aiming fine-tunes (P1), the character latent plus guidance (P2),
+pool mixing, correction geometry, the learned adversarial critic
+(ADVERSARIAL_CRITIC.md, Phase 1 failed), the RL pilot (RL_PILOT.md), and
+supervised imitation of selection winners (W1). Getting materially below 0.70
+means a different architecture, which is design work and GPU time, not another
+tuning cycle.
+
+The last finding is the one to carry forward, because it changes how to read
+everything before it. The 0.078 arrival tax was blamed on the model missing
+its target by 58 px. That was wrong. Comparing raw model output to corrected
+model output, instead of only comparing corrected output to the human, showed
+the sampler was fine and the correction was injecting the defect. Every
+measurement taken before 2026-07-26 used the defective correction as its arm.
+
+Next steps are at the bottom of this file, in order.
 
 ## What this project is
 
@@ -40,7 +78,10 @@ path has to end on the requested pixel, because the intended use is moving to
 a specific point on screen. Anything less makes the output unusable regardless
 of its realism score.
 
-## The central finding, measured 2026-07-20
+## The arrival tax, measured 2026-07-20, reading corrected 2026-07-26
+
+The measurements in this section stand. The conclusion drawn from them, that
+the lever is native arrival, was wrong and is reversed further down. Read both.
 
 Exact arrival is geometrically free. You can always move points to hit the
 target. What costs is what moving them does to the realism score, and that had
@@ -82,13 +123,17 @@ summed event steps to the pixel), so the model is told the endpoint. What it
 lacks is feedback: the whole path is drawn open-loop against one fixed
 instruction, position error accumulates step by step, and nothing corrects
 it. There is no correction step anywhere in experiments/event_stream_polar.py.
-See W3_PROPOSAL.md; the fix is per-step residual re-conditioning, not more
+See archive/W3_PROPOSAL.md; the fix proposed there was per-step residual
+re-conditioning, and it failed. Superseded by the 2026-07-26 section below:
+the tax is mostly the correction operator, not the aim. Not more
 endpoint information.
 
-Two consequences. Post-hoc correction is never free, not even at 2px, so those
-numbers are a floor and not a solution. And because cost scales with correction
-size, arrival has to be part of what the model is asked to do rather than a
-fix applied afterwards.
+The consequence drawn at the time: because the cost scales with correction
+size, arrival has to be part of what the model is asked to do rather than a fix
+applied afterwards. That is what sent six fine-tunes at native aiming, and all
+six failed. The tax turned out to be mostly a defect in the correction operator
+itself, which no amount of better aiming would have reached. What survives is
+the narrower claim: post-hoc correction is never free, not even at 2 px.
 
 ## The arrival tax and the product number survive a degeneracy control, 2026-07-26
 
@@ -314,7 +359,7 @@ per-checkpoint miss and AUC; they had only ever existed as loose JSON.
   extremes are inside the model's support but drawn far too rarely, and
   raising sampling temperature makes the output easier to tell apart, not
   harder, because the added variance is off-manifold. Rows
-  W3_groundwork_...ce210375, ...b7753a76. PLAN.md's original "W3 = SCALE" is
+  W3_groundwork_...ce210375, ...b7753a76. archive/PLAN.md's "W3 = SCALE" is
   superseded: scaling would spend money against the wrong diagnosis.
 
 ## Next steps, in order
@@ -342,6 +387,12 @@ is not the target and its 0.58 is not the number being moved.
    that used correct_additive as the arm has the same blind spot. The stall
    and dispersion findings in particular should be re-read with a raw column.
 4. Anything needing cloud spend stops for L sign-off. Local GPU does not.
+
+Steps 1 to 3 are all CPU, all measurable in an afternoon, and none of them will
+reach 0.50. They exist to make sure the next architecture is designed against
+correct measurements rather than against the artefacts of a broken correction
+operator. Do them first and do not skip step 3; it is the one that decides how
+much of the existing record can be trusted.
 
 If P3 (a new architecture) goes ahead, the P1 and P2 post-mortems jointly
 specify it. The model must be natively endpoint-conditioned, because feedback
@@ -429,4 +480,6 @@ artifact of the Windows mount, not real edits. Do not sweep them into a commit.
 - Whether to package the fallback as a usable product now, in parallel with
   research. ANSWERED 2026-07-21 (row W3_groundwork_...e7f67c96): with exact
   arrival enforced and selection run on the corrected candidates it reads
-  about 0.58 at roughly 1s/request, so it is packageable; see W3_PROPOSAL.md.
+  about 0.58 at roughly 1s/request, so it is packageable. That number was
+  measured with the defective additive correction and has not been re-read
+  under correct_jog; see next steps.
