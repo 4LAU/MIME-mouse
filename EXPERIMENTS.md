@@ -3650,3 +3650,503 @@ matrices for seeds 47 through 50 live on the GPU machine and are not part
 of the release bundle, so this script computes directly from the recorded
 per-seed values rather than refitting from raw features.
 
+
+## Training against a learned critic: built, run, and retired in two days (July 18-19)
+
+The question this route asked: if hand-picked feature targets keep
+failing (bursts 3 and 3b, the RL pilot), can a learned critic supply a
+richer training signal that actually transfers to the real detector?
+
+Three stages, each gated before the next was funded.
+
+Phase 0 trained a small transformer on raw step deltas to tell human
+from synthetic. It reached 0.632 where the RF detector reads 0.757, and
+its per-item rankings barely correlated with the RF's. A judge weaker
+than the examiner is not worth training against, but the failure could
+have been capacity rather than principle, so one more diagnostic was
+justified.
+
+Phase 0b handed the critic the RF's own vocabulary, per-step curvature,
+jerk, and angular velocity channels instead of raw deltas. That version
+reads 0.792, stronger than the RF itself. Capacity confirmed as the
+Phase 0 limit. But the deeper check failed: even this strong critic
+agrees with the RF only weakly on which synthetic paths look fake
+(Spearman 0.24) and is essentially blind to mean jerk (correlation
+0.015), the RF's single most important feature. Synthetic output
+carries several independent tells, and a learned critic locks onto
+whichever subset it finds first, not necessarily the one the real
+detector uses.
+
+Phase 1 ran the experiment anyway, deliberately, against the
+recommendation on record, because the rig was cheap and the prediction
+deserved a direct test. The generator was fine-tuned through the full
+K=200 differentiable sampler to fool the frozen Phase 0b critic, with a
+flow-matching anchor to prevent drift. One 90 minute burst, 617 steps,
+temperatures 71-74C throughout, the original checkpoint untouched
+(MD5 verified before and after). Training telemetry looked like
+success: the fool loss fell from about 1.0 to 0.5 and the critic's
+logits on generated batches moved firmly toward the human side.
+
+Scoring told the real story. On a fresh 2000-trajectory sample through
+the standard serving recipe, the RF detector reads 0.766 against the
+fine-tuned model, statistically indistinguishable from the 0.757
+baseline and certainly not below it. And the critic itself, tested
+out of sample on the new model's output, still separates at 0.80. The
+apparent training-time success did not survive a clean test even
+against the judge it was optimized on.
+
+That is the fifth independent negative for the family of approaches
+that fine-tune this generator against a fixed target, after direct
+moment matching, two conditioning corrections, and the RL pilot. Each
+failure has the same geometry: the optimization finds a shortcut that
+satisfies the training signal without moving the underlying
+distribution. The route is retired. The selection pipeline keeps the
+headline (0.504 tuning, 0.513 out of sample) and none of this touched
+it.
+
+What survives from the two days: the full-chain differentiable sampler
+with per-step gradient checkpointing (the hard machinery for any future
+whole-path objective), and the Phase 0b critic, a detector stronger
+than the RF that sees a different subset of tells. Both are assets for
+what comes next.
+
+Next direction, and it is a change of scale rather than another burst:
+a net-new generative model designed from the start to produce
+individually near-chance trajectories in a single shot, under a serving
+constraint of about two seconds per trajectory on modest hardware. The
+selection result proves paths of the required quality exist inside the
+current model's output distribution; the open research question is
+whether a model can be built that emits them directly instead of
+needing a population to filter. No published system does this. The
+program starts from two facts this project has already paid for:
+set-level selection reaches 0.513 but per-item filtering alone does
+not, and whole-path summary statistics (curvature variance, jerk) are
+where every fine-tuning attempt has died.
+
+## Per-path style latent: refuted before any training (research/w3_style_variance.py)
+
+w3_missing_paths.py named three kinds of movement the model never produces, and
+the obvious model change that follows is a style drawn once per path that the
+generator cannot ignore. The story it tells is tidy: the model emits the average
+of several styles because nothing in it ever picks one, which would also explain
+the half-rate stall deficit at line 1539, since only one of the styles pauses.
+This probe was the go/no-go before spending training time on it. It fails.
+
+Method. Cluster real paths on the eight interpretable descriptors from
+w3_missing_paths.describe, then decompose the 18 contract features by that
+label. The two spaces are deliberately different: k-means maximizes
+between-cluster spread in whatever space it clustered in, so clustering the 18
+features and then reporting between-cluster variance of the 18 features would
+measure the fitting. Every number is reported next to the same number from a
+random partition with matched group sizes, because any partition of 2000 paths
+explains something. Clusters are fit on half the real paths and every number is
+read on the other half. CPU only, no checkpoint touched, 6 seconds per k.
+
+| k | between-style share of feature variance | random-partition null |
+|---|------|------|
+| 2 | 0.098 | 0.001 |
+| 4 | 0.164 | 0.003 |
+| 5 | 0.177 | 0.004 |
+| 8 | 0.204 | 0.007 |
+
+Style is a real axis, far above the null, and a small one. Over 80 percent of
+the variation the detector reads lives inside a style. Weighting by RF
+importance does not rescue it, and the per-feature breakdown is worse than the
+headline:
+
+| feature | RF weight | eta^2 | excess over null |
+|---------|-----------|-------|------------------|
+| angular_velocity_mean | 0.113 | 0.026 | 0.021 |
+| angular_velocity_std | 0.072 | 0.091 | 0.085 |
+| path_efficiency | 0.065 | 0.536 | 0.529 |
+| curvature_mean | 0.065 | 0.006 | 0.000 |
+| movement_duration | 0.051 | 0.463 | 0.458 |
+| mean_jerk | 0.045 | 0.018 | 0.013 |
+
+The split is clean and it runs the wrong way. Style explains the coarse scale
+features, how far the pointer went and how long it took. The features the
+forest leans on hardest, angular velocity and curvature, are the ones style
+explains least; curvature_mean has zero excess over a random partition.
+
+Two further readings, both negative.
+
+Style mix. The arm's distribution over styles against the humans', on centroids
+fit from real paths alone: total variation distance 0.038 at k=4, 0.042 at k=5,
+0.050 at k=8. The model already picks styles at very nearly the human rate. The
+premise that it emits a blend because it never picks is simply wrong.
+
+Within style. The arm scored against real paths of its own style, k=4: 0.7106,
+0.7130, 0.7718, 0.7701, against a pooled 0.7353 and matched random-partition
+nulls of 0.7157, 0.7182, 0.6706, 0.7059. Conditioning on style does not shrink
+the gap, and in two of four cells the style grouping does worse than a random
+grouping of the same sizes.
+
+Verdict: park the style latent. The reading forward is that the detector's tell
+is within-path texture at the angular velocity and curvature scale rather than
+a global per-path choice, which is the same place line 233 and the line 1539
+stall deficit already point. Any model change aimed at a whole-path property
+should expect this result, since a whole-path property is what a style label is.
+
+Ledger: W3_groundwork_2026-07-27T011422+0000_9e333c52
+
+## Stall-targeted fine-tune: refuted before any training (research/w3_stall_pattern.py, w3_stall_surgery.py)
+
+After the style latent died, the next candidate was the stop-and-go pattern. The
+2026-05-15 synthesis above says the detector's heaviest tell, angular velocity,
+comes from heading changes at stall boundaries and not from smooth curves, and
+w3_style_variance.py had just shown that angular_velocity_mean carries RF weight
+0.113 while a per-path style explains only 0.026 of it, so whatever produces it
+is local. Line 1539 records the model stalling at half the human rate. That
+looked like a local, measurable, untried target.
+
+The premise was wrong, and it was wrong because line 1539 is a WS4 measurement
+of the flow model at 0.752, not of this arm. Measured directly on the event
+model's own paths, the model over-produces stops.
+
+Everything below is measured on the raw integer-pixel path at its own
+timestamps on both sides, never the resample. A hold is a maximal run of
+consecutive samples at an identical pixel, which is the codec's tick read off
+the output rather than the tokens.
+
+| | human | model raw | model as scored |
+|---|---|---|---|
+| holds per path | 8.57 | 11.36 | 12.23 |
+| share of time held | 9.7% | 12.8% | 15.8% |
+| exact-zero steps after resample | 5.286% | 5.317% | 6.816% |
+| hold length, samples | 2.33 | 2.22 | 2.34 |
+| hold duration, ms | 7.0 | 6.7 | 7.8 |
+| heading change at a hold, excess over null | 2.9 deg | 0.4 deg | 2.8 deg |
+| speed into a hold, x path mean | 1.054 | 1.215 | 1.216 |
+
+Length and duration already match, p50 and p90 alike. Excess heading change at a
+hold matches too, which closes pattern 2 of the three-pattern analysis for this
+arm. Worth noting that the uncorrected model shows almost no excess turn at a
+hold, 0.4 degrees, and correct_additive is what puts it there; the arrival
+correction is doing work nobody credited it with.
+
+The human number here is an independent reproduction of the recorded one:
+5.286% exact-zero steps against the 4.8 to 6.0% on record.
+
+Surgery bounds the axis. Delete a random fraction of each path's holds, leaving
+every surviving timestamp untouched so duration is unchanged and the resample
+interpolates through the gap, then score.
+
+| holds removed | holds/path | time held | zero steps | contract AUC |
+|---|---|---|---|---|
+| 0% | 12.23 | 15.8% | 6.816% | 0.7283 |
+| 15% | 10.42 | 13.5% | 5.820% | 0.7268 |
+| 30% | 8.59 | 11.1% | 4.775% | 0.7209 |
+| 50% | 6.17 | 8.1% | 3.475% | 0.7257 |
+| 75% | 3.09 | 4.1% | 1.793% | 0.7286 |
+| 100% | 0.00 | 0.0% | 0.029% | 0.7644 |
+
+The minimum sits at 30% removed, which is exactly the rate that takes 12.23
+holds per path to the human 8.57, so the surgery lands where it was aimed. It
+buys 0.0074 against a gap of 0.23. Removing every hold costs 0.036, so stalls do
+matter to the detector and this arm is already close enough that closing the
+remainder is not worth a fine-tune.
+
+Verdict: the stall axis is closed for this arm. Two of the three patterns from
+the 2026-05-15 analysis are now measured as already correct here, which leaves
+pattern 1, the shape of the velocity envelope across the whole movement, and
+that is the one recorded as out of reach for per-position heads.
+
+Ledger: W3_groundwork_2026-07-27T013357+0000_9d5b3899
+
+## Velocity envelope is not the gap; the gap is local turning (research/w3_envelope_ceiling.py)
+
+The case for building a different architecture rested on one inherited claim:
+that what is left is the shape of the speed profile across the whole movement,
+and that per-position heads cannot reach it. Measured on this arm, the claim is
+wrong.
+
+Two transplant instruments were built first and both failed, which is worth
+recording because the failure is instructive. Retiming a path means keeping its
+route and swapping its pacing, either by rebuilding positions along the polyline
+or by moving only the clock and leaving every pixel untouched. Both destroy the
+path. A real human path retimed with another human's pacing scores 0.7552 by the
+rebuilt route and 0.8129 by the clock, against 0.4922 untouched. The operation
+costs 0.26 to 0.32 on its own, which is twenty to fifty times the effect it was
+built to measure. Route, step size and timing are co-adapted in a real
+recording and no transplant leaves that intact. Both instruments do agree that
+the model's pacing on a real route costs 0.0006 to 0.0105 over a human's, but
+at 0.75 to 0.81 the forest is near saturation and that agreement is weak
+evidence.
+
+The reading that stands needs no surgery: run the contract RF recipe on subsets
+of the feature columns. Reproduces the contract exactly on all 18.
+
+| family | alone | contract without it |
+|---|---|---|
+| all 18 | 0.7353 | |
+| envelope (6) | 0.5476 | 0.7184 |
+| turning (7) | 0.7076 | 0.5921 |
+| derivatives (5) | 0.5551 | 0.7368 |
+
+The envelope separates at 0.5476 by itself and a perfect fix is worth 0.017.
+Derivatives are worth nothing unique. Turning carries the gap: 0.7076 alone, and
+removing it takes the detector down 0.143.
+
+Splitting turning by what a per-position head could in principle control:
+
+| | alone | contract without it |
+|---|---|---|
+| wobble: curvature mean and std, angular velocity mean and std, direction changes | 0.6808 | 0.6331 |
+| excursion: path_efficiency, max_deviation | 0.5173 | 0.7161 |
+
+This inverts the architecture argument. The blocker on record at line 2012 is
+that per-position token heads cannot coordinate GLOBAL outcomes. The whole-path
+features are exactly the ones that turn out not to matter: excursion separates
+at 0.5173 and is worth 0.019. What carries the gap is step-scale turning
+texture, worth 0.102, and that is local. It is also the quantity the polar
+model's dtheta head controls most directly, which makes the repeated failures to
+move curvature stranger than the recorded explanation allows: they cannot be
+blamed on an inability to coordinate globally, because the target is not global.
+
+Subsets are not additive. 0.017 plus 0.102 plus 0.019 is well short of the 0.235
+that separates 0.7353 from chance, so the families overlap and none of these is
+a full account.
+
+Verdict: do not scope a new architecture around the velocity envelope. The next
+thing to measure is whether the dtheta vocabulary can represent the human
+distribution of small turns at all, since a quantization floor would explain a
+local tell that repeated training pressure never moved.
+
+Ledger: W3_groundwork_2026-07-27T014744+0000_27fd6132
+
+## The alphabet is innocent; the model wobbles at mid speed (research/w3_turn_floor.py)
+
+The previous section put the gap in step-scale turning and showed the whole-path
+features are worth almost nothing, which leaves the failures to move curvature
+without their recorded explanation. The blocker on file at line 2012 is that
+per-position heads cannot coordinate global outcomes, and the target is not
+global. So the first suspect is the representation: the model emits quantized
+speed and turn tokens, and if that alphabet cannot spell a human path then no
+training pressure was ever going to work.
+
+Run real human paths through the model's own encode and decode and score what
+comes out.
+
+| | contract AUC |
+|---|---|
+| human untouched | 0.4922 |
+| codec round trip, no quantization | 0.5024 |
+| round trip plus the full vocabulary | 0.5039 |
+| arm as scored, for reference | 0.7283 |
+
+The codec costs 0.010 and the vocabulary a further 0.0016. The alphabet can hold
+a human path essentially exactly, so there is no quantization floor here and the
+curvature failures are a training or sampling problem rather than an expressive
+one. TH_BINS 256 is 1.4 degrees a step and S_BINS 128 is 3.6 percent apart,
+which turns out to be plenty.
+
+Where the turning actually differs has to be read against speed. Pooled, the
+model's median 125Hz step turn is 3.98 degrees against the human 1.65, but that
+cannot separate turning too much from turning at the wrong moments, and line 233
+records that all human curvature comes from moments under 5 px/s.
+
+| step speed px/s | human median turn | model | ratio | share of human steps |
+|---|---|---|---|---|
+| 0 to 5 | 0.00 | 0.00 | | 0.7% |
+| 5 to 25 | 0.00 | 0.00 | | 10.3% |
+| 25 to 100 | 0.00 | 0.00 | | 15.0% |
+| 100 to 400 | 4.76 | 12.03 | 2.52 | 32.1% |
+| 400 to 1000 | 4.12 | 6.29 | 1.53 | 19.2% |
+| 1000+ | 2.61 | 2.63 | 1.01 | 22.7% |
+
+The three slow bands read 0.00 on both sides because over half those steps are
+exactly collinear on the pixel lattice, so the median says nothing there and a
+different statistic would be needed to compare them.
+
+The defect is localized and one-sided. At the top of the speed range the model
+matches the humans to two decimal places. At 400 to 1000 it turns half again too
+much. At 100 to 400, which holds more steps than any other band on either side,
+it turns two and a half times too much. The model wobbles through
+moderate-speed motion where humans travel straight.
+
+EVENT_TH_TEMP has been touched once, at 1.15 (line 2146), hotter, inside a
+16-way selection pipeline, on the belief that the model needed more curvature.
+Read against speed that was the wrong direction and the wrong shape: the mid
+band needs less turning, the top band needs none of it changed, and a single
+global temperature cannot do that. The head is already conditioned on the speed
+class at the same position, so a speed-conditional sharpening is implementable
+where the conditioning already lives, and it is inference-only.
+
+Ledger: W3_groundwork_2026-07-27T020242+0000_0efb27ea
+
+## The endpoint correction is the defect, and it costs 0.014 to fix
+
+2026-07-26. The previous section proposed a speed-conditional sharpening of the
+dtheta head. Before touching the GPU, the mid-speed excess was traced to a
+speed class, because the head is conditioned on the speed class and the band was
+measured in px/s on the resample, which is a different axis.
+
+`research/w3_turn_by_class.py`. The median is unusable at small displacements:
+positions are integers, so a 1 px event can only turn by multiples of 45 degrees
+and the median collapses onto one lattice value. Mean and the share of perfectly
+straight continuations survive it. The arm appears twice, before and after
+`correct_additive`, because `w3_stall_pattern.py` had already caught that
+correction manufacturing a turn signature the raw model does not have.
+
+| speed class | px/event | human | raw model | corrected |
+|---|---|---|---|---|
+| 1 | 1.0 | 31.94 | 26.57 | 37.72 |
+| 2 to 11 | 1.0 to 1.4 | 31.16 | 30.89 | 41.08 |
+| 12 to 21 | 1.5 to 2.0 | 18.85 | 14.53 | 26.14 |
+| 32 | 3.0 | 10.36 | 10.47 | 18.07 |
+| straight share, class 32 | | 66.3% | 61.4% | 44.6% |
+
+The sampler is at or below the human almost everywhere. The correction puts the
+excess in. The whole mid-speed wobble is post-processing.
+
+`research/w3_lattice_arrival.py` priced it. Raw, uncorrected, the arm scores
+0.6500 and lands on the requested pixel 0.3% of the time. Corrected it scores
+0.7283 and lands 100%. Exact arrival costs 0.078, a third of the remaining gap
+to 0.50 and larger than any single lever found before it.
+
+Two gentler corrections were built and both failed, one of them instructively.
+Error diffusion in the step domain is arithmetically identical to the current
+correction: carrying the fractional error forward and rounding each step is the
+same operation as rounding the running total. It reproduced `correct_additive`
+to four decimals. Deferring the carry onto long steps scored worse (0.744 at a
+4 px floor, 0.764 at 8, 0.759 at 16) because nothing bounded the carry, so a
+long stretch of small steps could dump tens of pixels onto one event.
+
+`research/w3_aiming_price.py` separated the two explanations. Real human paths,
+given an invented target their own endpoint misses by a fixed amount, run
+through the same correction, no model anywhere:
+
+| injected miss px | additive | jog | 
+|---|---|---|
+| 0 | 0.4922 | 0.4922 |
+| 1 | 0.5281 | 0.5064 |
+| 2 | 0.5291 | 0.5184 |
+| 10 | 0.5717 | 0.5406 |
+| 40 | 0.6385 | 0.6117 |
+
+A single pixel of miss costs a real human path 0.036 under the current
+correction. Almost all the damage arrives with the first pixel, which is the
+signature of dithering rather than of magnitude: a sub-pixel drift added to
+every position and then rounded breaks the long straight lattice runs humans are
+full of.
+
+The arm's own miss is 58 px median, 30% of the requested distance, p90 465 px,
+over about 57 events. That is roughly a pixel of correction per event, and no
+operator is gentle at that size. So the 0.078 is mostly aim, not operator, and
+the model is not really aiming at all.
+
+`correct_jog` spends the error as `|err_x| + |err_y|` single-pixel changes,
+longest steps first, and leaves every other step byte identical to the model's
+own. Arrival is exact by construction because the steps are integers made to sum
+to the requested displacement.
+
+`research/w3_jog_verify.py`, 6000 cached trajectories, one path per spec, no
+candidate pool, no selection:
+
+```
+                         arrives      n   contract AUC
+additive (standing)       100.0%   6000         0.7283
+jog                       100.0%   6000         0.7144
+jog minus additive                             -0.0139
+```
+
+Subsample without replacement, 12 draws of 4500 of the 6000: gap mean -0.0100,
+sd 0.0076, 11 of 12 draws favour jog, worst +0.0084. Bootstrapping with
+replacement was tried first and thrown out: duplicated paths are easy for the
+forest, absolute AUC climbed to 0.80, and near saturation a real gap gets
+compressed toward zero.
+
+Not collapse. The contract's collapse flag and its feature list are identical
+for both arms. Five dispersion ratios move closer to the human, two move
+further: `angular_velocity_mean` 1.175 to 1.036, `angular_velocity_std` 1.089 to
+1.028, `num_direction_changes` 1.133 to 1.069, `path_efficiency` 0.824 to 0.921
+and `mean_velocity` 0.838 to 0.900 improve; `max_deviation` 0.997 to 1.211 and
+`curvature_std` 0.172 to 0.149 regress.
+
+The first version of the verification swept five seeds and got five identical
+numbers. The seed only feeds the feature jitter, the jitter is set to 0, and the
+contract pins its own RF seed at 42. Bootstrap over paths replaced it.
+
+Single-trajectory state of the art moves from 0.7283 to 0.7144. The next lever
+is aim: at a 1 px miss the jog correction costs 0.014 instead of the 0.064 it
+costs at 58, so generation that lands near the target is worth roughly another
+0.05 on top of this.
+
+Ledger: W3_groundwork_2026-07-27T045058+0000_f72bea9d
+
+## The aiming channel was already built and already failed, and the fix composes anyway
+
+2026-07-26. The lever named at the end of the previous section was aim: the
+model misses its target by 58 px median, and at that size no endpoint correction
+is gentle. The model carries a residual channel designed for exactly this, a
+running signal of how much displacement the unrevealed part still has to cover.
+
+It was built and evaluated on 2026-07-21 across six checkpoints, and the result
+never made it into this file. `research/w3_p1_eval.py`, pre-registered gate: a
+median native miss of 15 px or less, and one-shot AUC with arrival enforced
+materially below 0.728.
+
+| checkpoint | miss p50 | within 15 px | raw | additive |
+|---|---|---|---|---|
+| fc_v2 (the arm) | 58.0 | | 0.6500 | 0.7283 |
+| resid_v1 | 57.3 | 23.0% | 0.6467 | 0.7185 |
+| resid_v2 | 55.3 | 23.4% | 0.6466 | 0.7203 |
+| resid_v2, resid only | 124.3 | 8.0% | 0.6960 | 0.7819 |
+| resid_v6 | 67.8 | 19.8% | 0.6688 | 0.7472 |
+| resid_v4 | 97.0 | 9.4% | 0.8808 | 0.8785 |
+| resid_v5 | 101.2 | 10.8% | 0.8954 | 0.8917 |
+| resid_v3 | 170.1 | 2.8% | 0.9848 | 0.9880 |
+
+Six attempts, best miss 55.3 against the base model's 58.0. The gate wanted 15.
+Withholding the static displacement conditioning so aiming has to run through
+the residual channel (the `resid only` row) more than doubles the miss, which
+says the channel is not carrying the aim at all. The three checkpoints that
+changed the model most are the three that fell apart. The aiming channel is
+closed as a route; the miss stays at roughly 30% of the requested distance.
+
+What those runs did leave is two base models that score below the arm under the
+correction that was in service. They saved summary JSON and not the paths, so
+`research/w3_jog_on_resid.py` regenerates and applies the jog correction.
+2000 specs, one path each, no selection, decode recipe copied verbatim from
+`w3_p1_eval.py` with the previously recorded additive AUC printed beside the
+fresh one as a tripwire.
+
+```
+event_polar_4m_resid_v2, miss p50 55.3px, 29.1% of travel
+
+               arrives      n   contract AUC
+raw               0.4%   1998         0.6538
+additive        100.0%   1998         0.7210
+jog             100.0%   1998         0.6986
+
+recipe tripwire: additive 0.7210 against 0.7203 on record, drift +0.0007
+```
+
+Subsample without replacement, 12 draws of 1500: gap mean -0.0131, sd 0.0097,
+11 of 12 draws favour jog. Collapse flag and feature list identical for both
+arms; five dispersion ratios move closer to the human and three further, with
+`angular_velocity_mean` 1.184 to 1.026 and `angular_velocity_std` 1.095 to
+1.023 again the largest moves.
+
+The jog gain is larger on this model (-0.0223 point estimate) than on the model
+it was developed against (-0.0139), which is the evidence that it fixes the
+operator rather than fitting one generator.
+
+`event_polar_4m_resid_v1` was run too and tripped its own tripwire, additive
+0.7252 against 0.7185 on record, drift +0.0067. Generation is not bit
+reproducible across runs on this machine and the tripwire's 0.005 threshold is
+tighter than that run-to-run spread, which has not been measured. It scored
+0.7084 with jog, worse than v2, so nothing rests on it.
+
+Single-trajectory state of the art: **0.6986**, one path per request,
+exact arrival on the requested pixel, no candidate pool and no selection. Down
+from 0.7283.
+
+The two feature pipelines used across these scripts, `extract_feature_matrix`
+and `features_with_jitter(paths, 0.0, seed)`, were checked to be bit identical
+so the numbers compare.
+
+GPU: two 2.5 minute generation runs, peak 59C, well under the 75C gate.
+Checkpoint MD5 verified unchanged after each.
+
+Ledger: W3_groundwork_2026-07-27T055552+0000_9852d77e

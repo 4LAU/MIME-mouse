@@ -74,6 +74,22 @@ None of this should be read as "undetectable." It means near chance against the 
 
 ![Feature distribution comparison](figures/feature_distributions.png)
 
+### The harder question: one trajectory, no selection
+
+Everything above allows the pipeline to generate several candidate paths and keep one. Work since July 2026 asks a stricter question: what can the model do when it returns exactly one path per request, chosen before it is scored, and that path is required to start and end on the requested whole pixel? That is the product shape anything real would need, and selection is not available in it.
+
+Two things make this harder than the 0.652 row above. There is no second chance at a bad draw. And forcing the path to land on the target pixel is itself expensive, because moving the points to hit the target damages the movement.
+
+| Step | AUC | |
+|---|---|---|
+| Model alone, no correction | 0.654 | Lands on the requested pixel 0.4% of the time, so it is not a usable product |
+| + the endpoint correction in service since July 20 | 0.721 | Lands 100% of the time. Enforcing arrival costs 0.067 |
+| + a corrected endpoint correction, July 26 | 0.699 | Lands 100% of the time |
+
+The July 26 change is worth explaining because the mechanism was a surprise. The old correction spread the landing error thinly across every point in the path and rounded each one to the nearest pixel. Rounding a smooth ramp produces a staircase, and the steps of that staircase land in the middle of straight runs, so the correction was inserting sharp turns into paths the model had drawn straight. Measured per speed band, the model's own turning matches the human closely and the correction is what pushes it high. The replacement spends the landing error as whole-pixel nudges on the longest steps of the path, where one pixel bends the least angle, and leaves every other step exactly as the model drew it.
+
+These numbers come from a different scorer and a different human reference set than the table above, so they are not directly comparable to the 0.652 row. They are internally consistent with each other. The full account is in [EXPERIMENTS.md](EXPERIMENTS.md); the current state is in [HANDOFF.md](HANDOFF.md).
+
 ## How it works
 
 Real mouse movement is not purely continuous. At 125 Hz sampling, 6.14 percent of all recorded samples are exact zero-displacement stalls: the cursor sits perfectly still for a frame or more before moving again, usually right at a direction change or a deceleration. Those stalls carry essentially all of the curvature signal a detector can key on.

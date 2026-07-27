@@ -1,0 +1,214 @@
+{
+  "seed": 42,
+  "arms": {
+    "raw, no correction": {
+      "auc_rf_oob": 0.6499896250000001,
+      "n": 6000,
+      "exact_arrival": 0.003
+    },
+    "additive (current)": {
+      "auc_rf_oob": 0.7283234999999999,
+      "n": 6000,
+      "exact_arrival": 1.0
+    },
+    "diffused": {
+      "auc_rf_oob": 0.7289652500000001,
+      "n": 6000,
+      "exact_arrival": 1.0
+    },
+    "diffused, jog on >= 4 px": {
+      "auc_rf_oob": 0.7440005000000001,
+      "n": 6000,
+      "exact_arrival": 1.0
+    },
+    "diffused, jog on >= 8 px": {
+      "auc_rf_oob": 0.764139875,
+      "n": 6000,
+      "exact_arrival": 1.0
+    },
+    "diffused, jog on >= 16 px": {
+      "auc_rf_oob": 0.759071375,
+      "n": 6000,
+      "exact_arrival": 1.0
+    }
+  },
+  "turn_by_class": {
+    "1": {
+      "human": {
+        "mean_turn_deg": 31.935754441384287,
+        "straight_share": 0.5403675746636035,
+        "n": 24376
+      },
+      "raw, no correction": {
+        "mean_turn_deg": 26.56737304278618,
+        "straight_share": 0.6040995910761426,
+        "n": 96595
+      },
+      "additive (current)": {
+        "mean_turn_deg": 37.723849667021284,
+        "straight_share": 0.43802193379615656,
+        "n": 79512
+      },
+      "diffused": {
+        "mean_turn_deg": 37.720728601197216,
+        "straight_share": 0.4381060177325033,
+        "n": 79515
+      }
+    },
+    "2 to 11": {
+      "human": {
+        "mean_turn_deg": 31.162866844866095,
+        "straight_share": 0.2581699346405229,
+        "n": 7956
+      },
+      "raw, no correction": {
+        "mean_turn_deg": 30.890069474444626,
+        "straight_share": 0.38934480652272063,
+        "n": 37653
+      },
+      "additive (current)": {
+        "mean_turn_deg": 41.07591742225598,
+        "straight_share": 0.21392923092279284,
+        "n": 40074
+      },
+      "diffused": {
+        "mean_turn_deg": 41.06343590217404,
+        "straight_share": 0.2139862234201857,
+        "n": 40068
+      }
+    },
+    "12 to 21": {
+      "human": {
+        "mean_turn_deg": 18.845612248891076,
+        "straight_share": 0.6268185406563663,
+        "n": 8867
+      },
+      "raw, no correction": {
+        "mean_turn_deg": 14.530848446772588,
+        "straight_share": 0.6678966789667896,
+        "n": 23035
+      },
+      "additive (current)": {
+        "mean_turn_deg": 26.13642554609842,
+        "straight_share": 0.4497216274089936,
+        "n": 23350
+      },
+      "diffused": {
+        "mean_turn_deg": 26.140279935820047,
+        "straight_share": 0.44967880085653106,
+        "n": 23350
+      }
+    },
+    "22 to 24": {
+      "human": {
+        "mean_turn_deg": 24.139768610498436,
+        "straight_share": 0.16310013717421123,
+        "n": 7290
+      },
+      "raw, no correction": {
+        "mean_turn_deg": 23.12513668172248,
+        "straight_share": 0.20847908213236324,
+        "n": 28588
+      },
+      "additive (current)": {
+        "mean_turn_deg": 29.771992396339495,
+        "straight_share": 0.13089926065856758,
+        "n": 30703
+      },
+      "diffused": {
+        "mean_turn_deg": 29.770422342235168,
+        "straight_share": 0.1308949973944763,
+        "n": 30704
+      }
+    },
+    "32": {
+      "human": {
+        "mean_turn_deg": 10.360089239330591,
+        "straight_share": 0.6628363228699552,
+        "n": 3568
+      },
+      "raw, no correction": {
+        "mean_turn_deg": 10.472203765590828,
+        "straight_share": 0.6141434946790251,
+        "n": 8739
+      },
+      "additive (current)": {
+        "mean_turn_deg": 18.070929438641443,
+        "straight_share": 0.44640179910044975,
+        "n": 8004
+      },
+      "diffused": {
+        "mean_turn_deg": 18.070929438641443,
+        "straight_share": 0.44640179910044975,
+        "n": 8004
+      }
+    },
+    "38 to 40": {
+      "human": {
+        "mean_turn_deg": 8.210404068787739,
+        "straight_share": 0.6654074473826228,
+        "n": 1853
+      },
+      "raw, no correction": {
+        "mean_turn_deg": 9.347392075272515,
+        "straight_share": 0.5766749379652606,
+        "n": 4030
+      },
+      "additive (current)": {
+        "mean_turn_deg": 13.586016909300788,
+        "straight_share": 0.43844492440604754,
+        "n": 3704
+      },
+      "diffused": {
+        "mean_turn_deg": 13.586016909300788,
+        "straight_share": 0.43844492440604754,
+        "n": 3704
+      }
+    },
+    "60": {
+      "human": {
+        "mean_turn_deg": 6.973715358047004,
+        "straight_share": 0.37576167907921465,
+        "n": 1477
+      },
+      "raw, no correction": {
+        "mean_turn_deg": 7.055628890733626,
+        "straight_share": 0.20589812332439678,
+        "n": 3730
+      },
+      "additive (current)": {
+        "mean_turn_deg": 8.314231934523699,
+        "straight_share": 0.1361207167557372,
+        "n": 3181
+      },
+      "diffused": {
+        "mean_turn_deg": 8.314231934523699,
+        "straight_share": 0.1361207167557372,
+        "n": 3181
+      }
+    },
+    "100 to 128": {
+      "human": {
+        "mean_turn_deg": 4.885129197718552,
+        "straight_share": 0.12306858227161832,
+        "n": 7378
+      },
+      "raw, no correction": {
+        "mean_turn_deg": 3.408758334479989,
+        "straight_share": 0.0766005482986615,
+        "n": 24804
+      },
+      "additive (current)": {
+        "mean_turn_deg": 3.4952079616297884,
+        "straight_share": 0.06750970825450563,
+        "n": 20086
+      },
+      "diffused": {
+        "mean_turn_deg": 3.4952079616297884,
+        "straight_share": 0.06750970825450563,
+        "n": 20086
+      }
+    }
+  },
+  "wall_sec": 17.016409397125244
+}

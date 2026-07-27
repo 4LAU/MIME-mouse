@@ -1,0 +1,64 @@
+{
+  "n": 2000,
+  "k": 500,
+  "min_events": 5,
+  "max_events": 256,
+  "groups": {
+    "model cannot produce": {
+      "kept": 0.962,
+      "dropped_long": 0.034,
+      "dropped_short": 0.004,
+      "dropped_bad": 0.0,
+      "median_events": 42.0
+    },
+    "model reproduces": {
+      "kept": 0.974,
+      "dropped_long": 0.022,
+      "dropped_short": 0.004,
+      "dropped_bad": 0.0,
+      "median_events": 43.5
+    },
+    "all real paths": {
+      "kept": 0.9705,
+      "dropped_long": 0.0225,
+      "dropped_short": 0.007,
+      "dropped_bad": 0.0,
+      "median_events": 38.0
+    }
+  },
+  "descriptors": {
+    "detour_ratio": {
+      "kept": 1.0587411044961064,
+      "dropped": 1.5350800202888175
+    },
+    "paused_fraction": {
+      "kept": 0.05263157894736842,
+      "dropped": 0.07692307692307693
+    },
+    "n_pauses": {
+      "kept": 0.0,
+      "dropped": 1.0
+    },
+    "reversals": {
+      "kept": 0.0,
+      "dropped": 4.0
+    },
+    "overshoot": {
+      "kept": 0.0,
+      "dropped": 0.0016125219595625392
+    },
+    "peak_speed": {
+      "kept": 1820.055774522967,
+      "dropped": 3167.7898590983064
+    },
+    "duration_s": {
+      "kept": 0.39300012588500977,
+      "dropped": 0.8169999718666077
+    },
+    "straight_dist_px": {
+      "kept": 170.66048165876012,
+      "dropped": 240.68236329236922
+    }
+  },
+  "overall_drop_rate": 0.0295
+}

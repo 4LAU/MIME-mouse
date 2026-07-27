@@ -1,0 +1,56 @@
+{
+  "n_paths": 6000,
+  "n_ref": 2000,
+  "seed": 42,
+  "original_results": {
+    "none": 0.65,
+    "additive": 0.7283,
+    "rotate": 0.7342
+  },
+  "panel": {
+    "_reference": {
+      "n": 2000,
+      "max_abs_z_vs_contract": 0.0578841606178,
+      "worst_feature": "curvature_mean",
+      "rebuild_vs_contract_auc": 0.49222137499999996,
+      "jitter_px": 1e-09,
+      "n_holdout": 2000,
+      "n_paths_shared": 6000
+    },
+    "none": {
+      "contract": 0.6499896250000001,
+      "rebuilt": 0.6451275000000001,
+      "control": 0.6336505
+    },
+    "additive": {
+      "contract": 0.7283234999999999,
+      "rebuilt": 0.73527275,
+      "control": 0.708548875
+    },
+    "rotate": {
+      "contract": 0.744382125,
+      "rebuilt": 0.7377144999999999,
+      "control": 0.708020125
+    },
+    "real (holdout)": {
+      "contract": 0.47783137499999995,
+      "rebuilt": 0.48514425000000005,
+      "control": 0.49898462499999996
+    }
+  },
+  "tax": {
+    "additive": {
+      "contract": 0.07833387499999978,
+      "rebuilt": 0.09014524999999995,
+      "control": 0.07489837499999996,
+      "original": 0.07829999999999993
+    },
+    "rotate": {
+      "contract": 0.09439249999999988,
+      "rebuilt": 0.09258699999999986,
+      "control": 0.074369625,
+      "original": 0.08419999999999994
+    }
+  },
+  "wall_sec": 17.66061520576477
+}

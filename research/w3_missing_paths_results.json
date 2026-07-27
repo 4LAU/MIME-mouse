@@ -1,0 +1,89 @@
+{
+  "n_per_class": 2000,
+  "k": 500,
+  "seed": 42,
+  "auc": {
+    "covered real paths": 0.482056,
+    "uncovered real paths": 0.93998,
+    "all real paths": 0.73527275
+  },
+  "median_covered": {
+    "detour_ratio": 1.0753794235631013,
+    "paused_fraction": 0.041666666666666664,
+    "n_pauses": 0.0,
+    "reversals": 0.0,
+    "overshoot": 0.0,
+    "peak_speed": 1929.1425994042506,
+    "duration_s": 0.39250005781650543,
+    "straight_dist_px": 181.79505517168806
+  },
+  "median_uncovered": {
+    "detour_ratio": 1.1055909991565442,
+    "paused_fraction": 0.1043123543123543,
+    "n_pauses": 1.0,
+    "reversals": 0.0,
+    "overshoot": 0.0,
+    "peak_speed": 1714.2731630017538,
+    "duration_s": 0.49849995970726013,
+    "straight_dist_px": 172.14353056743028
+  },
+  "clusters": [
+    {
+      "n": 89,
+      "share": 0.178,
+      "median": {
+        "detour_ratio": 1.2275919824048358,
+        "paused_fraction": 0.08609271523178808,
+        "n_pauses": 1.0,
+        "reversals": 2.0,
+        "overshoot": 0.0006797594264720538,
+        "peak_speed": 7802.49811205408,
+        "duration_s": 0.814000129699707,
+        "straight_dist_px": 668.8714375722736
+      }
+    },
+    {
+      "n": 252,
+      "share": 0.504,
+      "median": {
+        "detour_ratio": 1.027466597658452,
+        "paused_fraction": 0.0,
+        "n_pauses": 0.0,
+        "reversals": 0.0,
+        "overshoot": 0.0,
+        "peak_speed": 1369.3475723152615,
+        "duration_s": 0.31200000643730164,
+        "straight_dist_px": 138.93518283078026
+      }
+    },
+    {
+      "n": 5,
+      "share": 0.01,
+      "median": {
+        "detour_ratio": 29.941402479311236,
+        "paused_fraction": 0.14354066985645933,
+        "n_pauses": 3.0,
+        "reversals": 3.0,
+        "overshoot": 6.793962261856726,
+        "peak_speed": 6748.644240549331,
+        "duration_s": 1.6410000324249268,
+        "straight_dist_px": 43.382023926967726
+      }
+    },
+    {
+      "n": 154,
+      "share": 0.308,
+      "median": {
+        "detour_ratio": 1.4511660463156613,
+        "paused_fraction": 0.287593984962406,
+        "n_pauses": 2.0,
+        "reversals": 1.0,
+        "overshoot": 1.6751263771154252e-16,
+        "peak_speed": 1406.5980302032772,
+        "duration_s": 0.6784998774528503,
+        "straight_dist_px": 127.24750629856618
+      }
+    }
+  ],
+  "wall_sec": 3.8223533630371094
+}

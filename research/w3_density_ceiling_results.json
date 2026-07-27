@@ -1,0 +1,104 @@
+{
+  "n_requests": 2000,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "rows": [
+    {
+      "temp": null,
+      "auc_mean": 0.7296510833333333,
+      "auc_sd": 0.006777554128282991,
+      "aucs": [
+        0.7321175,
+        0.7364391250000001,
+        0.720396625
+      ],
+      "collapse_features": [
+        "curvature_mean",
+        "curvature_std",
+        "max_acceleration",
+        "max_velocity",
+        "mean_acceleration",
+        "mean_jerk",
+        "std_acceleration",
+        "std_jerk"
+      ]
+    },
+    {
+      "temp": 1.0,
+      "auc_mean": 0.601759125,
+      "auc_sd": 0.004584607783796777,
+      "aucs": [
+        0.6016345,
+        0.607435375,
+        0.5962075
+      ],
+      "collapse_features": []
+    },
+    {
+      "temp": 0.7,
+      "auc_mean": 0.6028414583333334,
+      "auc_sd": 0.0028585470273617564,
+      "aucs": [
+        0.602992,
+        0.5992676250000001,
+        0.60626475
+      ],
+      "collapse_features": [
+        "max_acceleration"
+      ]
+    },
+    {
+      "temp": 0.5,
+      "auc_mean": 0.6224782083333333,
+      "auc_sd": 0.009113162132627537,
+      "aucs": [
+        0.6305198750000001,
+        0.6271793750000001,
+        0.609735375
+      ],
+      "collapse_features": []
+    },
+    {
+      "temp": 0.3,
+      "auc_mean": 0.6591174166666667,
+      "auc_sd": 0.004449454059831997,
+      "aucs": [
+        0.6571235,
+        0.665283,
+        0.65494575
+      ],
+      "collapse_features": []
+    },
+    {
+      "temp": 0.15,
+      "auc_mean": 0.6899039583333334,
+      "auc_sd": 0.008616320200360423,
+      "aucs": [
+        0.685456375,
+        0.7019525000000001,
+        0.6823030000000001
+      ],
+      "collapse_features": []
+    }
+  ],
+  "reference_points": {
+    "typical, one at random": 0.7204,
+    "greedy best of 32": 0.7494,
+    "recorded SIR product": 0.5833
+  },
+  "best": {
+    "temp": 1.0,
+    "auc_mean": 0.601759125,
+    "auc_sd": 0.004584607783796777,
+    "aucs": [
+      0.6016345,
+      0.607435375,
+      0.5962075
+    ],
+    "collapse_features": []
+  },
+  "wall_sec": 6.816215991973877
+}

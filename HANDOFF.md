@@ -1,0 +1,485 @@
+# Handoff
+
+The single session-start document for this repo. Read it before touching
+anything. Repo is MIME-mouse on WSL2 Ubuntu, branch
+w3-p3-representation-ceiling. Nothing is mid-flight; the GPU is idle and no
+runs are pending.
+
+Earlier handoffs and plans are in archive/ with a note on why each was
+overtaken. They are not instructions.
+
+## Start here: where things stand, 2026-07-26
+
+The mandate is research, not shipping. The goal is a generative model that
+returns ONE trajectory from A to B and scores 0.50. Anything that generates
+several candidates and picks among them is out of scope, so the selection
+product and its 0.58 are not the number being moved.
+
+  standing single-trajectory number   0.6986
+  what it means                       one path per request, decided before it
+                                      is scored, landing on the requested
+                                      whole pixel every time, no candidate pool
+  how to reproduce it                 research/w3_jog_on_resid.py with
+                                      --ckpt event_polar_4m_resid_v2.pt
+  scorer                              research/autoloop/scoring.py, NOT
+                                      evaluate.py (see Evaluation below)
+
+Everything bolted onto the current model family has now been measured and is
+flat: six aiming fine-tunes (P1), the character latent plus guidance (P2),
+pool mixing, correction geometry, the learned adversarial critic
+(ADVERSARIAL_CRITIC.md, Phase 1 failed), the RL pilot (RL_PILOT.md), and
+supervised imitation of selection winners (W1). Getting materially below 0.70
+means a different architecture, which is design work and GPU time, not another
+tuning cycle.
+
+The last finding is the one to carry forward, because it changes how to read
+everything before it. The 0.078 arrival tax was blamed on the model missing
+its target by 58 px. That was wrong. Comparing raw model output to corrected
+model output, instead of only comparing corrected output to the human, showed
+the sampler was fine and the correction was injecting the defect. Every
+measurement taken before 2026-07-26 used the defective correction as its arm.
+
+Next steps are at the bottom of this file, in order.
+
+## What this project is
+
+Academic research into generative models of human mouse movement. The question
+is whether a model can produce individual trajectories whose motion statistics
+are indistinguishable from recorded human ones.
+
+Realism is measured with a classifier two-sample test, the standard way to
+evaluate a generative model when you have real samples to compare against: fit
+a RandomForest to separate synthetic paths from held-out human paths on 18
+motion features, and report its out-of-bag AUC. 0.50 means the classifier
+cannot tell the two apart, which is the target. Higher means the model has a
+tell. METHODOLOGY.md explains why a classifier is used instead of per-feature
+distance measures: it catches joint-distribution mismatches that marginal
+comparisons miss. When these documents say "detector" they mean this
+RandomForest, which is a measuring instrument built and trained inside this
+repo, not any external or third-party system.
+
+## The product shape, and the constraint that drives W3
+
+L's target: a request for a trajectory from point A to point B returns ONE
+generated trajectory, on demand, in about 2 seconds, scoring 0.50.
+
+Pre-generated libraries are out. Covering enough distances and angles takes
+hours to days, which cannot happen on a client device at import. And a stored
+path was drawn for a different A to B, so it must be stretched or rotated to
+reach the requested endpoint. That transform is expensive on the metric, and
+this repo has already measured it (EXPERIMENTS.md): retrieval plus rotation
+0.94, best corpus rotate 0.670, similarity transform 0.682, nearest-match
+library serving 0.815. Against a 0.50 goal, warping a stored path costs more
+than the entire remaining gap. That is the real reason libraries are out, and
+it holds even with unlimited pre-generation time.
+
+The trajectory must also LAND exactly. L's tolerance is 0px: the delivered
+path has to end on the requested pixel, because the intended use is moving to
+a specific point on screen. Anything less makes the output unusable regardless
+of its realism score.
+
+## The arrival tax, measured 2026-07-20, reading corrected 2026-07-26
+
+The measurements in this section stand. The conclusion drawn from them, that
+the lever is native arrival, was wrong and is reversed further down. Read both.
+
+Exact arrival is geometrically free. You can always move points to hit the
+target. What costs is what moving them does to the realism score, and that had
+never been measured here.
+
+Row W3_groundwork_...0e65cfd1, results in
+research/w3_landing_price_results.json. N=6000, seed 42, integer targets,
+one-shot event_polar_4m_fc_v2 at the locked recipe. Every correction forces
+exact arrival and rounds to whole pixels:
+
+  uncorrected (arrives exactly 0.3% of the time)           0.6500
+  magnitude-weighted additive correction, 100% arrival     0.7283
+  rotate + scale correction, 100% arrival                  0.7342
+
+The uncorrected 0.6500 reproduces the 0.6544 recorded earlier, so the harness
+is consistent. Forcing arrival costs about +0.078.
+
+The tax scales with how far the path missed:
+
+  miss 2 to 5px     tax +0.019
+  miss 5 to 15px    tax +0.020
+  miss 15 to 40px   tax +0.035
+  miss 40 to 100px  tax +0.051
+
+The model currently misses by a median 58px, 30.3% of the travel distance, so
+it sits in the most expensive band. Landing natively within about 15px would
+cut the tax roughly 2.5x. Caveat: per-bin absolute AUCs are inflated by small
+sample size (n=412 to 2277 against a 2000-per-class recipe); only the
+within-bin tax delta is a fair comparison.
+
+Corrections must stay on the integer lattice. Real mouse coordinates are whole
+pixels, and EXPERIMENTS.md records that sub-pixel positions alone read 0.69, so
+a fractional coordinate is its own tell regardless of anything else.
+
+Why the model misses at all: CORRECTED 2026-07-21. The conditioning
+(log_dist, log_dur, cos angle, sin angle) IS the exact net displacement of
+the training path (verified: exp(log_dist) times (cos, sin) reproduces the
+summed event steps to the pixel), so the model is told the endpoint. What it
+lacks is feedback: the whole path is drawn open-loop against one fixed
+instruction, position error accumulates step by step, and nothing corrects
+it. There is no correction step anywhere in experiments/event_stream_polar.py.
+See archive/W3_PROPOSAL.md; the fix proposed there was per-step residual
+re-conditioning, and it failed. Superseded by the 2026-07-26 section below:
+the tax is mostly the correction operator, not the aim. Not more
+endpoint information.
+
+The consequence drawn at the time: because the cost scales with correction
+size, arrival has to be part of what the model is asked to do rather than a fix
+applied afterwards. That is what sent six fine-tunes at native aiming, and all
+six failed. The tax turned out to be mostly a defect in the correction operator
+itself, which no amount of better aiming would have reached. What survives is
+the narrower claim: post-hoc correction is never free, not even at 2 px.
+
+## The arrival tax and the product number survive a degeneracy control, 2026-07-26
+
+Rows W3_groundwork_...86be14c7 and ...0893dd67.
+
+The scorer reads more than motion. Real recordings are whole pixels at irregular
+times, and features.resample_trajectory interpolates them onto the 125 Hz grid,
+which leaves runs of points that are bitwise exactly collinear. Their angle
+difference is exactly 0.0, np.sign(0.0) is 0, and num_direction_changes counts
+nothing there. Generated paths carry no such exact structure, so the count
+roughly doubles. research/p3_ceiling_probe.py measured it: nudging real paths by
+one billionth of a pixel moves the contract AUC from 0.65 to 0.84 on its own.
+
+Every arrival correction shifts points and re-rounds them, which is exactly the
+operation that erases that structure. So the +0.078 arrival tax above could have
+been the cost of moving the path, the cost of erasing the structure, or both.
+
+research/degeneracy_panel.py separates them. It leaves scoring.score_features
+untouched and adds a second reading in which the arm AND a human reference built
+from raw recordings are both nudged by 1e-9 px, which removes the exact
+structure from both sides. A difference that survives that is about movement.
+
+Arrival tax, research/w3_arrival_tax_control.py, on the same 6000 cached
+one-shot paths as the original run, no regeneration:
+
+  arm             contract   rebuilt   control
+  none              0.6500    0.6451    0.6337
+  additive          0.7283    0.7353    0.7085
+  rotate            0.7444    0.7377    0.7080
+  real (holdout)    0.4778    0.4851    0.4990
+
+  tax             original  contract    control
+  additive         +0.0783   +0.0783    +0.0749
+
+The contract column reproduces the July 20 run exactly. The tax survives at
++0.075. It is motion damage, so W3's premise holds and P1's six cycles were
+aimed at a real problem. The rotate arm reads 0.7444 rather than the recorded
+0.7342 because the original rotate code is not in the repo and this imports
+w3_correction_lab.correct_similarity, which falls back to additive on degenerate
+paths.
+
+Product number, research/w3_product_control.py, pool_s42_k32 at K=32, judge
+seeds 0/1/2: contract 0.5833 (sd 0.0073, reproducing the recorded 0.5833),
+control 0.5889 (sd 0.0085). Inside seed noise. The packageable number is honest.
+
+Building the panel's human reference is the part to get right. The first attempt
+used the {split}_positions.npy grid, which prepare_training_data.py made by
+resampling and distance-normalizing, so its paths are fractional and its
+movement_duration is quantized to 175 distinct values against the contract
+reference's 903. That rebuild read 0.6382 against the contract reference and
+biased every arm scored against it, which produced a wrong intermediate result
+(a tax of +0.055) before the cause was found. The panel now builds from the raw
+segmented recordings in data/demo_pool.npz and reads 0.4922, chance.
+research/degeneracy_panel.py --self-test asserts both properties; any future
+reference must clear it.
+
+Side note on P3. Its representation ceiling of 0.6456 (research/
+p3_ceiling_results.json) is the same measurement as that 0.6382, so the ceiling
+is dominated by the 192-slot grid's quantized duration, with the direction-change
+degeneracy second. The conclusion that P3 could not reach its 0.70 gate is
+unchanged; the cause is better understood.
+
+CANDI read through the same panel, research/w3_candi_control.py, row
+W3_groundwork_...426caf73. Fresh n=2000 at the published convention (steps 200,
+guide 0.15, perp 0.85, rotate, seed 42), checkpoint md5 verified unchanged:
+
+  arm             published  contract   rebuilt   control
+  rounded            0.7520    0.9520    0.9493    0.9185
+  unrounded               -    0.7525    0.7677    0.8290
+  real (holdout)          -    0.4778    0.4851    0.4990
+
+Two things fall out.
+
+The published 0.752 reproduces on the UNROUNDED arm, 0.7525, not the rounded
+one. research/phase_a_baseline.py's --no-round help text says the default
+matches the published config; it does not, and research/phase1_score.py's
+docstring (no_round=True) is the correct account. Rounding costs 0.20. Worse,
+experiments/candi.py:296 rounds unconditionally with no way to turn it off, so
+the module you would actually call to serve CANDI produces the 0.95 arm, not the
+published one.
+
+And CANDI's number is the one the control does move. 0.7525 becomes 0.8290, so
+about 0.077 of it was the exact-arithmetic effect rather than motion. That
+matters for the family comparison, because the event-stream arms corrected for
+arrival read 0.7085 (additive) and 0.7080 (rotate) in the same control column.
+Under the contract scorer the two families look close (0.728 against 0.752);
+read fairly they are not, and the event-stream family is ahead by about 0.12.
+The ranking is the same in the rebuilt column, so it does not depend on the
+nudge.
+
+The older CFM and DDPM line is dense-125Hz too and has not been read through the
+panel. It is far off the pace either way, so it is low priority.
+
+## Numbers are not currently comparable across model families
+
+CANDI applies endpoint correction as standard (CANDI_CORRECT=rotate,
+experiments/candi.py:235), so its numbers are measured on paths that arrive and
+include the cost of arriving. Every event-stream number, including W0's 0.539
+fallback and W1's 0.654 one-shot baseline, pays none of that cost and is
+flattered by roughly the tax above. Do not compare across families without
+stating which side pays.
+
+CORRECTED 2026-07-26: this paragraph used to attribute the 0.504 and 0.513
+headline to CANDI. It is not a CANDI number. EXPERIMENTS.md:2839 records it as
+the 33-dim judge's set-level selection result, and EXPERIMENTS.md:2319 names the
+generator behind that candidate pool as event_polar_4m_fc_v2.pt. The headline
+belongs to the event-stream family with selection on top. CANDI's own best is
+0.752, and the panel above reads it at 0.829.
+
+## W3 P1 verdict, 2026-07-21
+
+P1 (native arrival through closed-loop conditioning) is closed as a FAIL
+after six ledgered cycles, rows W3_P1_...e56aced0 through ...9e999b85. The
+short version: a feedback channel telling the model its remaining offset is
+either ignored (when the static conditioning already carries the endpoint),
+too weak to redirect the draw (draft-error variant, v6: realism held at raw
+0.6688 but the miss stayed at 67.8px), or only becomes informative when the
+reveal order is forced left to right, which wrecks realism beyond recovery
+at fine-tune budgets (v3 to v5, raw 0.88 to 0.99). The model plans the whole
+path from the static conditioning; per-iteration feedback does not change
+that plan. Native exact arrival needs a different architecture, not another
+conditioning channel. Do not reopen P1 as a conditioning tweak; the full
+post-mortem is in the ledger notes of row ...9e999b85. The 0.58 corrected
+fallback remains the packageable product answer. P2 (learned character
+latent) proceeds independently; it targets under-dispersion, not arrival.
+
+## W3 P2 verdict, 2026-07-21
+
+P2 (learned whole-path character latent) produced the program's first real
+one-shot improvement and then failed to move the product number. Three
+training cycles (char_v1 to v3, posterior collapse fixed with free bits) plus
+a latent-control probe established that the representation works: latents
+encoded from extreme real paths generate measurably more extreme output. The
+bottleneck is the generator's conditional response, which squashes any
+character command about five to one, the same wall W2 hit from the feature
+side. Classifier-free guidance at sampling recovers part of it: corrected
+one-shot AUC 0.728 to about 0.70, replicated across spec seeds 42 and 43 and
+across serving configs (rows ...779b23b1, ...c4c975ca). Pushing guidance
+harder lifts the tell-feature spread further but goes off-manifold and the
+AUC worsens, the same failure shape as raw temperature.
+
+The product routing test then came back flat (row ...7957c1d4). A fresh 64k
+candidate pool from the guided model, same 2000-spec stream as the base pool,
+scored through the corrected-then-judged K filter: base pool 0.5833, guided
+pool 0.5903 at K=32, seed noise about 0.01, statistically indistinguishable.
+Mind the seed noise when reading old single-draw fallback numbers; the
+much-quoted 0.5747 was a lucky draw. Conclusion: one-shot quality gains of
+this size do not compound through best-of-32 selection, because selection
+already recovers the same tail from the base pool. The honest product number
+at exact arrival stays 0.58 to 0.59. Moving it needs either a much larger
+one-shot gain or something that changes what selection can reach, not a
+better average candidate. A mixed-pool probe (both generators, 64 candidates
+per request, row ...177c7795) confirmed generator diversity does not move it
+either, and a correction-scheme lab (row ...d25f77e2) confirmed the arrival
+tax is not correction geometry: bending only the tail of the path or
+rotating the whole path instead of shearing it lands within seed noise of
+the additive baseline on both pools. Every cheap lever on the product
+pipeline is now measured and flat. The 0.58 to 0.59 floor belongs to the
+model family itself.
+
+Ops note for this machine: two worker crashes during scoring were numpy
+AVX512 invalid-opcode faults under WSL2 (same instruction offset both
+times). Setting NPY_DISABLE_CPU_FEATURES to the AVX512 family fixes it.
+
+## The arrival tax is mostly the operator, not the aim, 2026-07-26
+
+Rows W3_groundwork_...f72bea9d and ...9852d77e. This reverses the reading in
+"The central finding" above, which attributed the +0.078 to the model missing
+by 58 px and pointed the work at native arrival. The measurement that broke it
+open was putting raw model output next to corrected model output per speed
+class, instead of only comparing corrected output to the human.
+
+  mean |turn| deg, speed class 12 to 21   human 18.85  raw 14.53  corrected 26.14
+  mean |turn| deg, speed class 32         human 10.36  raw 10.47  corrected 18.07
+  straight share, speed class 32          human 66.3%  raw 61.4%  corrected 44.6%
+
+The sampler is at or below the human almost everywhere. correct_additive puts
+the excess in. It adds a smooth drift to every position and rounds each one
+independently; rounding a ramp is a staircase, and the risers land in the
+middle of straight runs, where one riser is a 45 or 90 degree turn.
+
+correct_jog (research/w3_aiming_price.py) spends the error as |err_x| + |err_y|
+single-pixel changes on the longest steps, longest first, and leaves every
+other step byte identical to the model's own. Arrival is exact by construction.
+
+  event_polar_4m_fc_v2, n=6000      additive 0.7283   jog 0.7144   -0.0139
+  event_polar_4m_resid_v2, n=1998   additive 0.7210   jog 0.6986   -0.0223
+
+0.6986 is the standing single-trajectory number: one path per request, exact
+pixel arrival, no candidate pool, no selection. The gain is larger on resid_v2,
+which the operator was not developed against, than on fc_v2, which it was.
+
+Verification, research/w3_jog_verify.py: arrival asserted at 100% on both arms;
+collapse flag and collapsed-feature list identical before and after; 5 of 18
+dispersion ratios move closer to the human on both arms; subsampling without
+replacement, 12 draws at 0.75, favours jog in 11 of 12 on each arm. Two earlier
+instruments were wrong and both are recorded in that file's docstring. Seed
+sweeping is a no-op here (the contract pins RF_SEED=42 and the jitter is 0).
+Bootstrapping with replacement saturates the forest at 0.80 to 0.89 and
+compresses the gap toward zero.
+
+Two dead ends worth not repeating. Error diffusion along the path is
+arithmetically identical to the additive correction (carrying the fraction
+forward and rounding each step equals rounding the running total). Gating the
+discharge on a step-length floor creates an unbounded carry that dumps tens of
+pixels on one event, and scored 0.744 to 0.764 at 4, 8 and 16 px floors.
+
+The six P1 aiming checkpoints are now tabled in EXPERIMENTS.md with their
+per-checkpoint miss and AUC; they had only ever existed as loose JSON.
+
+## Where the program stands
+
+- W0 (done): per-request K=32 candidate filtering reads 0.539 at ~1s/request.
+  Backfilled row, never independently re-run, and does not include arrival.
+- W2 (done, FAIL): steering generation toward target feature values hit those
+  values without reducing the AUC.
+- W1 (done, clean NEGATIVE): fresh-init supervised training on set-level
+  winners reads 0.8331 one-shot against a 0.70 gate, worse than the 0.6544
+  baseline it started from. Winner imitation does not internalise the
+  selection signal. Rows W1_scratch_...9407d9fd, ...b4996735, ...694e74a5.
+- W3 groundwork (done): the failure is conditional under-dispersion in the
+  training objective, not a capacity ceiling and not a sampling knob. Human
+  extremes are inside the model's support but drawn far too rarely, and
+  raising sampling temperature makes the output easier to tell apart, not
+  harder, because the added variance is off-manifold. Rows
+  W3_groundwork_...ce210375, ...b7753a76. archive/PLAN.md's "W3 = SCALE" is
+  superseded: scaling would spend money against the wrong diagnosis.
+
+## Next steps, in order
+
+The standing mandate is research, not shipping: reach 0.50 with a generative
+model that returns a single trajectory from A to B. Anything that generates
+candidates and picks among them is out of scope, so the K=32 selection product
+is not the target and its 0.58 is not the number being moved.
+
+1. Re-measure the selection product on top of correct_jog, once, and then
+   leave it alone. The 0.58 to 0.59 figure was established with the additive
+   correction, which is now known to be defective. It is one scoring pass on
+   a cached pool, no GPU, and it keeps the packaged answer honest whether or
+   not anyone ships it.
+2. Re-price the arrival tax under the repaired operator. The tax was 0.078
+   with additive and it is 0.067 with jog on resid_v2, but that was never
+   measured across the miss bands, so it is not known whether the remaining
+   tax still scales with miss size. If it has gone flat, better aiming is
+   worth nothing and P1 stays closed on stronger grounds. If it still
+   scales, aiming is worth revisiting under a different architecture, which
+   is the P3 question.
+3. Look for the next operator-shaped defect, since one was just found by
+   comparing raw model output to corrected model output instead of comparing
+   corrected output to the human. Every measurement taken before 2026-07-26
+   that used correct_additive as the arm has the same blind spot. The stall
+   and dispersion findings in particular should be re-read with a raw column.
+4. Anything needing cloud spend stops for L sign-off. Local GPU does not.
+
+Steps 1 to 3 are all CPU, all measurable in an afternoon, and none of them will
+reach 0.50. They exist to make sure the next architecture is designed against
+correct measurements rather than against the artefacts of a broken correction
+operator. Do them first and do not skip step 3; it is the one that decides how
+much of the existing record can be trusted.
+
+If P3 (a new architecture) goes ahead, the P1 and P2 post-mortems jointly
+specify it. The model must be natively endpoint-conditioned, because feedback
+channels bolted onto this trunk are ignored; the trunk plans the whole path
+from its static conditioning. And it must be dispersion-calibrated by
+construction, because a learned character latent works as a representation but
+this decoder squashes any character command about five to one, and guidance
+only partially undoes that before going off-manifold.
+
+## Hard rules (verbatim from the standing mandate)
+
+- NEVER modify training/candi_polar_flow_best.pt
+  (MD5 91326a29750789f3167055324ef377c5). Verify with md5sum after every run.
+- NEVER touch data/human_eval_features.npy.
+- NEVER modify scoring code.
+- git add files individually, never `git add .`.
+- Repo is public: docs must read human-written, no em or en dashes.
+- L is non-technical: report what and why in plain terms, brief summary
+  first, no praise, max 25 words between tool calls.
+- Thermal: launch gate 75C, watchdog kill 83C, cooldown only if peak >= 79C.
+- Log every run as a row in research/autoloop/ledger.jsonl via
+  research/autoloop/ledger.py append_row (status must be ok/failed/killed).
+
+## Environment
+
+- Repo: /mnt/c/Users/aaron/Code/mouse-trajectory-synthesis
+- Python: ~/venvs/mime/bin/python, always with env PYTHONPATH=.
+- Check for stray GPU processes BEFORE launching, both sides. Linux:
+  nvidia-smi. Windows: powershell.exe Get-Process (WSL cannot see Windows
+  processes any other way).
+- Long runs: nohup + research/gpu_watchdog.py --pid <PID> --log <path>
+  --threshold 83 --interval 60 --max-minutes 90. The --log flag is REQUIRED.
+- Background with `;` separators, not `&&`. Backgrounding a `cd X && cmd`
+  chain backgrounds the whole chain and leaves the parent shell in the wrong
+  directory, which silently breaks redirects.
+- Generation is slow: 2000 one-shot paths take ~147s, 6000 take ~442s. Python
+  buffers stdout to a log file, so an empty log does not mean a dead process.
+  research/w3_landing_cache.pkl (13M, untracked) holds the 6000 generated
+  paths from the arrival-tax run and skips regeneration.
+
+## Evaluation, read before running anything
+
+Do NOT use evaluate.py for any decision. It loads
+data/human_eval_features.npy, the final untouched eval sample.
+research/autoloop/scoring.py is the metric contract, defaults to
+data/human_val_features_grpo.npy, and raises on any path containing
+"human_eval". Several older handoffs tell you to run evaluate.py anyway; that
+instruction is wrong and would spend the held-out sample permanently.
+
+For event-stream checkpoints use research/w1_oneshot_score.py, which wires
+specs, generation and the contract scorer together:
+
+    env PYTHONPATH=. ~/venvs/mime/bin/python research/w1_oneshot_score.py \
+      --ckpt event_polar_4m_fc_v2.pt --n 2000 --seed 42
+
+That reads 0.6544, matching README.md's documented ~0.65, and is the sanity
+anchor. Confirm it before trusting any new model's number.
+
+The locked decode recipe includes EVENT_CHOICE_TEMP=10. Omitting it inflates
+one-shot AUC badly (0.9387 instead of 0.6544). w1_oneshot_score.py defaults it
+to 10. The 0.596 to 0.60 figures in EXPERIMENTS.md are WITH selection
+(EVENT_SIR=8), not one-shot.
+
+## Uncommitted state
+
+Branch w3-p3-representation-ceiling carries the work. The probe scripts, their
+result JSON, EXPERIMENTS.md, METHODOLOGY.md, README.md and this file are
+committed and pushed as of 2026-07-26.
+
+Still untracked and deliberately so: the path caches (research/*.pkl, large
+binaries) and the pid and log scratch files.
+
+Still untracked and NOT deliberately: research/autoloop/. That directory holds
+scoring.py, the metric contract every number in this program is measured
+against, and ledger.py, which writes the run ledger. If it is lost, none of
+these results can be reproduced. Raised with L four times across sessions and
+not yet answered.
+
+Note: ~120 tracked files show as modified in git status. That is a line-ending
+artifact of the Windows mount, not real edits. Do not sweep them into a commit.
+
+## Open questions for L
+
+- Cloud budget ceiling for W3, if a training run eventually needs one.
+- Whether to package the fallback as a usable product now, in parallel with
+  research. ANSWERED 2026-07-21 (row W3_groundwork_...e7f67c96): with exact
+  arrival enforced and selection run on the corrected candidates it reads
+  about 0.58 at roughly 1s/request, so it is packageable. That number was
+  measured with the defective additive correction and has not been re-read
+  under correct_jog; see next steps.

@@ -1,0 +1,55 @@
+{
+  "ckpt": "candi_polar_flow_best.pt",
+  "ckpt_md5_ok": true,
+  "n": 2000,
+  "seed": 42,
+  "original": {
+    "rounded": 0.752,
+    "spread": 0.005
+  },
+  "arms": {
+    "rounded": {
+      "_reference": {
+        "n": 2000,
+        "max_abs_z_vs_contract": 0.0578841606178,
+        "worst_feature": "curvature_mean",
+        "rebuild_vs_contract_auc": 0.49222137499999996,
+        "jitter_px": 1e-09,
+        "n_holdout": 2000,
+        "n_paths_shared": 2000
+      },
+      "candi rounded": {
+        "contract": 0.9519973749999999,
+        "rebuilt": 0.949340375,
+        "control": 0.9185332500000001
+      },
+      "real (holdout)": {
+        "contract": 0.47783137499999995,
+        "rebuilt": 0.48514425000000005,
+        "control": 0.49898462499999996
+      }
+    },
+    "unrounded": {
+      "_reference": {
+        "n": 2000,
+        "max_abs_z_vs_contract": 0.0578841606178,
+        "worst_feature": "curvature_mean",
+        "rebuild_vs_contract_auc": 0.49222137499999996,
+        "jitter_px": 1e-09,
+        "n_holdout": 2000,
+        "n_paths_shared": 2000
+      },
+      "candi unrounded": {
+        "contract": 0.75254925,
+        "rebuilt": 0.7677486249999999,
+        "control": 0.8290181249999999
+      },
+      "real (holdout)": {
+        "contract": 0.47783137499999995,
+        "rebuilt": 0.48514425000000005,
+        "control": 0.49898462499999996
+      }
+    }
+  },
+  "wall_sec": 388.16268610954285
+}

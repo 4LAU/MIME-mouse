@@ -1,0 +1,325 @@
+{
+  "n_arm": 6000,
+  "n_ref": 2000,
+  "seed": 42,
+  "recorded": {
+    "contract": 0.7283,
+    "control": 0.7085
+  },
+  "d1_contract": {
+    "auc_all": 0.7283234999999999,
+    "features": [
+      {
+        "feature": "movement_duration",
+        "auc_alone": 0.738351875,
+        "auc_without": 0.7273495,
+        "loo_drop": 0.0009739999999999194,
+        "mean_shift_sd": -0.0018495386175594634,
+        "sd_ratio": 0.9558779744394608
+      },
+      {
+        "feature": "angular_velocity_mean",
+        "auc_alone": 0.584444625,
+        "auc_without": 0.7148688750000001,
+        "loo_drop": 0.013454624999999831,
+        "mean_shift_sd": 0.6288222782298747,
+        "sd_ratio": 1.1873206832478294
+      },
+      {
+        "feature": "max_velocity",
+        "auc_alone": 0.569953,
+        "auc_without": 0.732645,
+        "loo_drop": -0.004321500000000089,
+        "mean_shift_sd": -0.01857540627697144,
+        "sd_ratio": 0.22482225436636377
+      },
+      {
+        "feature": "time_to_peak_velocity",
+        "auc_alone": 0.5594889999999999,
+        "auc_without": 0.73643275,
+        "loo_drop": -0.008109250000000068,
+        "mean_shift_sd": -0.22122966390284535,
+        "sd_ratio": 0.9221101633051734
+      },
+      {
+        "feature": "angular_velocity_std",
+        "auc_alone": 0.552570375,
+        "auc_without": 0.7248663750000001,
+        "loo_drop": 0.003457124999999839,
+        "mean_shift_sd": 0.4630161299019666,
+        "sd_ratio": 1.098421190780192
+      },
+      {
+        "feature": "curvature_std",
+        "auc_alone": 0.5298388749999999,
+        "auc_without": 0.7307395,
+        "loo_drop": -0.0024160000000000847,
+        "mean_shift_sd": -0.20785502669913974,
+        "sd_ratio": 0.17389678824840582
+      },
+      {
+        "feature": "mean_acceleration",
+        "auc_alone": 0.52777775,
+        "auc_without": 0.729827375,
+        "loo_drop": -0.0015038750000000434,
+        "mean_shift_sd": -0.03216582239710336,
+        "sd_ratio": 0.30993259301346454
+      },
+      {
+        "feature": "velocity_skewness",
+        "auc_alone": 0.525124375,
+        "auc_without": 0.73197275,
+        "loo_drop": -0.0036492500000000483,
+        "mean_shift_sd": 0.059530198115071854,
+        "sd_ratio": 0.9568593714308977
+      },
+      {
+        "feature": "num_direction_changes",
+        "auc_alone": 0.5239631250000001,
+        "auc_without": 0.724614125,
+        "loo_drop": 0.0037093749999999037,
+        "mean_shift_sd": 0.19866118007772582,
+        "sd_ratio": 1.1559910282922803
+      },
+      {
+        "feature": "path_efficiency",
+        "auc_alone": 0.523769625,
+        "auc_without": 0.7244857499999999,
+        "loo_drop": 0.003837749999999973,
+        "mean_shift_sd": 0.10056681007015124,
+        "sd_ratio": 0.8041460101720946
+      },
+      {
+        "feature": "max_acceleration",
+        "auc_alone": 0.5212680000000001,
+        "auc_without": 0.7303276249999999,
+        "loo_drop": -0.0020041250000000232,
+        "mean_shift_sd": -0.022233408555114624,
+        "sd_ratio": 0.16935006026557206
+      },
+      {
+        "feature": "curvature_mean",
+        "auc_alone": 0.51770725,
+        "auc_without": 0.7299599999999999,
+        "loo_drop": -0.0016365000000000407,
+        "mean_shift_sd": -0.16021186837170912,
+        "sd_ratio": 0.15316415922047402
+      },
+      {
+        "feature": "std_velocity",
+        "auc_alone": 0.51334875,
+        "auc_without": 0.7295370000000001,
+        "loo_drop": -0.0012135000000002005,
+        "mean_shift_sd": -0.015884528266103436,
+        "sd_ratio": 0.2736772471246795
+      },
+      {
+        "feature": "std_acceleration",
+        "auc_alone": 0.511629875,
+        "auc_without": 0.7346550000000001,
+        "loo_drop": -0.0063315000000001564,
+        "mean_shift_sd": -0.025484736407058787,
+        "sd_ratio": 0.1936110687907804
+      },
+      {
+        "feature": "mean_velocity",
+        "auc_alone": 0.508368,
+        "auc_without": 0.732102625,
+        "loo_drop": -0.0037791250000001053,
+        "mean_shift_sd": -0.02462334615946473,
+        "sd_ratio": 0.9136429431187022
+      },
+      {
+        "feature": "max_deviation",
+        "auc_alone": 0.5069665,
+        "auc_without": 0.732350625,
+        "loo_drop": -0.004027125000000131,
+        "mean_shift_sd": -0.04339529806926772,
+        "sd_ratio": 0.9816253630691347
+      },
+      {
+        "feature": "mean_jerk",
+        "auc_alone": 0.5015436249999999,
+        "auc_without": 0.736800125,
+        "loo_drop": -0.008476625000000126,
+        "mean_shift_sd": -0.01940421076844939,
+        "sd_ratio": 0.33615872367684274
+      },
+      {
+        "feature": "std_jerk",
+        "auc_alone": 0.49631687500000005,
+        "auc_without": 0.73312225,
+        "loo_drop": -0.004798750000000074,
+        "mean_shift_sd": -0.034883649418039925,
+        "sd_ratio": 0.22847702879056733
+      }
+    ]
+  },
+  "d1_control": {
+    "auc_all": 0.708548875,
+    "features": [
+      {
+        "feature": "movement_duration",
+        "auc_alone": 0.7445963750000001,
+        "auc_without": 0.702225125,
+        "loo_drop": 0.006323749999999961,
+        "mean_shift_sd": 0.0022677822265214508,
+        "sd_ratio": 0.9437122798435298
+      },
+      {
+        "feature": "time_to_peak_velocity",
+        "auc_alone": 0.5818995,
+        "auc_without": 0.6977862499999999,
+        "loo_drop": 0.010762625000000026,
+        "mean_shift_sd": -0.23528698828731817,
+        "sd_ratio": 0.9046607818479041
+      },
+      {
+        "feature": "max_velocity",
+        "auc_alone": 0.57186575,
+        "auc_without": 0.70017775,
+        "loo_drop": 0.008371124999999924,
+        "mean_shift_sd": 0.043352882789128175,
+        "sd_ratio": 1.2767130744725559
+      },
+      {
+        "feature": "angular_velocity_mean",
+        "auc_alone": 0.5440657500000001,
+        "auc_without": 0.6748141250000002,
+        "loo_drop": 0.033734749999999813,
+        "mean_shift_sd": 0.433299797201501,
+        "sd_ratio": 1.1720434855892787
+      },
+      {
+        "feature": "curvature_std",
+        "auc_alone": 0.5359475,
+        "auc_without": 0.70242725,
+        "loo_drop": 0.006121625000000019,
+        "mean_shift_sd": 0.14594191521503902,
+        "sd_ratio": 1.042140571630848
+      },
+      {
+        "feature": "max_acceleration",
+        "auc_alone": 0.5289820000000001,
+        "auc_without": 0.70445775,
+        "loo_drop": 0.004091124999999973,
+        "mean_shift_sd": 0.027048268179357956,
+        "sd_ratio": 1.4167685069481804
+      },
+      {
+        "feature": "curvature_mean",
+        "auc_alone": 0.526920125,
+        "auc_without": 0.69890225,
+        "loo_drop": 0.00964662500000002,
+        "mean_shift_sd": 0.13392339719204624,
+        "sd_ratio": 1.1599420618748113
+      },
+      {
+        "feature": "std_velocity",
+        "auc_alone": 0.526179,
+        "auc_without": 0.703894875,
+        "loo_drop": 0.004653999999999936,
+        "mean_shift_sd": 0.040907035297095065,
+        "sd_ratio": 1.1236836573646665
+      },
+      {
+        "feature": "mean_jerk",
+        "auc_alone": 0.524180625,
+        "auc_without": 0.701820125,
+        "loo_drop": 0.00672874999999995,
+        "mean_shift_sd": 0.035208869971855926,
+        "sd_ratio": 2.8650715679567256
+      },
+      {
+        "feature": "angular_velocity_std",
+        "auc_alone": 0.5206652500000001,
+        "auc_without": 0.707094625,
+        "loo_drop": 0.0014542499999999903,
+        "mean_shift_sd": 0.3101701482776923,
+        "sd_ratio": 1.0604311993372189
+      },
+      {
+        "feature": "mean_acceleration",
+        "auc_alone": 0.515179375,
+        "auc_without": 0.7019868750000001,
+        "loo_drop": 0.006561999999999846,
+        "mean_shift_sd": -0.04972776732339848,
+        "sd_ratio": 1.0222643598222376
+      },
+      {
+        "feature": "velocity_skewness",
+        "auc_alone": 0.515116,
+        "auc_without": 0.7051607499999999,
+        "loo_drop": 0.003388125000000075,
+        "mean_shift_sd": 0.05918610196768404,
+        "sd_ratio": 0.987989627484906
+      },
+      {
+        "feature": "num_direction_changes",
+        "auc_alone": 0.51207525,
+        "auc_without": 0.70217525,
+        "loo_drop": 0.006373624999999938,
+        "mean_shift_sd": 0.006574232349885429,
+        "sd_ratio": 0.9170216573906078
+      },
+      {
+        "feature": "max_deviation",
+        "auc_alone": 0.510144375,
+        "auc_without": 0.7059336249999999,
+        "loo_drop": 0.002615250000000069,
+        "mean_shift_sd": -0.05676905156188381,
+        "sd_ratio": 0.9052355067871719
+      },
+      {
+        "feature": "path_efficiency",
+        "auc_alone": 0.5085375,
+        "auc_without": 0.693639,
+        "loo_drop": 0.014909874999999961,
+        "mean_shift_sd": 0.11262352036895193,
+        "sd_ratio": 0.7788350098697864
+      },
+      {
+        "feature": "mean_velocity",
+        "auc_alone": 0.49935087499999997,
+        "auc_without": 0.704310625,
+        "loo_drop": 0.004238249999999999,
+        "mean_shift_sd": -0.01653603315844737,
+        "sd_ratio": 0.9179914861662943
+      },
+      {
+        "feature": "std_jerk",
+        "auc_alone": 0.49895412499999997,
+        "auc_without": 0.702316125,
+        "loo_drop": 0.006232750000000009,
+        "mean_shift_sd": -0.022606788507051792,
+        "sd_ratio": 1.1465599511880356
+      },
+      {
+        "feature": "std_acceleration",
+        "auc_alone": 0.49359800000000004,
+        "auc_without": 0.7075973750000001,
+        "loo_drop": 0.000951499999999883,
+        "mean_shift_sd": 0.009546511521927292,
+        "sd_ratio": 1.3760725579889863
+      }
+    ]
+  },
+  "d2_contract": {
+    "auc_base": 0.714044,
+    "auc_marginals_matched": 0.6124615,
+    "fraction_closed": 0.4745870008035732
+  },
+  "d2_control": {
+    "auc_base": 0.6965995,
+    "auc_marginals_matched": 0.6242270000000001,
+    "fraction_closed": 0.368121485558203
+  },
+  "d3": {
+    "typical (one at random)": 0.72036475,
+    "oracle best of 32": 0.749417,
+    "oracle worst of 32": 0.9697905000000001,
+    "within_request_score_spread": 0.68176,
+    "across_request_score_spread": 0.07462573282722254
+  },
+  "wall_sec": 45.74791073799133
+}
