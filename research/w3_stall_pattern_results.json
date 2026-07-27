@@ -1,0 +1,89 @@
+{
+  "human": {
+    "n_paths": 1722,
+    "holds_per_path": 8.566202090592334,
+    "holds_per_sec": 18.739880229585104,
+    "hold_sample_frac": 0.2235576458269377,
+    "hold_time_frac": 0.09652343430558358,
+    "paths_with_no_hold": 0.25203252032520324,
+    "hold_ms_mean": 6.99403435104219,
+    "hold_ms": {
+      "p50": 1.999974250793457,
+      "p90": 14.999866485595703
+    },
+    "hold_len_mean": 2.3294013965154905,
+    "hold_len": {
+      "p50": 2.0,
+      "p90": 3.0
+    },
+    "turn_deg_mean": 18.270861648303345,
+    "turn_deg": {
+      "p50": 8.13010235415596,
+      "p90": 45.00000000000001
+    },
+    "turn_null_deg_mean": 15.323736547728757,
+    "turn_excess_deg": 2.9471251005745884,
+    "ramp_in_mean": 1.054256419630361,
+    "ramp_out_mean": 1.0497696919183657,
+    "resampled_zero_step_frac": 0.05286177836629535,
+    "n_holds_total": 14751
+  },
+  "model raw": {
+    "n_paths": 5594,
+    "holds_per_path": 11.361637468716483,
+    "holds_per_sec": 28.12577036745276,
+    "hold_sample_frac": 0.2941971023016835,
+    "hold_time_frac": 0.1281530379919283,
+    "paths_with_no_hold": 0.161601716124419,
+    "hold_ms_mean": 6.663779080183121,
+    "hold_ms": {
+      "p50": 1.9959211349487305,
+      "p90": 12.187382578849794
+    },
+    "hold_len_mean": 2.224538603143635,
+    "hold_len": {
+      "p50": 2.0,
+      "p90": 3.0
+    },
+    "turn_deg_mean": 16.61610590938314,
+    "turn_deg": {
+      "p50": 7.1250163489018075,
+      "p90": 45.00000000000001
+    },
+    "turn_null_deg_mean": 16.216562405312256,
+    "turn_excess_deg": 0.3995435040708841,
+    "ramp_in_mean": 1.2146986905109574,
+    "ramp_out_mean": 1.1975018264611577,
+    "resampled_zero_step_frac": 0.053171282519207004,
+    "n_holds_total": 63557
+  },
+  "model as scored": {
+    "n_paths": 5594,
+    "holds_per_path": 12.230425455845548,
+    "holds_per_sec": 30.35498883529734,
+    "hold_sample_frac": 0.33126135541056595,
+    "hold_time_frac": 0.15795143292588604,
+    "paths_with_no_hold": 0.12048623525205578,
+    "hold_ms_mean": 7.840405769296648,
+    "hold_ms": {
+      "p50": 2.003408968448639,
+      "p90": 15.986204147338867
+    },
+    "hold_len_mean": 2.341888711869857,
+    "hold_len": {
+      "p50": 2.0,
+      "p90": 3.0
+    },
+    "turn_deg_mean": 21.832332191818864,
+    "turn_deg": {
+      "p50": 14.036243467926484,
+      "p90": 45.00000000000001
+    },
+    "turn_null_deg_mean": 19.053519817512488,
+    "turn_excess_deg": 2.7788123743063764,
+    "ramp_in_mean": 1.2161625671333551,
+    "ramp_out_mean": 1.19346205654499,
+    "resampled_zero_step_frac": 0.06816215996881748,
+    "n_holds_total": 68417
+  }
+}

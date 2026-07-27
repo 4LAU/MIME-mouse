@@ -3788,3 +3788,67 @@ stall deficit already point. Any model change aimed at a whole-path property
 should expect this result, since a whole-path property is what a style label is.
 
 Ledger: W3_groundwork_2026-07-27T011422+0000_9e333c52
+
+## Stall-targeted fine-tune: refuted before any training (research/w3_stall_pattern.py, w3_stall_surgery.py)
+
+After the style latent died, the next candidate was the stop-and-go pattern. The
+2026-05-15 synthesis above says the detector's heaviest tell, angular velocity,
+comes from heading changes at stall boundaries and not from smooth curves, and
+w3_style_variance.py had just shown that angular_velocity_mean carries RF weight
+0.113 while a per-path style explains only 0.026 of it, so whatever produces it
+is local. Line 1539 records the model stalling at half the human rate. That
+looked like a local, measurable, untried target.
+
+The premise was wrong, and it was wrong because line 1539 is a WS4 measurement
+of the flow model at 0.752, not of this arm. Measured directly on the event
+model's own paths, the model over-produces stops.
+
+Everything below is measured on the raw integer-pixel path at its own
+timestamps on both sides, never the resample. A hold is a maximal run of
+consecutive samples at an identical pixel, which is the codec's tick read off
+the output rather than the tokens.
+
+| | human | model raw | model as scored |
+|---|---|---|---|
+| holds per path | 8.57 | 11.36 | 12.23 |
+| share of time held | 9.7% | 12.8% | 15.8% |
+| exact-zero steps after resample | 5.286% | 5.317% | 6.816% |
+| hold length, samples | 2.33 | 2.22 | 2.34 |
+| hold duration, ms | 7.0 | 6.7 | 7.8 |
+| heading change at a hold, excess over null | 2.9 deg | 0.4 deg | 2.8 deg |
+| speed into a hold, x path mean | 1.054 | 1.215 | 1.216 |
+
+Length and duration already match, p50 and p90 alike. Excess heading change at a
+hold matches too, which closes pattern 2 of the three-pattern analysis for this
+arm. Worth noting that the uncorrected model shows almost no excess turn at a
+hold, 0.4 degrees, and correct_additive is what puts it there; the arrival
+correction is doing work nobody credited it with.
+
+The human number here is an independent reproduction of the recorded one:
+5.286% exact-zero steps against the 4.8 to 6.0% on record.
+
+Surgery bounds the axis. Delete a random fraction of each path's holds, leaving
+every surviving timestamp untouched so duration is unchanged and the resample
+interpolates through the gap, then score.
+
+| holds removed | holds/path | time held | zero steps | contract AUC |
+|---|---|---|---|---|
+| 0% | 12.23 | 15.8% | 6.816% | 0.7283 |
+| 15% | 10.42 | 13.5% | 5.820% | 0.7268 |
+| 30% | 8.59 | 11.1% | 4.775% | 0.7209 |
+| 50% | 6.17 | 8.1% | 3.475% | 0.7257 |
+| 75% | 3.09 | 4.1% | 1.793% | 0.7286 |
+| 100% | 0.00 | 0.0% | 0.029% | 0.7644 |
+
+The minimum sits at 30% removed, which is exactly the rate that takes 12.23
+holds per path to the human 8.57, so the surgery lands where it was aimed. It
+buys 0.0074 against a gap of 0.23. Removing every hold costs 0.036, so stalls do
+matter to the detector and this arm is already close enough that closing the
+remainder is not worth a fine-tune.
+
+Verdict: the stall axis is closed for this arm. Two of the three patterns from
+the 2026-05-15 analysis are now measured as already correct here, which leaves
+pattern 1, the shape of the velocity envelope across the whole movement, and
+that is the one recorded as out of reach for per-position heads.
+
+Ledger: W3_groundwork_2026-07-27T013357+0000_9d5b3899
