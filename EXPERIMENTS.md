@@ -3852,3 +3852,64 @@ pattern 1, the shape of the velocity envelope across the whole movement, and
 that is the one recorded as out of reach for per-position heads.
 
 Ledger: W3_groundwork_2026-07-27T013357+0000_9d5b3899
+
+## Velocity envelope is not the gap; the gap is local turning (research/w3_envelope_ceiling.py)
+
+The case for building a different architecture rested on one inherited claim:
+that what is left is the shape of the speed profile across the whole movement,
+and that per-position heads cannot reach it. Measured on this arm, the claim is
+wrong.
+
+Two transplant instruments were built first and both failed, which is worth
+recording because the failure is instructive. Retiming a path means keeping its
+route and swapping its pacing, either by rebuilding positions along the polyline
+or by moving only the clock and leaving every pixel untouched. Both destroy the
+path. A real human path retimed with another human's pacing scores 0.7552 by the
+rebuilt route and 0.8129 by the clock, against 0.4922 untouched. The operation
+costs 0.26 to 0.32 on its own, which is twenty to fifty times the effect it was
+built to measure. Route, step size and timing are co-adapted in a real
+recording and no transplant leaves that intact. Both instruments do agree that
+the model's pacing on a real route costs 0.0006 to 0.0105 over a human's, but
+at 0.75 to 0.81 the forest is near saturation and that agreement is weak
+evidence.
+
+The reading that stands needs no surgery: run the contract RF recipe on subsets
+of the feature columns. Reproduces the contract exactly on all 18.
+
+| family | alone | contract without it |
+|---|---|---|
+| all 18 | 0.7353 | |
+| envelope (6) | 0.5476 | 0.7184 |
+| turning (7) | 0.7076 | 0.5921 |
+| derivatives (5) | 0.5551 | 0.7368 |
+
+The envelope separates at 0.5476 by itself and a perfect fix is worth 0.017.
+Derivatives are worth nothing unique. Turning carries the gap: 0.7076 alone, and
+removing it takes the detector down 0.143.
+
+Splitting turning by what a per-position head could in principle control:
+
+| | alone | contract without it |
+|---|---|---|
+| wobble: curvature mean and std, angular velocity mean and std, direction changes | 0.6808 | 0.6331 |
+| excursion: path_efficiency, max_deviation | 0.5173 | 0.7161 |
+
+This inverts the architecture argument. The blocker on record at line 2012 is
+that per-position token heads cannot coordinate GLOBAL outcomes. The whole-path
+features are exactly the ones that turn out not to matter: excursion separates
+at 0.5173 and is worth 0.019. What carries the gap is step-scale turning
+texture, worth 0.102, and that is local. It is also the quantity the polar
+model's dtheta head controls most directly, which makes the repeated failures to
+move curvature stranger than the recorded explanation allows: they cannot be
+blamed on an inability to coordinate globally, because the target is not global.
+
+Subsets are not additive. 0.017 plus 0.102 plus 0.019 is well short of the 0.235
+that separates 0.7353 from chance, so the families overlap and none of these is
+a full account.
+
+Verdict: do not scope a new architecture around the velocity envelope. The next
+thing to measure is whether the dtheta vocabulary can represent the human
+distribution of small turns at all, since a quantization floor would explain a
+local tell that repeated training pressure never moved.
+
+Ledger: W3_groundwork_2026-07-27T014744+0000_27fd6132

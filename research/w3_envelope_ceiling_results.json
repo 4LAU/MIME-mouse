@@ -1,0 +1,101 @@
+{
+  "seed": 42,
+  "cases": {
+    "clock only": {
+      "arm as scored": {
+        "auc_rf_oob": 0.7283234999999999,
+        "n": 6000
+      },
+      "arm on human envelopes": {
+        "auc_rf_oob": 0.7971563749999999,
+        "n": 6000
+      },
+      "arm on arm envelopes": {
+        "auc_rf_oob": 0.7998500000000001,
+        "n": 6000
+      },
+      "human on arm envelopes": {
+        "auc_rf_oob": 0.8135801249999999,
+        "n": 2000
+      },
+      "human on human envelopes": {
+        "auc_rf_oob": 0.812943625,
+        "n": 2000
+      },
+      "human untouched": {
+        "auc_rf_oob": 0.49222137499999996,
+        "n": 2000
+      }
+    },
+    "rebuilt positions": {
+      "arm as scored": {
+        "auc_rf_oob": 0.7283234999999999,
+        "n": 6000
+      },
+      "arm on human envelopes": {
+        "auc_rf_oob": 0.794604125,
+        "n": 6000
+      },
+      "arm on arm envelopes": {
+        "auc_rf_oob": 0.80785275,
+        "n": 6000
+      },
+      "human on arm envelopes": {
+        "auc_rf_oob": 0.765677125,
+        "n": 2000
+      },
+      "human on human envelopes": {
+        "auc_rf_oob": 0.755181375,
+        "n": 2000
+      },
+      "human untouched": {
+        "auc_rf_oob": 0.49222137499999996,
+        "n": 2000
+      }
+    }
+  },
+  "summary": {
+    "clock only": {
+      "ceiling_move": 0.06883287500000002,
+      "operation_null": 0.07152650000000016,
+      "operation_damage": 0.32072225,
+      "envelope_alone": 0.0006364999999999288
+    },
+    "rebuilt positions": {
+      "ceiling_move": 0.06628062500000009,
+      "operation_null": 0.0795292500000001,
+      "operation_damage": 0.2629600000000001,
+      "envelope_alone": 0.010495749999999915
+    }
+  },
+  "families": {
+    "_all": 0.73527275,
+    "_contract": 0.73527275,
+    "envelope": {
+      "alone": 0.547633375,
+      "without": 0.718410875,
+      "n_features": 6
+    },
+    "turning": {
+      "alone": 0.7076061250000001,
+      "without": 0.59210475,
+      "n_features": 7
+    },
+    "derivatives": {
+      "alone": 0.55510625,
+      "without": 0.7368017500000001,
+      "n_features": 5
+    },
+    "turning: wobble": {
+      "alone": 0.6808015000000001,
+      "without": 0.6331034999999999,
+      "n_features": 5
+    },
+    "turning: excursion": {
+      "alone": 0.517267375,
+      "without": 0.7160692499999999,
+      "n_features": 2
+    }
+  },
+  "wall_sec": 25.095848083496094
+}
