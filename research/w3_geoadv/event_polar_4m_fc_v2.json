@@ -1,0 +1,19 @@
+{
+  "ckpt": "event_polar_4m_fc_v2.pt",
+  "n": 2000,
+  "seed": 42,
+  "auc_rf_oob": 0.739129625,
+  "collapse_features": [
+    "curvature_mean",
+    "curvature_std",
+    "max_acceleration",
+    "mean_acceleration",
+    "mean_jerk",
+    "std_acceleration"
+  ],
+  "wall_sec": 144.16018414497375,
+  "coverage": {
+    "covered": 0.6279914538495829,
+    "uncovered": 0.7355853992554247
+  }
+}

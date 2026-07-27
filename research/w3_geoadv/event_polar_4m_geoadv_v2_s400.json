@@ -1,0 +1,21 @@
+{
+  "ckpt": "event_polar_4m_geoadv_v2_s400.pt",
+  "n": 1999,
+  "seed": 42,
+  "auc_rf_oob": 0.7881045325063732,
+  "collapse_features": [
+    "curvature_mean",
+    "max_acceleration",
+    "max_velocity",
+    "mean_acceleration",
+    "mean_jerk",
+    "std_acceleration",
+    "std_jerk",
+    "std_velocity"
+  ],
+  "wall_sec": 144.78595185279846,
+  "coverage": {
+    "covered": 0.6878305709615624,
+    "uncovered": 0.7844627130011527
+  }
+}

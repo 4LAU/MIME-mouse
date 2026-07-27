@@ -287,7 +287,45 @@ def train(args):
         th_loss = (ce_th * wt).sum() / wt.sum().clamp(1)
         anchor = flow_loss + s_loss + th_loss
 
-        loss = args.adv_weight * adv + args.anchor_weight * anchor
+        def gnorm(term):
+            """Generator-parameter gradient norm from one loss term alone."""
+            opt_g.zero_grad()
+            term.backward(retain_graph=True)
+            return float(torch.sqrt(sum((p.grad ** 2).sum() for p in g_params
+                                        if p.grad is not None)))
+
+        # Rescale the adversarial term so its gradient is a fixed fraction of
+        # the anchor's, measured every step.
+        #
+        # This is not tuning, it is a correctness fix. The first run of this
+        # script inherited clip_grad_norm_(g_params, 1.0) from the adv harness,
+        # where the critic was an MLP over 18 numbers. A sequence critic
+        # backpropagating through 255 resampled frames delivers a gradient
+        # 270x to 21000x the anchor's, so clipping the SUM to norm 1 rescaled
+        # everything by about 1e-4 and left the anchor contributing roughly
+        # four parts in ten thousand of each update. The anchor loss sat flat
+        # at 3.4 all run because it was being measured, not enforced, and the
+        # score walked from 0.7391 to 0.8492 with nothing holding the model to
+        # its pretraining. A fixed adv_weight cannot fix this: the ratio swings
+        # twentyfold step to step, so the scale has to be measured per step.
+        adv_w = args.adv_weight
+        if args.adv_grad_frac > 0 and not warm:
+            g_adv_n, g_anc_n = gnorm(adv), gnorm(anchor)
+            adv_w = args.adv_grad_frac * g_anc_n / max(g_adv_n, 1e-12)
+
+        if args.grad_probe:
+            # A rising D gap has two very different causes and the gap itself
+            # cannot tell them apart: the critic's complaint may not reach the
+            # generator's outputs at all (dead coupling, the failure the
+            # 18-feature critic hit), or it may arrive and simply be outweighed
+            # by the anchor. Backward each term alone and compare the norms.
+            g_adv = gnorm(adv_w * adv) if not warm else 0.0
+            g_anc = gnorm(args.anchor_weight * anchor)
+            ratio = g_adv / g_anc if g_anc > 0 else float("nan")
+            print(f"  [grad] step {step_i + 1:4d} | adv {g_adv:.3e} | "
+                  f"anchor {g_anc:.3e} | adv/anchor {ratio:.4f}", flush=True)
+
+        loss = adv_w * adv + args.anchor_weight * anchor
         opt_g.zero_grad()
         loss.backward()
         nn.utils.clip_grad_norm_(g_params, 1.0)
@@ -340,7 +378,13 @@ if __name__ == "__main__":
     p.add_argument("--critic-warmup", type=int, default=50,
                    help="steps of critic-only training before adversarial "
                         "gradients reach the generator")
-    p.add_argument("--adv-weight", type=float, default=1.0)
+    p.add_argument("--adv-weight", type=float, default=1.0,
+                   help="only used when --adv-grad-frac is 0")
+    p.add_argument("--adv-grad-frac", type=float, default=0.25,
+                   help="rescale the adversarial term each step so its "
+                        "generator gradient is this fraction of the anchor's. "
+                        "0 restores the fixed --adv-weight, which is what the "
+                        "first run used and why its anchor never acted.")
     p.add_argument("--anchor-weight", type=float, default=1.0)
     p.add_argument("--tau", type=float, default=1.0)
     p.add_argument("--reveal-min", type=float, default=0.2)
@@ -351,4 +395,9 @@ if __name__ == "__main__":
     p.add_argument("--save-every", type=int, default=100)
     p.add_argument("--num-workers", type=int, default=0)
     p.add_argument("--auto-resume", action="store_true")
+    p.add_argument("--grad-probe", action="store_true",
+                   help="report the generator gradient norm from the "
+                        "adversarial term against the anchor term each step. "
+                        "Distinguishes a critic whose complaint cannot reach "
+                        "the outputs from one that is merely outweighed.")
     train(p.parse_args())
