@@ -4138,7 +4138,7 @@ reproducible across runs on this machine and the tripwire's 0.005 threshold is
 tighter than that run-to-run spread, which has not been measured. It scored
 0.7084 with jog, worse than v2, so nothing rests on it.
 
-Honest single-trajectory state of the art: **0.6986**, one path per request,
+Single-trajectory state of the art: **0.6986**, one path per request,
 exact arrival on the requested pixel, no candidate pool and no selection. Down
 from 0.7283.
 

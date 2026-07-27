@@ -253,6 +253,52 @@ Ops note for this machine: two worker crashes during scoring were numpy
 AVX512 invalid-opcode faults under WSL2 (same instruction offset both
 times). Setting NPY_DISABLE_CPU_FEATURES to the AVX512 family fixes it.
 
+## The arrival tax is mostly the operator, not the aim, 2026-07-26
+
+Rows W3_groundwork_...f72bea9d and ...9852d77e. This reverses the reading in
+"The central finding" above, which attributed the +0.078 to the model missing
+by 58 px and pointed the work at native arrival. The measurement that broke it
+open was putting raw model output next to corrected model output per speed
+class, instead of only comparing corrected output to the human.
+
+  mean |turn| deg, speed class 12 to 21   human 18.85  raw 14.53  corrected 26.14
+  mean |turn| deg, speed class 32         human 10.36  raw 10.47  corrected 18.07
+  straight share, speed class 32          human 66.3%  raw 61.4%  corrected 44.6%
+
+The sampler is at or below the human almost everywhere. correct_additive puts
+the excess in. It adds a smooth drift to every position and rounds each one
+independently; rounding a ramp is a staircase, and the risers land in the
+middle of straight runs, where one riser is a 45 or 90 degree turn.
+
+correct_jog (research/w3_aiming_price.py) spends the error as |err_x| + |err_y|
+single-pixel changes on the longest steps, longest first, and leaves every
+other step byte identical to the model's own. Arrival is exact by construction.
+
+  event_polar_4m_fc_v2, n=6000      additive 0.7283   jog 0.7144   -0.0139
+  event_polar_4m_resid_v2, n=1998   additive 0.7210   jog 0.6986   -0.0223
+
+0.6986 is the standing single-trajectory number: one path per request, exact
+pixel arrival, no candidate pool, no selection. The gain is larger on resid_v2,
+which the operator was not developed against, than on fc_v2, which it was.
+
+Verification, research/w3_jog_verify.py: arrival asserted at 100% on both arms;
+collapse flag and collapsed-feature list identical before and after; 5 of 18
+dispersion ratios move closer to the human on both arms; subsampling without
+replacement, 12 draws at 0.75, favours jog in 11 of 12 on each arm. Two earlier
+instruments were wrong and both are recorded in that file's docstring. Seed
+sweeping is a no-op here (the contract pins RF_SEED=42 and the jitter is 0).
+Bootstrapping with replacement saturates the forest at 0.80 to 0.89 and
+compresses the gap toward zero.
+
+Two dead ends worth not repeating. Error diffusion along the path is
+arithmetically identical to the additive correction (carrying the fraction
+forward and rounding each step equals rounding the running total). Gating the
+discharge on a step-length floor creates an unbounded carry that dumps tens of
+pixels on one event, and scored 0.744 to 0.764 at 4, 8 and 16 px floors.
+
+The six P1 aiming checkpoints are now tabled in EXPERIMENTS.md with their
+per-checkpoint miss and AUC; they had only ever existed as loose JSON.
+
 ## Where the program stands
 
 - W0 (done): per-request K=32 candidate filtering reads 0.539 at ~1s/request.
@@ -273,23 +319,37 @@ times). Setting NPY_DISABLE_CPU_FEATURES to the AVX512 family fixes it.
 
 ## Next steps, in order
 
-1. Decision for L first. The packageable product today is the K=32 corrected
-   fallback at 0.58 to 0.59 with exact pixel arrival, about a second per
-   request. Every cheap improvement lever on top of the current model family
-   has now been measured and is flat: P1 conditioning (six cycles), P2
-   character latent plus guidance, pool mixing, correction schemes. Getting
-   materially below 0.58 means designing and training a new architecture
-   (P3), which is real design work and GPU time, not another tuning cycle.
-   The fork: ship on 0.58, or fund P3.
-2. If P3 goes ahead, the P1 and P2 post-mortems jointly specify it. The
-   model must be natively endpoint-conditioned, because feedback channels
-   bolted onto this trunk are ignored; the trunk plans the whole path from
-   its static conditioning. And it must be dispersion-calibrated by
-   construction, because a learned character latent works as a
-   representation but this decoder squashes any character command about
-   five to one, and guidance only partially undoes that before going
-   off-manifold. Drafting the proposal costs nothing and needs no sign-off.
-3. Anything needing cloud spend stops for L sign-off. Local GPU does not.
+The standing mandate is research, not shipping: reach 0.50 with a generative
+model that returns a single trajectory from A to B. Anything that generates
+candidates and picks among them is out of scope, so the K=32 selection product
+is not the target and its 0.58 is not the number being moved.
+
+1. Re-measure the selection product on top of correct_jog, once, and then
+   leave it alone. The 0.58 to 0.59 figure was established with the additive
+   correction, which is now known to be defective. It is one scoring pass on
+   a cached pool, no GPU, and it keeps the packaged answer honest whether or
+   not anyone ships it.
+2. Re-price the arrival tax under the repaired operator. The tax was 0.078
+   with additive and it is 0.067 with jog on resid_v2, but that was never
+   measured across the miss bands, so it is not known whether the remaining
+   tax still scales with miss size. If it has gone flat, better aiming is
+   worth nothing and P1 stays closed on stronger grounds. If it still
+   scales, aiming is worth revisiting under a different architecture, which
+   is the P3 question.
+3. Look for the next operator-shaped defect, since one was just found by
+   comparing raw model output to corrected model output instead of comparing
+   corrected output to the human. Every measurement taken before 2026-07-26
+   that used correct_additive as the arm has the same blind spot. The stall
+   and dispersion findings in particular should be re-read with a raw column.
+4. Anything needing cloud spend stops for L sign-off. Local GPU does not.
+
+If P3 (a new architecture) goes ahead, the P1 and P2 post-mortems jointly
+specify it. The model must be natively endpoint-conditioned, because feedback
+channels bolted onto this trunk are ignored; the trunk plans the whole path
+from its static conditioning. And it must be dispersion-calibrated by
+construction, because a learned character latent works as a representation but
+this decoder squashes any character command about five to one, and guidance
+only partially undoes that before going off-manifold.
 
 ## Hard rules (verbatim from the standing mandate)
 
@@ -347,11 +407,18 @@ to 10. The 0.596 to 0.60 figures in EXPERIMENTS.md are WITH selection
 
 ## Uncommitted state
 
-Nothing from this work is committed. PLAN.md is modified (new section "K=1
-MANDATE AND THE ENDPOINT TAX"). HANDOFF_W1.md line 18 was reworded for
-precision. Untracked: HANDOFF_W1.md, HANDOFF_W3.md,
-research/w1_oneshot_score.py, research/w3_landing_price_results.json,
-research/w3_landing_cache.pkl, research/autoloop/. Add files individually.
+Branch w3-p3-representation-ceiling carries the work. The probe scripts, their
+result JSON, EXPERIMENTS.md, METHODOLOGY.md, README.md and this file are
+committed and pushed as of 2026-07-26.
+
+Still untracked and deliberately so: the path caches (research/*.pkl, large
+binaries) and the pid and log scratch files.
+
+Still untracked and NOT deliberately: research/autoloop/. That directory holds
+scoring.py, the metric contract every number in this program is measured
+against, and ledger.py, which writes the run ledger. If it is lost, none of
+these results can be reproduced. Raised with L four times across sessions and
+not yet answered.
 
 Note: ~120 tracked files show as modified in git status. That is a line-ending
 artifact of the Windows mount, not real edits. Do not sweep them into a commit.

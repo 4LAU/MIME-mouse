@@ -1501,6 +1501,80 @@ The second is a different backbone. The masked-token event model was chosen beca
 
 The third is data. The model saw only the five public datasets it trained on, and until July 8 every claim was bounded to that distribution with no outside test available (Section 7.9b). Two external sets, AdSERP and M4D, have since been located and evaluated, and the reading holds up: the synthetics separate from external humans by about the same margin internal humans do, so the distribution-shift story survives the new data rather than being contradicted by it. What is still missing is external data clean of the instrumentation and environment shift the two external sets show against each other, or a way to disentangle that shift from generator error.
 
+### 7.12 The single-trajectory line: exact arrival, and what enforcing it costs
+
+Everything in Section 7 up to here permits selection: the pipeline generates several candidates per movement and keeps one. Work from July 2026 onward asks a stricter question that selection cannot answer. Given a start point and an end point, return one trajectory, decided before it is scored, that starts and ends on the requested whole pixel. This is the shape any real serving path would have, and it is also the harder research question, because there is no second chance at a bad draw.
+
+A note on comparability first. These measurements use `research/autoloop/scoring.py` against `data/human_val_features_grpo.npy`, the in-training validation humans, not `evaluate.py` against the held-out evaluation sample the Section 7.10 table reports. The two scorers agree in shape and disagree in level. Numbers in this section compare to each other and not to that table.
+
+**Arrival is geometrically free and empirically expensive.** You can always move a path's points until it hits the target. What that costs is what moving them does to the realism score, which had never been measured. On 6000 one-shot trajectories from `event_polar_4m_fc_v2`:
+
+| | arrives exactly | RF OOB AUC |
+|---|---|---|
+| uncorrected | 0.3% | 0.6500 |
+| magnitude-weighted additive correction | 100% | 0.7283 |
+| rotate and scale correction | 100% | 0.7342 |
+
+Enforcing arrival costs 0.078, about a third of the remaining distance to chance, and more than any single lever found before it. The cost scales with how far the raw path missed, from about 0.019 in the 2 to 5 px band up to 0.051 in the 40 to 100 px band. The model misses by a median 58 px, which is 30.3 percent of the requested travel distance, so it sits in the most expensive band. Corrections must stay on the integer lattice regardless: real mouse coordinates are whole pixels, and sub-pixel positions read 0.69 on their own.
+
+**Making the model aim better does not work.** Two readings of the arrival tax are possible and they imply opposite work. Either the correction damages any path it touches, in which case the lever is a better correction, or the correction is only as damaging as the error it absorbs, in which case the lever is generation that lands closer. The second was tried first, across six fine-tunes that add a residual channel telling the model how much displacement the unrevealed part of the path still has to cover. The pre-registered gate was a median native miss of 15 px or less.
+
+| checkpoint | miss p50 | within 15 px | uncorrected | corrected |
+|---|---|---|---|---|
+| fc_v2, the baseline | 58.0 px | | 0.6500 | 0.7283 |
+| resid_v1 | 57.3 px | 23.0% | 0.6467 | 0.7185 |
+| resid_v2 | 55.3 px | 23.4% | 0.6466 | 0.7203 |
+| resid_v2, residual channel only | 124.3 px | 8.0% | 0.6960 | 0.7819 |
+| resid_v6 | 67.8 px | 19.8% | 0.6688 | 0.7472 |
+| resid_v4 | 97.0 px | 9.4% | 0.8808 | 0.8785 |
+| resid_v5 | 101.2 px | 10.8% | 0.8954 | 0.8917 |
+| resid_v3 | 170.1 px | 2.8% | 0.9848 | 0.9880 |
+
+Best miss 55.3 px against a 15 px gate and a 58.0 px baseline. Withholding the static displacement conditioning so aiming must run through the residual channel (the `residual channel only` row) more than doubles the miss, which says the channel is not carrying the aim. The three variants that changed the model most are the three whose paths fell apart. The model plans the whole path from its static conditioning and per-iteration feedback does not change that plan; native exact arrival needs a different architecture, not another conditioning channel.
+
+**The correction was the defect.** Per-step turning was then measured separately for human paths, raw model output, and corrected model output, grouped by the model's own speed classes. Mean absolute turn in degrees:
+
+| speed class | px per event | human | raw model | corrected |
+|---|---|---|---|---|
+| 1 | 1.0 | 31.94 | 26.57 | 37.72 |
+| 2 to 11 | 1.0 to 1.4 | 31.16 | 30.89 | 41.08 |
+| 12 to 21 | 1.5 to 2.0 | 18.85 | 14.53 | 26.14 |
+| 32 | 3.0 | 10.36 | 10.47 | 18.07 |
+| 38 to 40 | 3.7 to 3.9 | 8.21 | 9.35 | 13.59 |
+
+The sampler sits at or below the human almost everywhere. The correction puts the excess in. Share of events that continue perfectly straight, at speed class 32: human 66.3 percent, raw 61.4 percent, corrected 44.6 percent.
+
+The mechanism is rounding, not the correction's shape. The additive correction adds a smooth drift to every position and then rounds each position independently. Rounding a ramp produces a staircase, and the risers land wherever the ramp happens to cross a half pixel, which is in the middle of straight runs. A human 1 px step run is a repeated identical displacement, and one riser inside it is a 45 or 90 degree turn.
+
+Two alternatives were built and both failed before the third worked. Error diffusion along the path turned out to be the same operator in disguise: carrying the fractional error forward and rounding each step is arithmetically identical to rounding the running total, and it reproduced the additive number to four decimals. Restricting the discharge to steps above a length floor introduced an unbounded carry, where a long run of short steps accumulated tens of pixels and dumped them on one event, and it scored worse at every floor tried.
+
+**The jog correction.** The replacement spends the landing error as `|err_x| + |err_y|` single-pixel changes, one per chosen step, longest steps first, where one pixel bends the least angle. Every step not chosen passes through exactly as the model drew it, and arrival is exact by construction because the steps are integers made to sum to the requested displacement.
+
+Isolating the operator from the aim: take real human paths, invent a target their own endpoint misses by a chosen amount, and apply each correction. No model anywhere, so whatever this costs is what the operator costs.
+
+| injected miss px | additive | jog |
+|---|---|---|
+| 0 | 0.4922 | 0.4922 |
+| 1 | 0.5281 | 0.5064 |
+| 5 | 0.5520 | 0.5362 |
+| 10 | 0.5717 | 0.5406 |
+| 20 | 0.5927 | 0.5573 |
+| 40 | 0.6385 | 0.6117 |
+| 80 | 0.6944 | 0.7020 |
+
+Almost all of the additive operator's damage arrives with the first pixel of miss, which is the signature of dithering rather than of magnitude. At 80 px the two cross and the additive operator is better, which is the regime the arm actually sits in, and is why the size of the real gain was not predictable from this curve.
+
+On generated paths, one per request, exact arrival, no selection:
+
+| model | additive | jog | change |
+|---|---|---|---|
+| event_polar_4m_fc_v2, n=6000 | 0.7283 | 0.7144 | -0.0139 |
+| event_polar_4m_resid_v2, n=1998 | 0.7210 | 0.6986 | -0.0223 |
+
+The gain is larger on `resid_v2`, a model the correction was not developed against, than on the one it was, which is evidence that it repairs the operator rather than fitting one generator. Both arms were checked for collapse: the contract's own flag and its list of collapsed features are identical before and after, and of the 18 dispersion ratios, five move closer to the human on both arms. Stability was measured by subsampling without replacement, 12 draws at 75 percent, where 11 of 12 draws favour the jog correction on each arm. Bootstrapping with replacement was tried first and discarded: duplicated paths are easy for the forest, absolute AUC climbed to 0.80 and 0.89, and near saturation a real gap is compressed toward zero.
+
+The single-trajectory number therefore stands at 0.6986, from 0.7283, with exact pixel arrival on every served path and no candidate pool anywhere.
+
 ## 8. Related Work
 
 ### 8.1 Kinematic Theory and the Sigma-Lognormal Model
@@ -1590,6 +1664,9 @@ continuous-discrete structure the real data shows.
 | Best set-level AUC | 0.504 (3-seed) | Event-stream model + set-level reselection, Section 7.9 |
 | Best set-level AUC, out-of-sample | 0.513 (6-seed mean), 95 percent CI [0.506, 0.520] | Seeds never used in tuning, Section 7.9c |
 | Out-of-sample cross-detector reads | Raw-NN mean 0.508, GBM mean 0.523 (worst 0.536) | Section 7.9c |
+| Best single-trajectory AUC with exact arrival | 0.6986 | One path per request, no selection, different scorer, Section 7.12 |
+| Cost of forcing exact pixel arrival | +0.067 to +0.078 | Section 7.12 |
+| Best native endpoint miss across 6 aiming fine-tunes | 55.3 px median, against a 15 px gate | Section 7.12 |
 | Best retrieval+transform AUC | 0.686 | Corpus rotate (rotation + scale) |
 | Best of the continuous-model era | 0.864 | ZIMT with magnitude-weighted endpoint correction |
 | Intermediate hybrid result | 0.852 | CANDI polar hybrid diffusion |
