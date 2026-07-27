@@ -3913,3 +3913,63 @@ distribution of small turns at all, since a quantization floor would explain a
 local tell that repeated training pressure never moved.
 
 Ledger: W3_groundwork_2026-07-27T014744+0000_27fd6132
+
+## The alphabet is innocent; the model wobbles at mid speed (research/w3_turn_floor.py)
+
+The previous section put the gap in step-scale turning and showed the whole-path
+features are worth almost nothing, which leaves the failures to move curvature
+without their recorded explanation. The blocker on file at line 2012 is that
+per-position heads cannot coordinate global outcomes, and the target is not
+global. So the first suspect is the representation: the model emits quantized
+speed and turn tokens, and if that alphabet cannot spell a human path then no
+training pressure was ever going to work.
+
+Run real human paths through the model's own encode and decode and score what
+comes out.
+
+| | contract AUC |
+|---|---|
+| human untouched | 0.4922 |
+| codec round trip, no quantization | 0.5024 |
+| round trip plus the full vocabulary | 0.5039 |
+| arm as scored, for reference | 0.7283 |
+
+The codec costs 0.010 and the vocabulary a further 0.0016. The alphabet can hold
+a human path essentially exactly, so there is no quantization floor here and the
+curvature failures are a training or sampling problem rather than an expressive
+one. TH_BINS 256 is 1.4 degrees a step and S_BINS 128 is 3.6 percent apart,
+which turns out to be plenty.
+
+Where the turning actually differs has to be read against speed. Pooled, the
+model's median 125Hz step turn is 3.98 degrees against the human 1.65, but that
+cannot separate turning too much from turning at the wrong moments, and line 233
+records that all human curvature comes from moments under 5 px/s.
+
+| step speed px/s | human median turn | model | ratio | share of human steps |
+|---|---|---|---|---|
+| 0 to 5 | 0.00 | 0.00 | | 0.7% |
+| 5 to 25 | 0.00 | 0.00 | | 10.3% |
+| 25 to 100 | 0.00 | 0.00 | | 15.0% |
+| 100 to 400 | 4.76 | 12.03 | 2.52 | 32.1% |
+| 400 to 1000 | 4.12 | 6.29 | 1.53 | 19.2% |
+| 1000+ | 2.61 | 2.63 | 1.01 | 22.7% |
+
+The three slow bands read 0.00 on both sides because over half those steps are
+exactly collinear on the pixel lattice, so the median says nothing there and a
+different statistic would be needed to compare them.
+
+The defect is localized and one-sided. At the top of the speed range the model
+matches the humans to two decimal places. At 400 to 1000 it turns half again too
+much. At 100 to 400, which holds more steps than any other band on either side,
+it turns two and a half times too much. The model wobbles through
+moderate-speed motion where humans travel straight.
+
+EVENT_TH_TEMP has been touched once, at 1.15 (line 2146), hotter, inside a
+16-way selection pipeline, on the belief that the model needed more curvature.
+Read against speed that was the wrong direction and the wrong shape: the mid
+band needs less turning, the top band needs none of it changed, and a single
+global temperature cannot do that. The head is already conditioned on the speed
+class at the same position, so a speed-conditional sharpening is implementable
+where the conditioning already lives, and it is inference-only.
+
+Ledger: W3_groundwork_2026-07-27T020242+0000_0efb27ea
