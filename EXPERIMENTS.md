@@ -3650,3 +3650,141 @@ matrices for seeds 47 through 50 live on the GPU machine and are not part
 of the release bundle, so this script computes directly from the recorded
 per-seed values rather than refitting from raw features.
 
+
+## Training against a learned critic: built, run, and retired in two days (July 18-19)
+
+The question this route asked: if hand-picked feature targets keep
+failing (bursts 3 and 3b, the RL pilot), can a learned critic supply a
+richer training signal that actually transfers to the real detector?
+
+Three stages, each gated before the next was funded.
+
+Phase 0 trained a small transformer on raw step deltas to tell human
+from synthetic. It reached 0.632 where the RF detector reads 0.757, and
+its per-item rankings barely correlated with the RF's. A judge weaker
+than the examiner is not worth training against, but the failure could
+have been capacity rather than principle, so one more diagnostic was
+justified.
+
+Phase 0b handed the critic the RF's own vocabulary, per-step curvature,
+jerk, and angular velocity channels instead of raw deltas. That version
+reads 0.792, stronger than the RF itself. Capacity confirmed as the
+Phase 0 limit. But the deeper check failed: even this strong critic
+agrees with the RF only weakly on which synthetic paths look fake
+(Spearman 0.24) and is essentially blind to mean jerk (correlation
+0.015), the RF's single most important feature. Synthetic output
+carries several independent tells, and a learned critic locks onto
+whichever subset it finds first, not necessarily the one the real
+detector uses.
+
+Phase 1 ran the experiment anyway, deliberately, against the
+recommendation on record, because the rig was cheap and the prediction
+deserved a direct test. The generator was fine-tuned through the full
+K=200 differentiable sampler to fool the frozen Phase 0b critic, with a
+flow-matching anchor to prevent drift. One 90 minute burst, 617 steps,
+temperatures 71-74C throughout, the original checkpoint untouched
+(MD5 verified before and after). Training telemetry looked like
+success: the fool loss fell from about 1.0 to 0.5 and the critic's
+logits on generated batches moved firmly toward the human side.
+
+Scoring told the real story. On a fresh 2000-trajectory sample through
+the standard serving recipe, the RF detector reads 0.766 against the
+fine-tuned model, statistically indistinguishable from the 0.757
+baseline and certainly not below it. And the critic itself, tested
+out of sample on the new model's output, still separates at 0.80. The
+apparent training-time success did not survive a clean test even
+against the judge it was optimized on.
+
+That is the fifth independent negative for the family of approaches
+that fine-tune this generator against a fixed target, after direct
+moment matching, two conditioning corrections, and the RL pilot. Each
+failure has the same geometry: the optimization finds a shortcut that
+satisfies the training signal without moving the underlying
+distribution. The route is retired. The selection pipeline keeps the
+headline (0.504 tuning, 0.513 out of sample) and none of this touched
+it.
+
+What survives from the two days: the full-chain differentiable sampler
+with per-step gradient checkpointing (the hard machinery for any future
+whole-path objective), and the Phase 0b critic, a detector stronger
+than the RF that sees a different subset of tells. Both are assets for
+what comes next.
+
+Next direction, and it is a change of scale rather than another burst:
+a net-new generative model designed from the start to produce
+individually near-chance trajectories in a single shot, under a serving
+constraint of about two seconds per trajectory on modest hardware. The
+selection result proves paths of the required quality exist inside the
+current model's output distribution; the open research question is
+whether a model can be built that emits them directly instead of
+needing a population to filter. No published system does this. The
+program starts from two facts this project has already paid for:
+set-level selection reaches 0.513 but per-item filtering alone does
+not, and whole-path summary statistics (curvature variance, jerk) are
+where every fine-tuning attempt has died.
+
+## Per-path style latent: refuted before any training (research/w3_style_variance.py)
+
+w3_missing_paths.py named three kinds of movement the model never produces, and
+the obvious model change that follows is a style drawn once per path that the
+generator cannot ignore. The story it tells is tidy: the model emits the average
+of several styles because nothing in it ever picks one, which would also explain
+the half-rate stall deficit at line 1539, since only one of the styles pauses.
+This probe was the go/no-go before spending training time on it. It fails.
+
+Method. Cluster real paths on the eight interpretable descriptors from
+w3_missing_paths.describe, then decompose the 18 contract features by that
+label. The two spaces are deliberately different: k-means maximizes
+between-cluster spread in whatever space it clustered in, so clustering the 18
+features and then reporting between-cluster variance of the 18 features would
+measure the fitting. Every number is reported next to the same number from a
+random partition with matched group sizes, because any partition of 2000 paths
+explains something. Clusters are fit on half the real paths and every number is
+read on the other half. CPU only, no checkpoint touched, 6 seconds per k.
+
+| k | between-style share of feature variance | random-partition null |
+|---|------|------|
+| 2 | 0.098 | 0.001 |
+| 4 | 0.164 | 0.003 |
+| 5 | 0.177 | 0.004 |
+| 8 | 0.204 | 0.007 |
+
+Style is a real axis, far above the null, and a small one. Over 80 percent of
+the variation the detector reads lives inside a style. Weighting by RF
+importance does not rescue it, and the per-feature breakdown is worse than the
+headline:
+
+| feature | RF weight | eta^2 | excess over null |
+|---------|-----------|-------|------------------|
+| angular_velocity_mean | 0.113 | 0.026 | 0.021 |
+| angular_velocity_std | 0.072 | 0.091 | 0.085 |
+| path_efficiency | 0.065 | 0.536 | 0.529 |
+| curvature_mean | 0.065 | 0.006 | 0.000 |
+| movement_duration | 0.051 | 0.463 | 0.458 |
+| mean_jerk | 0.045 | 0.018 | 0.013 |
+
+The split is clean and it runs the wrong way. Style explains the coarse scale
+features, how far the pointer went and how long it took. The features the
+forest leans on hardest, angular velocity and curvature, are the ones style
+explains least; curvature_mean has zero excess over a random partition.
+
+Two further readings, both negative.
+
+Style mix. The arm's distribution over styles against the humans', on centroids
+fit from real paths alone: total variation distance 0.038 at k=4, 0.042 at k=5,
+0.050 at k=8. The model already picks styles at very nearly the human rate. The
+premise that it emits a blend because it never picks is simply wrong.
+
+Within style. The arm scored against real paths of its own style, k=4: 0.7106,
+0.7130, 0.7718, 0.7701, against a pooled 0.7353 and matched random-partition
+nulls of 0.7157, 0.7182, 0.6706, 0.7059. Conditioning on style does not shrink
+the gap, and in two of four cells the style grouping does worse than a random
+grouping of the same sizes.
+
+Verdict: park the style latent. The reading forward is that the detector's tell
+is within-path texture at the angular velocity and curvature scale rather than
+a global per-path choice, which is the same place line 233 and the line 1539
+stall deficit already point. Any model change aimed at a whole-path property
+should expect this result, since a whole-path property is what a style label is.
+
+Ledger: W3_groundwork_2026-07-27T011422+0000_9e333c52
