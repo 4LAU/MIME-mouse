@@ -4050,10 +4050,11 @@ jog                       100.0%   6000         0.7144
 jog minus additive                             -0.0139
 ```
 
-Bootstrap over paths, 12 resamples: gap mean -0.0111, sd 0.0052, 11 of 12
-resamples favour jog, worst +0.0044. Resampling with replacement duplicates
-paths and the RF exploits that, so the absolute bootstrap levels sit near 0.80
-and only the paired gap is meaningful.
+Subsample without replacement, 12 draws of 4500 of the 6000: gap mean -0.0100,
+sd 0.0076, 11 of 12 draws favour jog, worst +0.0084. Bootstrapping with
+replacement was tried first and thrown out: duplicated paths are easy for the
+forest, absolute AUC climbed to 0.80, and near saturation a real gap gets
+compressed toward zero.
 
 Not collapse. The contract's collapse flag and its feature list are identical
 for both arms. Five dispersion ratios move closer to the human, two move
@@ -4072,3 +4073,80 @@ costs at 58, so generation that lands near the target is worth roughly another
 0.05 on top of this.
 
 Ledger: W3_groundwork_2026-07-27T045058+0000_f72bea9d
+
+## The aiming channel was already built and already failed, and the fix composes anyway
+
+2026-07-26. The lever named at the end of the previous section was aim: the
+model misses its target by 58 px median, and at that size no endpoint correction
+is gentle. The model carries a residual channel designed for exactly this, a
+running signal of how much displacement the unrevealed part still has to cover.
+
+It was built and evaluated on 2026-07-21 across six checkpoints, and the result
+never made it into this file. `research/w3_p1_eval.py`, pre-registered gate: a
+median native miss of 15 px or less, and one-shot AUC with arrival enforced
+materially below 0.728.
+
+| checkpoint | miss p50 | within 15 px | raw | additive |
+|---|---|---|---|---|
+| fc_v2 (the arm) | 58.0 | | 0.6500 | 0.7283 |
+| resid_v1 | 57.3 | 23.0% | 0.6467 | 0.7185 |
+| resid_v2 | 55.3 | 23.4% | 0.6466 | 0.7203 |
+| resid_v2, resid only | 124.3 | 8.0% | 0.6960 | 0.7819 |
+| resid_v6 | 67.8 | 19.8% | 0.6688 | 0.7472 |
+| resid_v4 | 97.0 | 9.4% | 0.8808 | 0.8785 |
+| resid_v5 | 101.2 | 10.8% | 0.8954 | 0.8917 |
+| resid_v3 | 170.1 | 2.8% | 0.9848 | 0.9880 |
+
+Six attempts, best miss 55.3 against the base model's 58.0. The gate wanted 15.
+Withholding the static displacement conditioning so aiming has to run through
+the residual channel (the `resid only` row) more than doubles the miss, which
+says the channel is not carrying the aim at all. The three checkpoints that
+changed the model most are the three that fell apart. The aiming channel is
+closed as a route; the miss stays at roughly 30% of the requested distance.
+
+What those runs did leave is two base models that score below the arm under the
+correction that was in service. They saved summary JSON and not the paths, so
+`research/w3_jog_on_resid.py` regenerates and applies the jog correction.
+2000 specs, one path each, no selection, decode recipe copied verbatim from
+`w3_p1_eval.py` with the previously recorded additive AUC printed beside the
+fresh one as a tripwire.
+
+```
+event_polar_4m_resid_v2, miss p50 55.3px, 29.1% of travel
+
+               arrives      n   contract AUC
+raw               0.4%   1998         0.6538
+additive        100.0%   1998         0.7210
+jog             100.0%   1998         0.6986
+
+recipe tripwire: additive 0.7210 against 0.7203 on record, drift +0.0007
+```
+
+Subsample without replacement, 12 draws of 1500: gap mean -0.0131, sd 0.0097,
+11 of 12 draws favour jog. Collapse flag and feature list identical for both
+arms; five dispersion ratios move closer to the human and three further, with
+`angular_velocity_mean` 1.184 to 1.026 and `angular_velocity_std` 1.095 to
+1.023 again the largest moves.
+
+The jog gain is larger on this model (-0.0223 point estimate) than on the model
+it was developed against (-0.0139), which is the evidence that it fixes the
+operator rather than fitting one generator.
+
+`event_polar_4m_resid_v1` was run too and tripped its own tripwire, additive
+0.7252 against 0.7185 on record, drift +0.0067. Generation is not bit
+reproducible across runs on this machine and the tripwire's 0.005 threshold is
+tighter than that run-to-run spread, which has not been measured. It scored
+0.7084 with jog, worse than v2, so nothing rests on it.
+
+Honest single-trajectory state of the art: **0.6986**, one path per request,
+exact arrival on the requested pixel, no candidate pool and no selection. Down
+from 0.7283.
+
+The two feature pipelines used across these scripts, `extract_feature_matrix`
+and `features_with_jitter(paths, 0.0, seed)`, were checked to be bit identical
+so the numbers compare.
+
+GPU: two 2.5 minute generation runs, peak 59C, well under the 75C gate.
+Checkpoint MD5 verified unchanged after each.
+
+Ledger: W3_groundwork_2026-07-27T055552+0000_9852d77e

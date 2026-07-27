@@ -14,12 +14,16 @@ reported off one print. This checks the four things that could make it fake:
   selection   one path per spec, one correction, no candidates, no picking. The
               spec list is asserted to be the same length as the path list and
               every path is used.
-  stability   a 0.014 move has to survive resampling. The first version of this
-              swept the seed, which was useless: the seed only feeds the feature
-              jitter, the jitter is set to 0, and the contract pins its own RF
-              seed at 42. Five seeds returned five identical numbers. The gap is
-              instead measured on bootstrap resamples of the path set, which is
-              the noise that actually exists here.
+  stability   the move has to survive resampling, and two instruments were
+              wrong before this one. Sweeping the seed was useless: the seed
+              only feeds the feature jitter, the jitter is set to 0, and the
+              contract pins its own RF seed at 42, so five seeds returned five
+              identical numbers. Bootstrapping with replacement was worse than
+              useless: duplicated paths are easy for the forest, absolute AUC
+              climbs to 0.80 on the 6000-path arm and 0.89 on the 2000-path
+              one, and near saturation a real gap gets compressed toward zero.
+              What is used here is subsampling WITHOUT replacement, which
+              leaves the detection problem at its true difficulty.
 
 Nothing here generates. The arm is the landing cache, the model is never loaded
 and the checkpoint is never opened.
@@ -71,14 +75,20 @@ def arrival(paths, specs):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--boots", type=int, default=12)
+    ap.add_argument("--frac", type=float, default=0.75)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--cache", default=str(CACHE),
+                    help="path cache to read; defaults to the fc_v2 landing "
+                         "cache, or pass a w3_jog_cache_*.pkl from "
+                         "w3_jog_on_resid.py")
     ap.add_argument("--out", default=str(OUT))
     args = ap.parse_args()
 
     t0 = time.time()
-    # pickle.load: this repo's own artifact from the 2026-07-20 landing-price
-    # run on this machine, never third-party input.
-    with open(CACHE, "rb") as fh:
+    # pickle.load: this repo's own artifacts, written by the landing-price run
+    # and by research/w3_jog_on_resid.py on this machine, never third-party
+    # input.
+    with open(args.cache, "rb") as fh:
         specs, trajs = pickle.load(fh)
     keep = [(np.asarray(s), np.asarray(t)) for s, t in zip(specs, trajs)
             if len(t) >= 3]
@@ -109,10 +119,12 @@ def main():
     print(f"{'jog minus additive':<22}{'':>10}{'':>7}{gap:>15.4f}")
 
     rng = np.random.default_rng(args.seed)
-    print(f"\nbootstrap over paths, {args.boots} resamples of {len(raw)}")
+    m = int(round(args.frac * len(raw)))
+    print(f"\nsubsample without replacement, {args.boots} draws of {m} "
+          f"of {len(raw)} paths")
     d = []
     for b in range(args.boots):
-        idx = rng.integers(0, len(raw), len(raw))
+        idx = rng.permutation(len(raw))[:m]
         a, _ = full_score([arms["additive (standing)"][i] for i in idx],
                           args.seed)
         j, _ = full_score([arms["jog"][i] for i in idx], args.seed)
@@ -147,8 +159,8 @@ def main():
 
     Path(args.out).write_text(json.dumps(
         {"seed": args.seed, "arms": res, "gap": gap,
-         "bootstrap_gaps": d.tolist(),
-         "bootstrap_mean": float(d.mean()), "bootstrap_sd": float(d.std()),
+         "subsample_frac": args.frac, "subsample_gaps": d.tolist(),
+         "subsample_mean": float(d.mean()), "subsample_sd": float(d.std()),
          "dispersion_closer": better, "dispersion_further": worse,
          "wall_sec": time.time() - t0}, indent=2))
     print(f"\n[verify] wrote {args.out} ({time.time()-t0:.0f}s)")

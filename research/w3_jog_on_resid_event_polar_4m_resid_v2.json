@@ -1,0 +1,61 @@
+{
+ "ckpt": "event_polar_4m_resid_v2.pt",
+ "n": 2000,
+ "seed": 42,
+ "order": "gumbel",
+ "resid_mode": "prefix",
+ "ckpt_md5": "3b0f1b227d633a8d28ea2054f6142283",
+ "usable": 2000,
+ "miss_median_px": 55.27203591484681,
+ "miss_p90_px": 448.2376007836796,
+ "miss_pct_travel_median": 29.05326216018902,
+ "within_15px_pct": 24.55,
+ "arms": {
+  "raw": {
+   "auc": 0.6537886735584433,
+   "n_per_class": 1998,
+   "exact_arrival": 0.004,
+   "collapse_flag": true,
+   "collapse_features": [
+    "mean_acceleration",
+    "std_acceleration",
+    "mean_jerk",
+    "curvature_mean",
+    "curvature_std"
+   ]
+  },
+  "additive": {
+   "auc": 0.7209724739754769,
+   "n_per_class": 1998,
+   "exact_arrival": 1.0,
+   "collapse_flag": true,
+   "collapse_features": [
+    "mean_acceleration",
+    "std_acceleration",
+    "max_acceleration",
+    "mean_jerk",
+    "std_jerk",
+    "curvature_mean",
+    "curvature_std"
+   ]
+  },
+  "jog": {
+   "auc": 0.6986425865304744,
+   "n_per_class": 1998,
+   "exact_arrival": 1.0,
+   "collapse_flag": true,
+   "collapse_features": [
+    "mean_acceleration",
+    "std_acceleration",
+    "max_acceleration",
+    "mean_jerk",
+    "std_jerk",
+    "curvature_mean",
+    "curvature_std"
+   ]
+  }
+ },
+ "jog_minus_additive": -0.022329887445002528,
+ "recorded_additive": 0.7203,
+ "wall_sec": 144.87847709655762
+}
