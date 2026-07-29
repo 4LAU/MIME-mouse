@@ -1,0 +1,5 @@
+{
+  "serving decoder (reference)": 0.5320058750000001,
+  "frame renderer, as shipped": 0.585885125,
+  "frame renderer + endpoint": 0.627990625
+}

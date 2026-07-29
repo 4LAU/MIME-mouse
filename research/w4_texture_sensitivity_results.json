@@ -1,0 +1,85 @@
+{
+  "n_paths": 1940,
+  "seed": 42,
+  "n_sub": 6,
+  "leftover_sd_median": 0.6948330890068307,
+  "arms": {
+    "real (floor)": {
+      "auc_internal": 0.4888602667658625,
+      "auc_contract": 0.5071908545010096
+    },
+    "real, re-emitted": {
+      "auc_internal": 0.4888602667658625,
+      "auc_contract": 0.5071908545010096
+    },
+    "real + 0.25 px, rounded": {
+      "auc_internal": 0.573092119247529,
+      "auc_contract": 0.5807514082261664
+    },
+    "real + 0.25 px, diffused": {
+      "auc_internal": 0.573092119247529,
+      "auc_contract": 0.5807514082261664
+    },
+    "real + 0.5 px, rounded": {
+      "auc_internal": 0.8660949622701668,
+      "auc_contract": 0.864453847380168
+    },
+    "real + 0.5 px, diffused": {
+      "auc_internal": 0.8660949622701668,
+      "auc_contract": 0.864453847380168
+    },
+    "real + 1.0 px, rounded": {
+      "auc_internal": 0.9502792539058348,
+      "auc_contract": 0.9512986236581996
+    },
+    "real + 1.0 px, diffused": {
+      "auc_internal": 0.9502792539058348,
+      "auc_contract": 0.9512986236581996
+    },
+    "real + 2.0 px, rounded": {
+      "auc_internal": 0.9838287809544054,
+      "auc_contract": 0.9841134817727709
+    },
+    "real + 2.0 px, diffused": {
+      "auc_internal": 0.9838287809544054,
+      "auc_contract": 0.9841134817727709
+    },
+    "real, 3-pt smoothed": {
+      "auc_internal": 0.5906888351578277,
+      "auc_contract": 0.5963831172281858
+    },
+    "real, 5-pt smoothed": {
+      "auc_internal": 0.5792876501222233,
+      "auc_contract": 0.5970164204485068
+    },
+    "plan only": {
+      "auc_internal": 0.8276151822722925,
+      "auc_contract": 0.8287296737166543
+    },
+    "plan + own": {
+      "auc_internal": 0.4888602667658625,
+      "auc_contract": 0.5071908545010096
+    },
+    "plan + own reversed": {
+      "auc_internal": 0.8298085609522797,
+      "auc_contract": 0.8366792432777127
+    },
+    "plan + own rolled": {
+      "auc_internal": 0.8466396535232225,
+      "auc_contract": 0.8503843394622169
+    },
+    "plan + swap": {
+      "auc_internal": 0.8507809012647466,
+      "auc_contract": 0.8505153310660007
+    },
+    "plan + swap rescaled": {
+      "auc_internal": 0.8337260867254757,
+      "auc_contract": 0.8391630353916463
+    },
+    "plan + speed-scaled": {
+      "auc_internal": 0.835831384844298,
+      "auc_contract": 0.8414876713784676
+    }
+  },
+  "wall_sec": 61.770468950271606
+}

@@ -1,0 +1,156 @@
+{
+  "pool": "pool_s42_k32.npz",
+  "K": 32,
+  "original_k32": 0.5833,
+  "n_specs_shared": 2000,
+  "seeds": {
+    "0": {
+      "_reference": {
+        "n": 2000,
+        "max_abs_z_vs_contract": 0.0578841606178,
+        "worst_feature": "curvature_mean",
+        "rebuild_vs_contract_auc": 0.49222137499999996,
+        "jitter_px": 1e-09,
+        "n_holdout": 2000,
+        "n_paths_shared": 2000
+      },
+      "additive": {
+        "contract": 0.5911111250000001,
+        "rebuilt": 0.607524125,
+        "control": 0.596748625
+      },
+      "jog": {
+        "contract": 0.594868125,
+        "rebuilt": 0.5879485,
+        "control": 0.57467275
+      },
+      "jog-served": {
+        "contract": 0.6853234999999999,
+        "rebuilt": 0.6900095,
+        "control": 0.6578726250000001
+      },
+      "real (holdout)": {
+        "contract": 0.47783137499999995,
+        "rebuilt": 0.48514425000000005,
+        "control": 0.49898462499999996
+      },
+      "_picks_agree": 0.5235,
+      "_exact_arrival": {
+        "additive": 1.0,
+        "jog": 1.0,
+        "jog-served": 1.0
+      }
+    },
+    "1": {
+      "_reference": {
+        "n": 2000,
+        "max_abs_z_vs_contract": 0.0578841606178,
+        "worst_feature": "curvature_mean",
+        "rebuild_vs_contract_auc": 0.49222137499999996,
+        "jitter_px": 1e-09,
+        "n_holdout": 2000,
+        "n_paths_shared": 2000
+      },
+      "additive": {
+        "contract": 0.58537775,
+        "rebuilt": 0.601655625,
+        "control": 0.5929380000000001
+      },
+      "jog": {
+        "contract": 0.58804675,
+        "rebuilt": 0.5892113750000001,
+        "control": 0.583712125
+      },
+      "jog-served": {
+        "contract": 0.6828333750000001,
+        "rebuilt": 0.68724025,
+        "control": 0.666589375
+      },
+      "real (holdout)": {
+        "contract": 0.47783137499999995,
+        "rebuilt": 0.48514425000000005,
+        "control": 0.49898462499999996
+      },
+      "_picks_agree": 0.521,
+      "_exact_arrival": {
+        "additive": 1.0,
+        "jog": 1.0,
+        "jog-served": 1.0
+      }
+    },
+    "2": {
+      "_reference": {
+        "n": 2000,
+        "max_abs_z_vs_contract": 0.0578841606178,
+        "worst_feature": "curvature_mean",
+        "rebuild_vs_contract_auc": 0.49222137499999996,
+        "jitter_px": 1e-09,
+        "n_holdout": 2000,
+        "n_paths_shared": 2000
+      },
+      "additive": {
+        "contract": 0.573474625,
+        "rebuilt": 0.6035598750000001,
+        "control": 0.5770216250000001
+      },
+      "jog": {
+        "contract": 0.589707,
+        "rebuilt": 0.579198625,
+        "control": 0.572796
+      },
+      "jog-served": {
+        "contract": 0.6687945000000001,
+        "rebuilt": 0.685621625,
+        "control": 0.67109525
+      },
+      "real (holdout)": {
+        "contract": 0.47783137499999995,
+        "rebuilt": 0.48514425000000005,
+        "control": 0.49898462499999996
+      },
+      "_picks_agree": 0.518,
+      "_exact_arrival": {
+        "additive": 1.0,
+        "jog": 1.0,
+        "jog-served": 1.0
+      }
+    }
+  },
+  "mean": {
+    "additive": {
+      "contract": 0.5833211666666667,
+      "rebuilt": 0.6042465416666668,
+      "control": 0.58890275
+    },
+    "jog": {
+      "contract": 0.5908739583333332,
+      "rebuilt": 0.5854528333333334,
+      "control": 0.5770602916666666
+    },
+    "jog-served": {
+      "contract": 0.6789837916666667,
+      "rebuilt": 0.6876237916666668,
+      "control": 0.66518575
+    }
+  },
+  "sd": {
+    "additive": {
+      "contract": 0.007345460471960843,
+      "rebuilt": 0.0024445117298188762,
+      "control": 0.00854404526251566
+    },
+    "jog": {
+      "contract": 0.0029044945672134156,
+      "rebuilt": 0.004452344305640857,
+      "control": 0.004765550871372496
+    },
+    "jog-served": {
+      "contract": 0.007276282435887484,
+      "rebuilt": 0.0018117560379290285,
+      "control": 0.005488598808932599
+    }
+  },
+  "jog_minus_additive": 0.0075527916666665584,
+  "jogserved_minus_additive": 0.095662625,
+  "wall_sec": 284.27942752838135
+}

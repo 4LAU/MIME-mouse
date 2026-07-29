@@ -1,0 +1,63 @@
+{
+ "pool": "pool_char_v3_cfg2_s42_k32.npz",
+ "correction": "additive_int",
+ "sir_temp": 0.7,
+ "sir_seed": 0,
+ "arms": {
+  "K8_raw_raw": {
+   "auc": 0.601423625,
+   "n_per_class": 2000,
+   "n_specs_selected": 2000,
+   "wall_sec": 33.58189654350281
+  },
+  "K8_raw_corr": {
+   "auc": 0.657062375,
+   "n_per_class": 2000,
+   "n_specs_selected": 2000,
+   "wall_sec": 33.34470319747925
+  },
+  "K8_corr_corr": {
+   "auc": 0.5994228749999999,
+   "n_per_class": 2000,
+   "n_specs_selected": 2000,
+   "wall_sec": 33.4404411315918
+  },
+  "K16_raw_raw": {
+   "auc": 0.5873377500000001,
+   "n_per_class": 2000,
+   "n_specs_selected": 2000,
+   "wall_sec": 33.04972553253174
+  },
+  "K16_raw_corr": {
+   "auc": 0.6546857500000001,
+   "n_per_class": 2000,
+   "n_specs_selected": 2000,
+   "wall_sec": 33.145906925201416
+  },
+  "K16_corr_corr": {
+   "auc": 0.591554125,
+   "n_per_class": 2000,
+   "n_specs_selected": 2000,
+   "wall_sec": 33.025909423828125
+  },
+  "K32_raw_raw": {
+   "auc": 0.567025375,
+   "n_per_class": 2000,
+   "n_specs_selected": 2000,
+   "wall_sec": 33.085270404815674
+  },
+  "K32_raw_corr": {
+   "auc": 0.649590625,
+   "n_per_class": 2000,
+   "n_specs_selected": 2000,
+   "wall_sec": 33.0518102645874
+  },
+  "K32_corr_corr": {
+   "auc": 0.577877375,
+   "n_per_class": 2000,
+   "n_specs_selected": 2000,
+   "wall_sec": 32.97558903694153
+  }
+ },
+ "total_sec": 322.62293767929077
+}

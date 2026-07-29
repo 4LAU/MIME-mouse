@@ -91,7 +91,14 @@ def train(args):
     cfg = dict(ckpt["config"])
     dt_mean, dt_std = float(ckpt["dt_mean"]), float(ckpt["dt_std"])
     model = EventStreamPolarModel(**cfg).to(device)
-    model.load_state_dict(ckpt["model_state_dict"])
+    if args.fresh_init:
+        # W1: train FROM SCRATCH on set-selected winners. The checkpoint
+        # contributes only its data-derived constants (config, dt z-scoring
+        # stats, feature bank mu/sd) -- no learned weights carry over.
+        print(f"FRESH INIT: config/dt-stats/feat-stats from {args.load_from}, "
+              f"weights random", flush=True)
+    else:
+        model.load_state_dict(ckpt["model_state_dict"])
     f_mu = ckpt["feat_mu"].to(device)
     f_sd = ckpt["feat_sd"].to(device)
     print(f"Loaded {args.load_from} (epoch {ckpt.get('epoch')}, "
@@ -130,8 +137,10 @@ def train(args):
                                        dt_s, real, cond, args.n_frames)
         return detector_features(x, y, fmask)
 
-    for p in model.dt_head.parameters():
-        p.requires_grad_(False)
+    if not args.fresh_init:
+        # fine-tune mode: timing texture already matches humans, keep it
+        for p in model.dt_head.parameters():
+            p.requires_grad_(False)
     g_params = [p for p in model.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(g_params, lr=args.lr, weight_decay=0.0)
 
@@ -237,4 +246,7 @@ if __name__ == "__main__":
     parser.add_argument("--snapshot-every", type=int, default=500)
     parser.add_argument("--save-every", type=int, default=500)
     parser.add_argument("--auto-resume", action="store_true")
+    parser.add_argument("--fresh-init", action="store_true",
+                        help="W1: random-init the model (config/dt-stats/feat-stats "
+                             "still read from --load-from); trains the dt head too")
     train(parser.parse_args())

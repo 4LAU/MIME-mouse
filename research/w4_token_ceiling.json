@@ -1,0 +1,6 @@
+{
+  "serving decode, snap 2.5 + round": 0.5118472500000001,
+  "round only, no snap": 0.52751175,
+  "snap only, no round": 0.52488625,
+  "neither": 0.617541875
+}

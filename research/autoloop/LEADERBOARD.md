@@ -1,6 +1,6 @@
 # Autoloop Leaderboard
 
-_Regenerated 2026-07-27T05:55:52+00:00_
+_Regenerated 2026-07-29T03:58:53+00:00_
 
 **Best-of-N tier1 scores are selection-biased; only tier2 confirmations are quotable.**
 
@@ -70,6 +70,18 @@ n_trials (tier1, status=ok): 3
 | 2 | W3_groundwork_2026-07-26T041909+0000_86be14c7 | 0.6500 | 0.1500 | UNCONFIRMED | n/a | ok | Degeneracy control on the arrival tax. Contract column repro |
 | 3 | W3_groundwork_2026-07-26T055107+0000_426caf73 | 0.7525 | 0.2525 | UNCONFIRMED | n/a | ok | Degeneracy control on CANDI. The published 0.752 reproduces  |
 
+## fc_v3_feat_film_train
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## jq_queued_mmd_train
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
 ## phase0b_critic_finetune
 
 n_trials (tier1, status=ok): 2
@@ -78,4 +90,303 @@ n_trials (tier1, status=ok): 2
 |---|---|---|---|---|---|---|---|
 | 1 | phase0b_critic_finetune_2026-07-20T063005+0000_1dd2b084 | 0.7573 | 0.2573 | UNCONFIRMED | n/a | ok | BACKFILL, no fresh compute. Published baseline reference for |
 | 2 | phase0b_critic_finetune_2026-07-20T063005+0000_07c11584 | 0.7662 | 0.2662 | UNCONFIRMED | n/a | ok | BACKFILL, no fresh compute. Phase 1 fine-tune of candi_polar |
+
+## w3_conditional_gate
+
+n_trials (tier1, status=ok): 1
+
+| rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
+|---|---|---|---|---|---|---|---|
+| 1 | w3_conditional_gate_2026-07-27T073545+0000_f28ce8d0 | 0.5491 | 0.0491 | UNCONFIRMED | n/a | ok | POSITIVE, and the first localisation this session that survi |
+
+## w3_coupling_gate
+
+n_trials (tier1, status=ok): 2
+
+| rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
+|---|---|---|---|---|---|---|---|
+| 1 | w3_coupling_gate_2026-07-27T072736+0000_76303ff4 | 0.6507 | 0.1507 | UNCONFIRMED | n/a | ok | NEGATIVE. Repairing every pairwise rank dependence to human, |
+| 2 | w3_coupling_gate_2026-07-27T073545+0000_0f13f30b | 0.6507 | 0.1507 | UNCONFIRMED | n/a | ok | CORRECTED RERUN of row ...76303ff4, which is superseded. The |
+
+## w3_duration_response
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w3_efficiency_gate
+
+n_trials (tier1, status=ok): 1
+
+| rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
+|---|---|---|---|---|---|---|---|
+| 1 | w3_efficiency_gate_2026-07-27T080921+0000_b8cfaca3 | 0.5479 | 0.0479 | UNCONFIRMED | n/a | ok | NEGATIVE for the single-feature story, and it decomposes the |
+
+## w4
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_ar_v1
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_arrangement
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_attenuation
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_command_ceiling
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_command_ceiling_v2
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_copula_order
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_coupling
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_dtstruct
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_lattice_emitter
+
+n_trials (tier1, status=ok): 1
+
+| rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
+|---|---|---|---|---|---|---|---|
+| 1 | w4_lattice_emitter_2026-07-27T180857+0000_842e1356 | 0.7320 | 0.2320 | UNCONFIRMED | n/a | ok | NEGATIVE, AND THE NULL ARM CARRIES THE FINDING. Tested the p |
+
+## w4_manifold_projection
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_marginal_vs_coupling
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_mmd_alignment
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_mmd_blindness
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_mmd_queue
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_mmd_symmetric
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_mmd_term_balance
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_ms_lattice
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_objective_vs_metric
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_order
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_order_resid
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_pipeline_agreement
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_plan_space
+
+n_trials (tier1, status=ok): 1
+
+| rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
+|---|---|---|---|---|---|---|---|
+| 1 | w4_plan_space_2026-07-27T094052+0000_d9c80213 | 0.5595 | 0.0595 | UNCONFIRMED | n/a | ok | THE PLAN LAYER IS NOT WHERE THE DEFICIT IS, which kills the  |
+
+## w4_prefixcond
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_redundancy
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_refine
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_renderer_endpoint
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_robust_coverage
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_sf_mmd_pilot
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_sharpness
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_statevisit
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_stillcal
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_stillprice
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_straight
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_submove
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_submovement_ceiling
+
+n_trials (tier1, status=ok): 1
+
+| rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
+|---|---|---|---|---|---|---|---|
+| 1 | w4_submovement_ceiling_2026-07-27T095747+0000_e6e3bff8 | 0.8335 | 0.3335 | UNCONFIRMED | n/a | ok | NO SMOOTH PARAMETERISATION AT ANY TRACTABLE SIZE PRESERVES W |
+
+## w4_texture_sensitivity
+
+n_trials (tier1, status=ok): 1
+
+| rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
+|---|---|---|---|---|---|---|---|
+| 1 | w4_texture_sensitivity_2026-07-27T094052+0000_7613625c | 0.8287 | 0.3287 | UNCONFIRMED | n/a | ok | THE CONTRACT IS A TEXTURE INSTRUMENT, NOT A SHAPE INSTRUMENT |
+
+## w4_tickstruct
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_token_ceiling
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_train_serve_gap
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_ttp_repair
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_variety_mechanisms
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_variety_vs_steering
+
+n_trials (tier1, status=ok): 1
+
+| rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
+|---|---|---|---|---|---|---|---|
+| 1 | w4_variety_vs_steering_2026-07-27T185816+0000_1252df17 | 0.6624 | 0.1624 | UNCONFIRMED | n/a | ok | TWO FINDINGS, THE SECOND ONE REFRAMES THE PROGRAM. (1) The A |
 

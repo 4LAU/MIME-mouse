@@ -1,0 +1,44 @@
+{
+  "n_paths": 969,
+  "n_sub": 12,
+  "seed": 42,
+  "arms": {
+    "real (floor)": {
+      "auc_internal": 0.4697836225359732,
+      "auc_contract": 0.49285433580308446
+    },
+    "rounded (base)": {
+      "auc_internal": 0.6806810932509444,
+      "auc_contract": 0.7043380928494367
+    },
+    "emitted, human turns w=0.1": {
+      "auc_internal": 0.747977285531561,
+      "auc_contract": 0.7369262408129835
+    },
+    "emitted, human turns w=0.25": {
+      "auc_internal": 0.7375540624157979,
+      "auc_contract": 0.7319686334150193
+    },
+    "emitted, human turns w=0.5": {
+      "auc_internal": 0.7408060611676097,
+      "auc_contract": 0.7252697396377487
+    },
+    "emitted, human turns w=1.0": {
+      "auc_internal": 0.8088413682783417,
+      "auc_contract": 0.8117488372786515
+    },
+    "emitted, human turns w=3.0": {
+      "auc_internal": 0.8435105398413778,
+      "auc_contract": 0.8375262657341465
+    },
+    "emitted, own turns w=1.0": {
+      "auc_internal": 0.7957891754822617,
+      "auc_contract": 0.7985022807124045
+    },
+    "emitted, w=0": {
+      "auc_internal": 0.6806810932509444,
+      "auc_contract": 0.7043380928494367
+    }
+  },
+  "wall_sec": 174.76751279830933
+}

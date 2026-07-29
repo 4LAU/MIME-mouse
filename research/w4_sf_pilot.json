@@ -1,0 +1,18 @@
+{
+  "event_polar_4m_fc_v3.pt": {
+    "mmd_symmetric": 0.02148316241800785,
+    "auc_rollout": 0.6235918998718262
+  },
+  "event_polar_4m_sf_s200.pt": {
+    "mmd_symmetric": 0.0185316801071167,
+    "auc_rollout": 0.6362333297729492
+  },
+  "event_polar_4m_sf_s400.pt": {
+    "mmd_symmetric": 0.021828174591064453,
+    "auc_rollout": 0.6762828826904297
+  },
+  "event_polar_4m_sf.pt": {
+    "mmd_symmetric": 0.0292932391166687,
+    "auc_rollout": 0.7291555404663086
+  }
+}

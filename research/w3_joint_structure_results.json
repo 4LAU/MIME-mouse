@@ -1,0 +1,148 @@
+{
+  "seed": 42,
+  "n_real": 4000,
+  "shuffled_human_auc": 0.9997695625000002,
+  "arms": {
+    "fc_v2": {
+      "n": 4000,
+      "auc_raw": 0.680124375,
+      "auc_marginals_matched": 0.622122,
+      "marginals_worth": 0.05800237500000005,
+      "joint_residual_above_chance": 0.12212199999999995,
+      "corr_frobenius_gap": 0.7462755681089832,
+      "worst_pairs": [
+        {
+          "a": "max_acceleration",
+          "b": "path_efficiency",
+          "r_arm": -0.020760550672534413,
+          "r_human": -0.20029363926835245,
+          "gap": 0.17953308859581804
+        },
+        {
+          "a": "max_velocity",
+          "b": "path_efficiency",
+          "r_arm": 0.005338927458682966,
+          "r_human": -0.1682594259537141,
+          "gap": 0.17359835341239707
+        },
+        {
+          "a": "std_velocity",
+          "b": "path_efficiency",
+          "r_arm": 0.06348740421796277,
+          "r_human": -0.09639712877482053,
+          "gap": 0.1598845329927833
+        },
+        {
+          "a": "std_acceleration",
+          "b": "path_efficiency",
+          "r_arm": 0.09845793484112092,
+          "r_human": -0.039493013280813324,
+          "gap": 0.13795094812193426
+        },
+        {
+          "a": "std_jerk",
+          "b": "path_efficiency",
+          "r_arm": 0.09453591909599493,
+          "r_human": -0.03746840352927522,
+          "gap": 0.13200432262527015
+        },
+        {
+          "a": "movement_duration",
+          "b": "angular_velocity_mean",
+          "r_arm": -0.03367034797939675,
+          "r_human": 0.09825765651610352,
+          "gap": 0.13192800449550027
+        },
+        {
+          "a": "path_efficiency",
+          "b": "movement_duration",
+          "r_arm": -0.48643141971446363,
+          "r_human": -0.60381552080097,
+          "gap": 0.11738410108650638
+        },
+        {
+          "a": "velocity_skewness",
+          "b": "angular_velocity_mean",
+          "r_arm": 0.06930580914411306,
+          "r_human": 0.18008377500523592,
+          "gap": 0.11077796586112286
+        }
+      ],
+      "convicted_pair": {
+        "arm": 0.14027923851745241,
+        "human": 0.1934505908406619
+      }
+    },
+    "resid_v2": {
+      "n": 1998,
+      "auc_raw": 0.6683554174795415,
+      "auc_marginals_matched": 0.6059098387676966,
+      "marginals_worth": 0.06244557871184497,
+      "joint_residual_above_chance": 0.10590983876769655,
+      "corr_frobenius_gap": 0.8536927725748302,
+      "worst_pairs": [
+        {
+          "a": "max_deviation",
+          "b": "angular_velocity_mean",
+          "r_arm": -0.0806049384622597,
+          "r_human": 0.09275842701493935,
+          "gap": 0.17336336547719905
+        },
+        {
+          "a": "movement_duration",
+          "b": "angular_velocity_mean",
+          "r_arm": -0.057481877851501814,
+          "r_human": 0.10913958094082958,
+          "gap": 0.1666214587923314
+        },
+        {
+          "a": "max_deviation",
+          "b": "angular_velocity_std",
+          "r_arm": 0.011721544658518903,
+          "r_human": 0.17753421982351666,
+          "gap": 0.16581267516499776
+        },
+        {
+          "a": "num_direction_changes",
+          "b": "angular_velocity_mean",
+          "r_arm": 0.061707503109977004,
+          "r_human": 0.22656112424957792,
+          "gap": 0.16485362113960092
+        },
+        {
+          "a": "max_velocity",
+          "b": "angular_velocity_mean",
+          "r_arm": -0.212852018120952,
+          "r_human": -0.050554490735272156,
+          "gap": 0.16229752738567985
+        },
+        {
+          "a": "velocity_skewness",
+          "b": "time_to_peak_velocity",
+          "r_arm": -0.34448072786996875,
+          "r_human": -0.184788264514407,
+          "gap": 0.15969246335556175
+        },
+        {
+          "a": "max_acceleration",
+          "b": "angular_velocity_mean",
+          "r_arm": -0.20230731650612846,
+          "r_human": -0.04727334381520513,
+          "gap": 0.15503397269092334
+        },
+        {
+          "a": "std_velocity",
+          "b": "angular_velocity_mean",
+          "r_arm": -0.2247327692110674,
+          "r_human": -0.07079141336680722,
+          "gap": 0.1539413558442602
+        }
+      ],
+      "convicted_pair": {
+        "arm": 0.14915298314058284,
+        "human": 0.1811685518278424
+      }
+    }
+  },
+  "wall_sec": 5.821016073226929
+}

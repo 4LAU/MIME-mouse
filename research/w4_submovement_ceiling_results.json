@@ -1,0 +1,270 @@
+{
+  "n_paths": 1940,
+  "seed": 42,
+  "ns": [
+    1,
+    2,
+    3,
+    4,
+    6,
+    8,
+    12
+  ],
+  "floor_internal": 0.4888602667658625,
+  "floor_contract": 0.5071908545010096,
+  "rows": [
+    {
+      "n": 1,
+      "n_params": 4,
+      "n_fitted": 1940,
+      "rms_median": 10.538409245043024,
+      "rms_p90": 76.51512220511411,
+      "resid_sd_median": 7.027006977857174,
+      "resid_lag1_rho": 0.8089084520629131,
+      "arms": {
+        "plan only": {
+          "auc_internal": 0.9983360346476778,
+          "auc_contract": 0.9963888298437664,
+          "excess_over_floor": 0.5094757678818154
+        },
+        "+ own resid": {
+          "auc_internal": 0.4888602667658625,
+          "auc_contract": 0.5071908545010096,
+          "excess_over_floor": 0.0
+        },
+        "+ swap resid": {
+          "auc_internal": 0.9089409076416197,
+          "auc_contract": 0.9103496652141566,
+          "excess_over_floor": 0.42008064087575725
+        },
+        "+ white": {
+          "auc_internal": 0.9905300775852907,
+          "auc_contract": 0.9904960675948561,
+          "excess_over_floor": 0.5016698108194282
+        },
+        "+ ar1": {
+          "auc_internal": 0.975737193112977,
+          "auc_contract": 0.9770485705175894,
+          "excess_over_floor": 0.48687692634711455
+        }
+      }
+    },
+    {
+      "n": 2,
+      "n_params": 8,
+      "n_fitted": 1940,
+      "rms_median": 3.9627899328694824,
+      "rms_p90": 27.48027953658907,
+      "resid_sd_median": 2.6946490156413594,
+      "resid_lag1_rho": 0.567950878074112,
+      "arms": {
+        "plan only": {
+          "auc_internal": 0.9424879105112126,
+          "auc_contract": 0.9467714422361568,
+          "excess_over_floor": 0.45362764374535014
+        },
+        "+ own resid": {
+          "auc_internal": 0.4888602667658625,
+          "auc_contract": 0.5071908545010096,
+          "excess_over_floor": 0.0
+        },
+        "+ swap resid": {
+          "auc_internal": 0.9096618928685302,
+          "auc_contract": 0.9093142204272505,
+          "excess_over_floor": 0.4208016261026677
+        },
+        "+ white": {
+          "auc_internal": 0.9686182112870655,
+          "auc_contract": 0.9703212349877777,
+          "excess_over_floor": 0.479757944521203
+        },
+        "+ ar1": {
+          "auc_internal": 0.9506178924434052,
+          "auc_contract": 0.9543138218726751,
+          "excess_over_floor": 0.46175762567754275
+        }
+      }
+    },
+    {
+      "n": 3,
+      "n_params": 12,
+      "n_fitted": 1940,
+      "rms_median": 2.301794738878563,
+      "rms_p90": 14.478936915329806,
+      "resid_sd_median": 1.572468690327487,
+      "resid_lag1_rho": 0.353563213827747,
+      "arms": {
+        "plan only": {
+          "auc_internal": 0.9081756828568391,
+          "auc_contract": 0.9134433786799874,
+          "excess_over_floor": 0.41931541609097667
+        },
+        "+ own resid": {
+          "auc_internal": 0.4888602667658625,
+          "auc_contract": 0.5071908545010096,
+          "excess_over_floor": 0.0
+        },
+        "+ swap resid": {
+          "auc_internal": 0.8985814114146031,
+          "auc_contract": 0.9013574768838347,
+          "excess_over_floor": 0.40972114464874065
+        },
+        "+ white": {
+          "auc_internal": 0.9381782070358169,
+          "auc_contract": 0.9406290519715166,
+          "excess_over_floor": 0.4493179402699544
+        },
+        "+ ar1": {
+          "auc_internal": 0.9281654532894038,
+          "auc_contract": 0.9288690349665215,
+          "excess_over_floor": 0.43930518652354134
+        }
+      }
+    },
+    {
+      "n": 4,
+      "n_params": 16,
+      "n_fitted": 1940,
+      "rms_median": 1.5397236557878204,
+      "rms_p90": 9.734305630445869,
+      "resid_sd_median": 1.051558345466579,
+      "resid_lag1_rho": 0.19283831950339278,
+      "arms": {
+        "plan only": {
+          "auc_internal": 0.882830401743012,
+          "auc_contract": 0.8844842703794239,
+          "excess_over_floor": 0.3939701349771495
+        },
+        "+ own resid": {
+          "auc_internal": 0.4888602667658625,
+          "auc_contract": 0.5071908545010096,
+          "excess_over_floor": 0.0
+        },
+        "+ swap resid": {
+          "auc_internal": 0.8815685779572748,
+          "auc_contract": 0.8879726857264322,
+          "excess_over_floor": 0.39270831119141236
+        },
+        "+ white": {
+          "auc_internal": 0.9160709161441174,
+          "auc_contract": 0.9205858752258474,
+          "excess_over_floor": 0.4272106493782549
+        },
+        "+ ar1": {
+          "auc_internal": 0.9070609257094271,
+          "auc_contract": 0.9089290838558827,
+          "excess_over_floor": 0.4182006589435646
+        }
+      }
+    },
+    {
+      "n": 6,
+      "n_params": 24,
+      "n_fitted": 1940,
+      "rms_median": 0.9826713169745358,
+      "rms_p90": 5.927532263302277,
+      "resid_sd_median": 0.6759755310892487,
+      "resid_lag1_rho": -0.00530755330403431,
+      "arms": {
+        "plan only": {
+          "auc_internal": 0.8269643426506535,
+          "auc_contract": 0.833482304176852,
+          "excess_over_floor": 0.3381040758847911
+        },
+        "+ own resid": {
+          "auc_internal": 0.4888602667658625,
+          "auc_contract": 0.5071908545010096,
+          "excess_over_floor": 0.0
+        },
+        "+ swap resid": {
+          "auc_internal": 0.8340161016048465,
+          "auc_contract": 0.8434987777659688,
+          "excess_over_floor": 0.34515583483898404
+        },
+        "+ white": {
+          "auc_internal": 0.8732506111170156,
+          "auc_contract": 0.8726737697948772,
+          "excess_over_floor": 0.38439034435115316
+        },
+        "+ ar1": {
+          "auc_internal": 0.8775166064406419,
+          "auc_contract": 0.8754552821766394,
+          "excess_over_floor": 0.3886563396747794
+        }
+      }
+    },
+    {
+      "n": 8,
+      "n_params": 32,
+      "n_fitted": 1940,
+      "rms_median": 0.7260962836041465,
+      "rms_p90": 4.412149340958761,
+      "resid_sd_median": 0.5082462616616827,
+      "resid_lag1_rho": -0.1276395127828111,
+      "arms": {
+        "plan only": {
+          "auc_internal": 0.7844101392283983,
+          "auc_contract": 0.7816566585184398,
+          "excess_over_floor": 0.29554987246253583
+        },
+        "+ own resid": {
+          "auc_internal": 0.4888602667658625,
+          "auc_contract": 0.5071908545010096,
+          "excess_over_floor": 0.0
+        },
+        "+ swap resid": {
+          "auc_internal": 0.7983817355723245,
+          "auc_contract": 0.8017694494632799,
+          "excess_over_floor": 0.30952146880646203
+        },
+        "+ white": {
+          "auc_internal": 0.8361760017004995,
+          "auc_contract": 0.8376203634817727,
+          "excess_over_floor": 0.3473157349346371
+        },
+        "+ ar1": {
+          "auc_internal": 0.8403786268466362,
+          "auc_contract": 0.8393825061111702,
+          "excess_over_floor": 0.35151836008077375
+        }
+      }
+    },
+    {
+      "n": 12,
+      "n_params": 48,
+      "n_fitted": 1940,
+      "rms_median": 0.4728273726721499,
+      "rms_p90": 2.755055778507219,
+      "resid_sd_median": 0.33745495991807106,
+      "resid_lag1_rho": -0.26880381071617115,
+      "arms": {
+        "plan only": {
+          "auc_internal": 0.712281326389627,
+          "auc_contract": 0.7139061005420342,
+          "excess_over_floor": 0.22342105962376457
+        },
+        "+ own resid": {
+          "auc_internal": 0.4888602667658625,
+          "auc_contract": 0.5071908545010096,
+          "excess_over_floor": 0.0
+        },
+        "+ swap resid": {
+          "auc_internal": 0.7397881018174088,
+          "auc_contract": 0.7410282708045488,
+          "excess_over_floor": 0.25092783505154637
+        },
+        "+ white": {
+          "auc_internal": 0.7769396322669784,
+          "auc_contract": 0.7751149165692421,
+          "excess_over_floor": 0.2880793655011159
+        },
+        "+ ar1": {
+          "auc_internal": 0.7852792539058348,
+          "auc_contract": 0.790416622382825,
+          "excess_over_floor": 0.2964189871399723
+        }
+      }
+    }
+  ],
+  "wall_sec": 568.9911839962006
+}

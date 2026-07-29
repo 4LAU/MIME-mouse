@@ -1,0 +1,15 @@
+{
+  "n": 2500,
+  "seed": 42,
+  "arms": {
+    "bank rows, no noise": 0.51427875,
+    "bank + BW 0.05": 0.9999979999999999,
+    "bank + BW 0.1": 0.9999994999999999,
+    "bank + BW 0.25": 0.9999995,
+    "bank + BW 0.5": 0.99999625,
+    "bank + BW 0.25, columns shuffled": 1.0
+  },
+  "mean_abs_corr_bank": 0.2599078609591268,
+  "mean_abs_corr_bw025": 0.24602054752793978,
+  "wall_sec": 7.846863031387329
+}

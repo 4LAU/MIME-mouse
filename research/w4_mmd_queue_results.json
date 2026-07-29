@@ -1,0 +1,22 @@
+[
+  {
+    "arm": "1. current: 32 gen vs 32 human",
+    "separability": 0.555,
+    "cohens_d": 0.23378859092146087
+  },
+  {
+    "arm": "2. 32 gen vs 2048 human",
+    "separability": 0.715,
+    "cohens_d": 0.7898842986707942
+  },
+  {
+    "arm": "3. 32 gen + 992 queued vs 1024 human",
+    "separability": 1.0,
+    "cohens_d": 7.774297120728303
+  },
+  {
+    "arm": "4. 512 gen vs 512 human (brute force)",
+    "separability": 1.0,
+    "cohens_d": 4.564212709624632
+  }
+]

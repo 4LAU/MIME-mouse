@@ -90,6 +90,46 @@ if _cfg.get("feat_dim", 0) > 0 and "feat_bank" in _ckpt:
 _FEAT_ON = os.environ.get("EVENT_FEAT", "1") == "1"
 _FEAT_BW = float(os.environ.get("EVENT_FEAT_BW", "0.25"))
 _FEAT_WIN = int(os.environ.get("EVENT_FEAT_WIN", "256"))
+# Character-latent checkpoints (train_events_polar_char.py) carry a learned
+# conditional prior over the latent z that rides the resid slot. With
+# EVENT_Z_PRIOR=1 a fresh z is drawn per candidate from that prior;
+# EVENT_Z_TEMP scales the draw's standard deviation.
+_Z_PRIOR = None
+_Z_TEMP = float(os.environ.get("EVENT_Z_TEMP", "1.0"))
+# Research hook: EVENT_Z_FILE names an .npz with array "z" (N, z_dim); rows
+# are consumed in generation order, overriding the prior draw. Lets a probe
+# hand the model specific latents (e.g. encodings of extreme real paths).
+_Z_ROWS = None
+_z_cursor = 0
+if os.environ.get("EVENT_Z_FILE"):
+    import numpy as _np
+    _Z_ROWS = torch.tensor(
+        _np.load(os.environ["EVENT_Z_FILE"])["z"], dtype=torch.float32,
+        device=_DEVICE)
+if (_ckpt is not None and "prior_state_dict" in _ckpt
+        and os.environ.get("EVENT_Z_PRIOR", "0") == "1"):
+    _Z_DIM = int(_ckpt["z_dim"])
+    _Z_PRIOR = torch.nn.Sequential(
+        torch.nn.Linear(_cfg["cond_dim"], 128), torch.nn.GELU(),
+        torch.nn.Linear(128, 2 * _Z_DIM)).to(_DEVICE)
+    _Z_PRIOR.load_state_dict(_ckpt["prior_state_dict"])
+    _Z_PRIOR.eval()
+# Research hook (research/cond_realization_probe.py): apply an affine map to
+# the drawn feat AFTER KDE jitter, feat <- feat @ M.T + v, clamped to the same
+# +/-10 range as the bank. Inert unless EVENT_FEAT_CORR names an .npz with
+# 18x18 "M" and 18-vector "v".
+_FEAT_CORR_PATH = os.environ.get("EVENT_FEAT_CORR", "")
+_FEAT_CORR_M = _FEAT_CORR_V = None
+if _FEAT_CORR_PATH:
+    _fc = np.load(_FEAT_CORR_PATH)
+    _FEAT_CORR_M = torch.tensor(_fc["M"], dtype=torch.float32, device=_DEVICE)
+    _FEAT_CORR_V = torch.tensor(_fc["v"], dtype=torch.float32, device=_DEVICE)
+    print(f"[event_stream_polar] feat correction loaded from {_FEAT_CORR_PATH}")
+# Research hook: log commanded (z-scored) feat vectors and each spec's
+# log-distance to an .npz for offline realization-bias analysis. Inert unless
+# EVENT_FEAT_LOG names a path. Only logs the exactly-one-candidate-per-spec
+# case (EVENT_BESTOF=1, EVENT_SIR=1), which is what the probe scripts use.
+_FEAT_LOG_PATH = os.environ.get("EVENT_FEAT_LOG", "")
 # Best-of-N candidate selection: sample K candidates per spec under the SAME
 # commanded character, keep the one whose realized features (computed with
 # the training-side differentiable pipeline, z-scored by the checkpoint
@@ -141,6 +181,11 @@ _SIR_DUR_DIVERSE = os.environ.get("EVENT_SIR_DUR_DIVERSE", "0") == "1"
 _POOL_SAVE = os.environ.get("EVENT_POOL_SAVE", "")
 _POOL_LOAD = os.environ.get("EVENT_POOL_LOAD", "")
 _POOL_PICKS = os.environ.get("EVENT_POOL_PICKS", "")
+# EVENT_POOL_TOKENS=1 additionally stores each saved candidate's raw token
+# rows (dt_z, s_cls, th_cls) and its sampled cond in the pool npz, aligned
+# row-for-row with X/owner_idx/trajs, so a picks array can recover winner
+# TOKENS for distillation without lossy re-encoding of decoded pixels.
+_POOL_TOKENS = os.environ.get("EVENT_POOL_TOKENS", "0") == "1"
 assert not (_BESTOF > 1 and _SIR_K > 1), "EVENT_BESTOF and EVENT_SIR are exclusive"
 
 if _replay_only:
@@ -204,6 +249,8 @@ def _decode(dt_z, s_cls, th_cls, sx, sy, angle) -> Trajectory | None:
 def generate_paths(specs: list) -> list:
     if _POOL_LOAD:
         return _pool_replay(specs)
+    feat_log_commanded: list = []
+    feat_log_dist: list = []
     results: list = [None] * len(specs)
     pending = []
     for idx, (sx, sy, ex, ey) in enumerate(specs):
@@ -223,6 +270,8 @@ def generate_paths(specs: list) -> list:
     K = _BESTOF if (_BESTOF > 1 and _FEAT_BANK is not None and _FEAT_ON) else 1
     K_sir = _SIR_K if (_SIR_K > 1 and _FEAT_BANK is not None and _FEAT_ON) else 1
     sir_cands: dict = {it["idx"]: [] for it in pending} if K_sir > 1 else {}
+    sir_toks: dict | None = (
+        {it["idx"]: [] for it in pending} if (K_sir > 1 and _POOL_TOKENS) else None)
     chunk_size = max(_EVAL_BATCH // max(K, K_sir), 1)
     for c0 in range(0, len(pending), chunk_size):
         chunk = pending[c0:c0 + chunk_size]
@@ -249,6 +298,15 @@ def generate_paths(specs: list) -> list:
                 pos = (pos + jit).clamp(0, len(_FB_ORDER) - 1)
                 feat = _FEAT_BANK[_FB_ORDER[pos]] + _FEAT_BW * torch.randn(
                     B, _FEAT_BANK.shape[1], device=_DEVICE)
+                # log the pristine KDE draw (the human target), BEFORE any
+                # EVENT_FEAT_CORR correction is applied below, so the log
+                # always reflects "commanded" in the sense of Step A: the
+                # human-bank target the model was asked to realize.
+                if _FEAT_LOG_PATH and feat.shape[0] == len(chunk):
+                    feat_log_commanded.append(feat.detach().cpu().numpy())
+                    feat_log_dist.append(cond[:, 0].detach().cpu().numpy())
+                if _FEAT_CORR_M is not None:
+                    feat = (feat @ _FEAT_CORR_M.t() + _FEAT_CORR_V).clamp(-10.0, 10.0)
             else:
                 feat = torch.zeros(B, _FEAT_BANK.shape[1], device=_DEVICE)
         if K > 1:
@@ -257,10 +315,23 @@ def generate_paths(specs: list) -> list:
         else:
             cond_s, feat_s = cond, feat
         with torch.no_grad():
+            resid_ext = None
+            if _Z_PRIOR is not None:
+                mu_p, lv_p = _Z_PRIOR(cond_s).chunk(2, dim=-1)
+                resid_ext = mu_p + (torch.exp(0.5 * lv_p.clamp(-8.0, 8.0))
+                                    * _Z_TEMP * torch.randn_like(mu_p))
+            if _Z_ROWS is not None:
+                global _z_cursor
+                resid_ext = _Z_ROWS[_z_cursor:_z_cursor + cond_s.shape[0]]
+                _z_cursor += cond_s.shape[0]
             dt_z, s_tok, th_tok = _model.sample(
                 cond_s, seq_len, n_steps=_N_STEPS, temperature=_TEMP,
                 th_temperature=_TH_TEMP, order=_ORDER, choice_temp=_CHOICE_TEMP,
                 feat=feat_s,
+                drop_disp_cond=os.environ.get("EVENT_RESID_ONLY", "0") == "1",
+                resid_mode=os.environ.get("EVENT_RESID_MODE", "prefix"),
+                resid_ext=resid_ext,
+                guidance=float(os.environ.get("EVENT_CFG_W", "0")),
             )
         if K > 1:
             # realized character of each candidate, same pipeline and
@@ -284,6 +355,7 @@ def generate_paths(specs: list) -> list:
         dt_np = dt_z.float().cpu().numpy()
         s_np = s_tok.cpu().numpy()
         th_np = th_tok.cpu().numpy()
+        cond_np_chunk = cond_s.cpu().numpy() if sir_toks is not None else None
         for k, it in enumerate(chunk):
             if K > 1:
                 # decode candidates best-first until one is valid
@@ -300,12 +372,25 @@ def generate_paths(specs: list) -> list:
                     sir_cands[it["idx"]].append(
                         _decode(dt_np[row], s_np[row], th_np[row],
                                 it["sx"], it["sy"], it["angle"]))
+                    if sir_toks is not None:
+                        sir_toks[it["idx"]].append(
+                            (dt_np[row], s_np[row], th_np[row],
+                             cond_np_chunk[row]))
             else:
                 results[it["idx"]] = _decode(dt_np[k], s_np[k], th_np[k],
                                              it["sx"], it["sy"], it["angle"])
 
     if K_sir > 1:
-        _sir_select(sir_cands, results, specs)
+        _sir_select(sir_cands, results, specs, sir_toks=sir_toks)
+    if _FEAT_LOG_PATH and feat_log_commanded:
+        np.savez_compressed(
+            _FEAT_LOG_PATH,
+            commanded=np.concatenate(feat_log_commanded, axis=0),
+            log_dist=np.concatenate(feat_log_dist, axis=0),
+        )
+        print(f"[event_stream_polar] logged "
+              f"{sum(len(a) for a in feat_log_commanded)} commanded feat "
+              f"vectors to {_FEAT_LOG_PATH}", flush=True)
     return results
 
 
@@ -343,16 +428,17 @@ def _pool_replay(specs: list) -> list:
     return results
 
 
-def _sir_select(sir_cands: dict, results: list, specs: list) -> None:
+def _sir_select(sir_cands: dict, results: list, specs: list,
+                sir_toks: dict | None = None) -> None:
     """Keep one candidate per spec by a weighted draw whose weights are the
     human/synthetic density ratio from a freshly fitted discriminator."""
     from sklearn.ensemble import GradientBoostingClassifier
 
     from features import extract_features, resample_trajectory
 
-    feats, owners = [], []
+    feats, owners, owner_toks = [], [], []
     for idx, cands in sir_cands.items():
-        for traj in cands:
+        for pos, traj in enumerate(cands):
             if traj is None or len(traj) < 3:
                 continue
             f = extract_features(resample_trajectory(traj))
@@ -360,10 +446,20 @@ def _sir_select(sir_cands: dict, results: list, specs: list) -> None:
                 continue
             feats.append(f)
             owners.append((idx, traj))
+            if sir_toks is not None:
+                owner_toks.append(sir_toks[idx][pos])
     if not feats:
         return
     X_syn = np.asarray(feats)
     if _POOL_SAVE:
+        extra = {}
+        if sir_toks is not None:
+            extra = {
+                "dt_z": np.stack([t[0] for t in owner_toks]).astype(np.float32),
+                "s_cls": np.stack([t[1] for t in owner_toks]).astype(np.int16),
+                "th_cls": np.stack([t[2] for t in owner_toks]).astype(np.int16),
+                "cond": np.stack([t[3] for t in owner_toks]).astype(np.float32),
+            }
         np.savez_compressed(
             _POOL_SAVE,
             specs=np.asarray(specs, dtype=np.float64),
@@ -372,9 +468,11 @@ def _sir_select(sir_cands: dict, results: list, specs: list) -> None:
             trajs=np.asarray(
                 [np.asarray(t, dtype=np.float32) for _, t in owners],
                 dtype=object),
+            **extra,
         )
         print(f"[pool] saved {len(owners)} candidates "
-              f"({len(sir_cands)} specs) to {_POOL_SAVE}", flush=True)
+              f"({len(sir_cands)} specs{', with tokens' if extra else ''}) "
+              f"to {_POOL_SAVE}", flush=True)
     X_hum = np.load(_SIR_REF)
 
     def fit_logodds(X_neg):

@@ -1,0 +1,65 @@
+{
+  "model": "fc_v2",
+  "seed": 42,
+  "n_real": 6000,
+  "n_raw": 5999,
+  "n_clipped": 4492,
+  "n_control": 5064,
+  "bent_fraction": 0.46057676279379894,
+  "panel": {
+    "_reference": {
+      "n": 2000,
+      "max_abs_z_vs_contract": 0.0578841606178,
+      "worst_feature": "curvature_mean",
+      "rebuild_vs_contract_auc": 0.49222137499999996,
+      "jitter_px": 1e-09,
+      "n_holdout": 2000,
+      "n_paths_shared": 4492
+    },
+    "fc_v2 raw": {
+      "contract": 0.6499896250000001,
+      "rebuilt": 0.6451275000000001,
+      "control": 0.6336505
+    },
+    "fc_v2 + injected routes": {
+      "contract": 0.758365375,
+      "rebuilt": 0.760005875,
+      "control": 0.752483625
+    },
+    "human, route tail clipped to model": {
+      "contract": 0.5236013749999999,
+      "rebuilt": 0.5163638749999999,
+      "control": 0.50959625
+    },
+    "human, duration clipped (null control)": {
+      "contract": 0.5151546250000001,
+      "rebuilt": 0.500305625,
+      "control": 0.50168725
+    },
+    "real (holdout)": {
+      "contract": 0.47783137499999995,
+      "rebuilt": 0.48514425000000005,
+      "control": 0.49898462499999996
+    }
+  },
+  "auc": {
+    "raw": 0.6499896250000001,
+    "injected": 0.758365375,
+    "clipped": 0.5236013749999999,
+    "control": 0.5151546250000001,
+    "floor": 0.47783137499999995
+  },
+  "gap_share_reproduced_by_ablation": 0.26586004446490324,
+  "gap_share_closed_by_injection": -0.6295123817766489,
+  "detour": {
+    "human_p50": 1.0587679602424536,
+    "human_p90": 2.177031252122534,
+    "model_p50": 1.0701943969334833,
+    "model_p90": 1.693728059893709,
+    "clipped_p50": 1.0704103260869204,
+    "clipped_p90": 1.7418620649124874,
+    "injected_p50": 1.2137823936411871,
+    "injected_p90": 2.9502584308931556
+  },
+  "wall_sec": 22.98913836479187
+}

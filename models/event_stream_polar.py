@@ -96,6 +96,9 @@ class EventStreamPolarModel(nn.Module):
         cond_dropout: float = 0.1,
         dropout: float = 0.1,
         feat_dim: int = 0,
+        resid_dim: int = 0,
+        feat_film: bool = False,
+        feat_dropout: float | None = None,
     ):
         super().__init__()
         self.d_model = d_model
@@ -103,6 +106,13 @@ class EventStreamPolarModel(nn.Module):
         self.n_steps = n_diffusion_steps
         self.cond_dropout = cond_dropout
         self.feat_dim = feat_dim
+        self.resid_dim = resid_dim
+        # feat_dropout defaults to cond_dropout so every existing checkpoint
+        # keeps its exact behaviour. Set it to 0.0 to stop deleting the
+        # character command during training, which is what teaches the trunk
+        # that the channel is unreliable and can be ignored.
+        self.feat_dropout = cond_dropout if feat_dropout is None else feat_dropout
+        self.use_feat_film = bool(feat_film and feat_dim > 0)
 
         self.s_embed = nn.Embedding(N_S_CLASSES + 1, d_model)    # +1 MASK
         self.th_embed = nn.Embedding(N_TH_CLASSES + 1, d_model)  # +1 MASK
@@ -131,11 +141,46 @@ class EventStreamPolarModel(nn.Module):
                 nn.GELU(),
                 nn.Linear(d_model, d_model),
             )
+        # closed-loop arrival conditioning (W3 P1): a vector describing the
+        # displacement the still-masked part of the sequence must cover,
+        # recomputed from the revealed prefix at every sampling iteration.
+        # Zero-init like feat_embed so a fine-tune starts as an exact no-op.
+        self.resid_embed = None
+        if resid_dim > 0:
+            self.resid_embed = nn.Sequential(
+                nn.Linear(resid_dim, d_model),
+                nn.GELU(),
+                nn.Linear(d_model, d_model),
+            )
 
         self.layers = nn.ModuleList([
             CANDIBlock(d_model, n_heads, d_ff, dropout)
             for _ in range(n_layers)
         ])
+        # Dedicated per-layer FiLM for the 18-dim character command.
+        #
+        # Without this the command is SUMMED into one d_model vector together
+        # with the diffusion timestep embedding and the displacement
+        # conditioning, and only that sum reaches CANDIBlock's FiLM. The
+        # timestep signal varies over 1000 steps and carries most of the
+        # reconstruction loss, so the character command competes with it for
+        # the same channel and loses. Measured consequence, on fc_v2:
+        # commanded-to-realized correlation averages 0.41 across the 18
+        # features and is at or below 0.31 on the whole shape family
+        # (research/cond_realization_probe.py, and the HANDOFF section dated
+        # 2026-07-27). A command obeyed at 0.41 cannot produce a human feature
+        # distribution however good the rest of the model is.
+        #
+        # Giving the command its own scale and shift after every block means it
+        # no longer shares a bottleneck with the timestep. Zero-init makes the
+        # whole path an exact no-op at load, so a fine-tune starts at its
+        # parent checkpoint's behaviour to the digit and any movement is
+        # attributable to this training.
+        self.feat_film = None
+        if self.use_feat_film:
+            self.feat_film = nn.ModuleList([
+                nn.Linear(d_model, d_model * 2) for _ in range(n_layers)
+            ])
         self.norm = nn.LayerNorm(d_model)
         self.dt_head = nn.Linear(d_model, 1)
         self.s_head = nn.Linear(d_model, N_S_CLASSES)
@@ -154,6 +199,13 @@ class EventStreamPolarModel(nn.Module):
         if self.feat_embed is not None:
             nn.init.zeros_(self.feat_embed[2].weight)
             nn.init.zeros_(self.feat_embed[2].bias)
+        if self.resid_embed is not None:
+            nn.init.zeros_(self.resid_embed[2].weight)
+            nn.init.zeros_(self.resid_embed[2].bias)
+        if self.feat_film is not None:
+            for lin in self.feat_film:
+                nn.init.zeros_(lin.weight)
+                nn.init.zeros_(lin.bias)
 
     def _init_weights(self):
         for p in self.parameters():
@@ -179,7 +231,40 @@ class EventStreamPolarModel(nn.Module):
         th_out[mask] = TH_MASK_TOKEN
         return s_out, th_out, mask
 
-    def trunk(self, dt_noisy, s_tok, th_tok, t, cond, feat=None):
+    @torch.no_grad()
+    def prefix_resid(self, s_tok, th_tok, cond):
+        """Closed-loop conditioning vector, one per sequence: the displacement
+        the not-yet-revealed part still has to cover, measured from the
+        longest fully-revealed prefix. Absolute headings need every earlier
+        dtheta, so scattered revealed positions past the first mask cannot be
+        placed; the contiguous prefix is the largest part whose displacement
+        is exact. Everything is expressed in the conditioning frame, the same
+        frame the dtheta tokens live in: the target is (exp(log_dist), 0) and
+        prefix headings integrate from zero, so the vector needs no absolute
+        angle and stays meaningful when the static displacement conditioning
+        is withheld. Returns [log1p(dist), unit_x, unit_y, prefix_fraction].
+        Works on masked training inputs and on the sampler's partial state
+        identically, so training and sampling see the same signal."""
+        B, T = s_tok.shape
+        idx = torch.arange(T, device=s_tok.device).unsqueeze(0).expand(B, T)
+        hidden = s_tok >= S_MASK_TOKEN
+        p = torch.where(hidden, idx, torch.full_like(idx, T)).min(dim=1).values
+        s = class_to_speed(s_tok.clamp(max=N_S_CLASSES - 1))
+        dth = class_to_dtheta(th_tok.clamp(max=N_TH_CLASSES - 1))
+        motion = (s_tok > TICK_CLASS) & (s_tok < S_PAD_CLASS)
+        heading = torch.cumsum(
+            torch.where(motion, dth, torch.zeros_like(dth)), dim=1)
+        keep = (idx < p.unsqueeze(1)) & motion
+        px = torch.where(keep, s * torch.cos(heading), torch.zeros_like(s)).sum(1)
+        py = torch.where(keep, s * torch.sin(heading), torch.zeros_like(s)).sum(1)
+        rx = torch.exp(cond[:, 0]) - px
+        ry = -py
+        rn = torch.sqrt(rx * rx + ry * ry)
+        return torch.stack(
+            [torch.log1p(rn), rx / (rn + 1e-6), ry / (rn + 1e-6),
+             p.float() / T], dim=1)
+
+    def trunk(self, dt_noisy, s_tok, th_tok, t, cond, feat=None, resid=None):
         B, T = dt_noisy.shape
         x = (
             self.dt_proj(dt_noisy.unsqueeze(-1))
@@ -192,13 +277,23 @@ class EventStreamPolarModel(nn.Module):
             keep = (torch.rand(B, 1, device=cond.device) > self.cond_dropout).float()
             cond = cond * keep
         combined = t_emb + self.cond_embed(cond)
+        fe = None
         if self.feat_embed is not None and feat is not None:
-            if self.training and self.cond_dropout > 0:
-                fkeep = (torch.rand(B, 1, device=feat.device) > self.cond_dropout).float()
+            if self.training and self.feat_dropout > 0:
+                fkeep = (torch.rand(B, 1, device=feat.device) > self.feat_dropout).float()
                 feat = feat * fkeep
-            combined = combined + self.feat_embed(feat)
-        for layer in self.layers:
+            fe = self.feat_embed(feat)
+            combined = combined + fe
+        if self.resid_embed is not None and resid is not None:
+            if self.training and self.cond_dropout > 0:
+                rkeep = (torch.rand(B, 1, device=resid.device) > self.cond_dropout).float()
+                resid = resid * rkeep
+            combined = combined + self.resid_embed(resid)
+        for i, layer in enumerate(self.layers):
             x = layer(x, combined)
+            if self.feat_film is not None and fe is not None:
+                scale, shift = self.feat_film[i](fe).unsqueeze(1).chunk(2, dim=-1)
+                x = x * (1.0 + scale) + shift
         return self.norm(x)
 
     def th_logits(self, x: torch.Tensor, s_cond: torch.Tensor) -> torch.Tensor:
@@ -206,8 +301,8 @@ class EventStreamPolarModel(nn.Module):
         position (true class in training, sampled class when sampling)."""
         return self.th_head(self.th_norm(x + self.s_ctx_embed(s_cond.clamp(max=N_S_CLASSES - 1))))
 
-    def forward(self, dt_noisy, s_tok, th_tok, t, cond, s_true, feat=None):
-        x = self.trunk(dt_noisy, s_tok, th_tok, t, cond, feat)
+    def forward(self, dt_noisy, s_tok, th_tok, t, cond, s_true, feat=None, resid=None):
+        x = self.trunk(dt_noisy, s_tok, th_tok, t, cond, feat, resid)
         return (
             self.dt_head(x).squeeze(-1),
             self.s_head(x),
@@ -225,6 +320,10 @@ class EventStreamPolarModel(nn.Module):
         order: str = "conf",
         choice_temp: float = 0.0,
         feat: torch.Tensor | None = None,
+        drop_disp_cond: bool = False,
+        resid_mode: str = "prefix",
+        resid_ext: torch.Tensor | None = None,
+        guidance: float = 0.0,
     ):
         """Flow ODE on dt; MaskGIT position reveal on (s, dtheta) jointly.
 
@@ -240,6 +339,15 @@ class EventStreamPolarModel(nn.Module):
         """
         B = cond.shape[0]
         dev = cond.device
+        # resid-only serving: withhold the static displacement dims from the
+        # trunk so aiming runs entirely on the live residual channel. The
+        # residual itself is always computed from the true cond.
+        cond_static = cond
+        if drop_disp_cond:
+            cond_static = cond.clone()
+            cond_static[:, 0] = 0.0
+            cond_static[:, 2] = 0.0
+            cond_static[:, 3] = 0.0
         temp = max(temperature, 1e-4)
         th_temp = max(th_temperature if th_temperature is not None else temperature, 1e-4)
 
@@ -258,6 +366,9 @@ class EventStreamPolarModel(nn.Module):
             ).view(B, seq_len)
             s_for_th = torch.where(masked, s_new, s_tok.clamp(max=N_S_CLASSES - 1))
             th_l = self.th_logits(x_feat, s_for_th)
+            if x_feat_u is not None:
+                th_u = self.th_logits(x_feat_u, s_for_th)
+                th_l = th_u + guidance * (th_l - th_u)
             th_probs = torch.softmax(th_l / th_temp, dim=-1)
             th_new = torch.multinomial(
                 th_probs.view(-1, th_probs.shape[-1]), 1
@@ -270,12 +381,42 @@ class EventStreamPolarModel(nn.Module):
             th_new = torch.where(motion, th_new, torch.full_like(th_new, TH_NULL_CLASS))
             return s_new, th_new, conf
 
+        s_draft = th_draft = None
         for i in range(n_steps):
             t_cont = 1.0 - i * step
             t_scaled = torch.full((B,), t_cont * (self.n_steps - 1), device=dev)
-            x_feat = self.trunk(dt_z, s_tok, th_tok, t_scaled, cond, feat)
+            if self.resid_embed is None:
+                resid = None
+            elif resid_ext is not None:
+                # external per-sequence vector riding the resid slot, e.g.
+                # a character latent drawn from a learned prior (W3 P2)
+                resid = resid_ext
+            elif resid_mode == "draft" and s_draft is not None:
+                # closed loop on the model's own provisional full draft:
+                # the draft has no mask tokens, so prefix_resid reduces to
+                # target minus the draft's endpoint - a live error signal
+                # that works under any reveal order (stale by one step).
+                resid = self.prefix_resid(s_draft, th_draft, cond)
+            else:
+                resid = self.prefix_resid(s_tok, th_tok, cond)
+            x_feat = self.trunk(dt_z, s_tok, th_tok, t_scaled, cond_static,
+                                feat, resid)
             v_pred = self.dt_head(x_feat).squeeze(-1)
             s_logits = self.s_head(x_feat)
+            # classifier-free guidance on the character channels: the null
+            # (zeroed feat and resid) is in-distribution by construction,
+            # since training dropped both by zeroing. Amplifies the trunk's
+            # under-responsive reaction to character commands; dt flow and
+            # the static cond stay unguided.
+            x_feat_u = None
+            if guidance > 0 and guidance != 1.0 and (
+                    feat is not None or resid is not None):
+                x_feat_u = self.trunk(
+                    dt_z, s_tok, th_tok, t_scaled, cond_static,
+                    torch.zeros_like(feat) if feat is not None else None,
+                    torch.zeros_like(resid) if resid is not None else None)
+                s_u = self.s_head(x_feat_u)
+                s_logits = s_u + guidance * (s_logits - s_u)
 
             dt_z = dt_z - step * v_pred
 
@@ -289,8 +430,18 @@ class EventStreamPolarModel(nn.Module):
                 continue
 
             s_new, th_new, conf = sample_masked(masked)
+            if resid_mode == "draft":
+                s_draft = torch.where(masked, s_new, s_tok)
+                th_draft = torch.where(masked, th_new, th_tok)
             if order == "random":
                 score = torch.rand_like(conf)
+            elif order == "l2r":
+                # left-to-right reveal: the revealed set is always a
+                # contiguous prefix, so prefix_resid tracks the true partial
+                # state every iteration and the arrival loop actually closes.
+                score = -torch.arange(
+                    seq_len, device=dev, dtype=torch.float32
+                ).unsqueeze(0).expand(B, -1)
             elif order == "gumbel":
                 g = -torch.log(-torch.log(torch.rand_like(conf).clamp(1e-9, 1.0)))
                 anneal = choice_temp * (1.0 - i / n_steps)

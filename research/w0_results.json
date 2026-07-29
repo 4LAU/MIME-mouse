@@ -1,0 +1,104 @@
+{
+  "workstream": "W0 groundwork (net-new model program, July 19 mandate)",
+  "task_a_serve_latency": {
+    "model": "candi_polar_flow_best.pt (NOT modified; MD5 91326a29750789f3167055324ef377c5 verified unchanged before and after)",
+    "generation_config": "steps=200 guide=0.15 perp=0.85 correct=rotate cfg=0.0 (research/phase_a_baseline.py, the published 0.752/0.757 recipe)",
+    "script": "research/w0_latency.py (imports phase_a_baseline.load_model/generate_paths/make_specs verbatim, times them; does not reimplement generation)",
+    "note_on_batching": "Each of the K repeated specs draws an INDEPENDENT duration (DurationModel has no fixed seed), so K items usually land in K distinct seq_len groups inside generate_paths and are generated in series, not as one parallel tensor op. This matches the real product scenario (K independently-sampled candidates for one request) and explains why per-spec cost barely changes with K on either device: there is effectively no batching speedup, latency is ~linear in K.",
+    "gpu": {
+      "torch_device": "cuda",
+      "model_load_sec": 0.147,
+      "batch_1_median_sec": 1.412,
+      "batch_1_ms_per_spec": 1412.3,
+      "batch_8_median_sec": 11.077,
+      "batch_8_ms_per_spec": 1384.6,
+      "batch_16_median_sec": 19.957,
+      "batch_16_ms_per_spec": 1247.3,
+      "batch_32_median_sec": 35.754,
+      "batch_32_ms_per_spec": 1117.3,
+      "raw_results_file": "research/w0_latency_gpu.json"
+    },
+    "cpu": {
+      "torch_device": "cpu",
+      "forced_via": "CUDA_VISIBLE_DEVICES=\"\" (note: on this Windows/torch build torch.cuda.is_available() still reports True with this var set, but torch.cuda.device_count() correctly reports 0, and get_device() in experiments/_common.py gates on device_count()>0, so generation genuinely ran on CPU -- confirmed by the load-time log line 'device=cpu')",
+      "model_load_sec": 0.052,
+      "batch_1_median_sec": 1.446,
+      "batch_1_ms_per_spec": 1445.9,
+      "batch_8_median_sec": 12.737,
+      "batch_8_ms_per_spec": 1592.2,
+      "batch_16_median_sec": 21.660,
+      "batch_16_ms_per_spec": 1353.8,
+      "batch_32_median_sec": 39.089,
+      "batch_32_ms_per_spec": 1221.5,
+      "raw_results_file": "research/w0_latency_cpu.json"
+    },
+    "verify_against_prior": {
+      "prior_claim": "~700ms/spec at K=32 on CPU from July 7 poolgen (PLAN.md)",
+      "measured": "1221.5 ms/spec at K=32 on CPU for candi_polar_flow_best.pt",
+      "verdict": "DOES NOT MATCH -- prior number is from a different model (event_polar_4m_fc_v2.pt, autoregressive event-stream architecture, ~100 sampling steps) generating a 2000-spec pool; this measurement is CANDI's own 200-step diffusion sampler on a single spec repeated K times. The two are not the same pipeline, so the mismatch is expected, not a bug. Flagging per instructions rather than silently reconciling."
+    },
+    "key_finding": "GPU gives almost no speedup over CPU for this model at any batch size (~1.1-1.6s/spec on both). CANDI's latency is not compute-bound; it is dominated by 200 sequential Python-level sampling steps (and, since per-item durations differ, items rarely batch together). Even K=1 on GPU is 1.41s, already consuming ~70% of the 2s serving budget; K=8 alone is ~11s, ~5.5x over budget. Per-request K-candidate filtering with THIS model and THIS sampler is not compatible with the <=2s target for any K>1, and is marginal even at K=1."
+  },
+  "task_b_per_item_sir_floor": {
+    "model": "event_polar_4m_fc_v2.pt (the production event-stream model, NOT candi_polar_flow_best.pt -- this is the model the per-item SIR mechanism and the 0.504 headline both belong to; PLAN.md's 'per-item SIR ~0.56' figure is about this model)",
+    "script": "research/w0_sir_floor.py",
+    "deviation_from_instructions": "Task B's instructions describe a fresh ~64k-generation GPU run with a temperature watchdog. Skipped: pool_s42_k32.npz (2000 specs x 31-32 candidates, event_polar_4m_fc_v2.pt, seed 42, built July 6 by scripts/run_poolgen32.sh under the identical locked recipe) already exists on disk and satisfies the exact request -- same model, same spec convention, K=32 with per-spec draw order preserved. K=8/16 were built as true prefixes of this same K=32 draw (first 8 / first 16 candidates per spec, in original order), exactly as instructed for reuse. No GPU time was spent; no watchdog was needed. If a reviewer wants a literally-fresh draw, rerun scripts/run_poolgen32.sh with an unused seed.",
+    "judge": "selection_lab.py's pick_sir(), called directly (not reimplemented). This is an offline, verbatim port of experiments/event_stream_polar.py's production _sir_select(): GradientBoostingClassifier(n_estimators=200, max_depth=3, subsample=0.8, random_state=0) fit on human-vs-candidate log-odds, then a per-spec tempered (temp=0.7) Gumbel-max lottery draw -- the same per-item judge and same selection mechanics used to build the production candidate pools.",
+    "honest_split": "Judge fit ONLY on ref half A: data/human_ref_features_sir.npy (4000 rows, a reference set disjoint from all eval humans) split via np.random.default_rng(0), first 2000 rows = ref A (fit), last 2000 = ref B (never used here). Final AUC computed against data/human_val_features_grpo.npy, which the judge never saw. data/human_eval_features.npy (protected) was never read.",
+    "final_scoring_recipe": "RandomForestClassifier(n_estimators=100, oob_score=True, random_state=42), OOB decision function AUC, 2000 selected synth vs 2000 human_val_features_grpo.npy rows",
+    "results": {
+      "K=8": {"rf_oob_auc": 0.5809, "n_per_class": 2000},
+      "K=16": {"rf_oob_auc": 0.5646, "n_per_class": 2000},
+      "K=32": {"rf_oob_auc": 0.5391, "n_per_class": 2000}
+    },
+    "raw_results_file": "research/w0_sir_floor_results.json",
+    "interpretation": "Monotonic improvement with K, consistent with PLAN.md's disclosed 'per-item SIR ~0.56' figure (K=16 here reads 0.5646, in the same neighborhood -- exact match not expected since that number was measured on a different pool/seed draw). Per-item filtering alone, even at K=32, stays well above the 0.504 set-level headline and above 0.50 chance. This is the floor the net-new model (W1/W2) must beat while also fitting inside the <=2s serving budget."
+  },
+  "task_c_winners_inventory": {
+    "selection_mechanism": "trust33.py's f20d85_r30_rf config: 33-feature (18 hand-crafted + 15 raw-signal) SET-LEVEL trust-region discriminator loop, judge=RandomForestClassifier, 30 rounds, frac=0.20 decaying 0.85/round. This produces the *_picks_trust33_f20d85_r30_rf.npy files -- the actual headline/OOS winner picks (distinct from Task B's per-item SIR mechanism).",
+    "model": "event_polar_4m_fc_v2.pt (training/event_polar_4m_fc_v2.pt, present on disk)",
+    "release_bundle_seeds_42_43_44": {
+      "42": {"pool_file": "pool_s42_k16.npz", "pool_size_mb": 20.5, "picks_file": "pool_s42_k16_picks_trust33_f20d85_r30_rf.npy", "n_winners": 2000, "final_rf_oob_auc": 0.5095},
+      "43": {"pool_file": "pool_s43_k16.npz", "pool_size_mb": 20.5, "picks_file": "pool_s43_k16_picks_trust33_f20d85_r30_rf.npy", "n_winners": 2000, "final_rf_oob_auc": 0.5030},
+      "44": {"pool_file": "pool_s44_k16.npz", "pool_size_mb": 20.4, "picks_file": "pool_s44_k16_picks_trust33_f20d85_r30_rf.npy", "n_winners": 2000, "final_rf_oob_auc": 0.4993},
+      "total_winners": 6000,
+      "confirmed_via": "setup_data.py RELEASE_ASSETS list names exactly these 3 pools + 3 picks files + event_polar_4m_fc_v2.pt"
+    },
+    "out_of_sample_seeds_45_to_50": {
+      "45": {"pool_file": "pool_s45_k16.npz", "picks_file": "pool_s45_k16_picks_trust33_f20d85_r30_rf.npy", "n_winners": 2000, "final_rf_oob_auc": 0.5148},
+      "46": {"pool_file": "pool_s46_k16.npz", "picks_file": "pool_s46_k16_picks_trust33_f20d85_r30_rf.npy", "n_winners": 2000, "final_rf_oob_auc": 0.5190},
+      "47": {"pool_file": "pool_s47_k16.npz", "picks_file": "pool_s47_k16_picks_trust33_f20d85_r30_rf.npy", "n_winners": 2000, "final_rf_oob_auc": 0.5221},
+      "48": {"pool_file": "pool_s48_k16.npz", "picks_file": "pool_s48_k16_picks_trust33_f20d85_r30_rf.npy", "n_winners": 2000, "final_rf_oob_auc": 0.5114},
+      "49": {"pool_file": "pool_s49_k16.npz", "picks_file": "pool_s49_k16_picks_trust33_f20d85_r30_rf.npy", "n_winners": 2000, "final_rf_oob_auc": 0.5033},
+      "50": {"pool_file": "pool_s50_k16.npz", "picks_file": "pool_s50_k16_picks_trust33_f20d85_r30_rf.npy", "n_winners": 2000, "final_rf_oob_auc": 0.5087},
+      "total_winners": 12000
+    },
+    "extra_non_release_artifact": {
+      "seed_42_k32_variant": {"pool_file": "pool_s42_k32.npz", "pool_size_mb": 40.7, "picks_file": "pool_s42_k32_picks_trust33_f20d85_r30_rf.npy", "n_winners": 2000, "note": "Same seed-42 specs redrawn at K=32 (support-deficiency hedge, July 7). Overlaps in underlying (A,B) specs with the seed-42 K=16 set but different candidate draws/picks; not part of the release bundle."}
+    },
+    "grand_total_winner_trajectories_on_disk": 20000,
+    "grand_total_release_plus_oos_unique_seeds": 18000,
+    "format": "Each pool_s<seed>_k16.npz stores: specs (2000x4 float, start/end xy), X (Nx18 float, features.py-space feature vectors for EVERY candidate), owner_idx (N int, candidate->spec mapping), trajs (N-length object array of variable-length (T,3) float arrays: x,y,t per point, in pixels/seconds). The matching *_picks_trust33_f20d85_r30_rf.npy is a (2000,) int64 array of winning candidate row indices (one per spec, -1 if none -- none observed, all 2000/2000 filled for every seed checked). Winner trajectories = pool['trajs'][picks] for picks >= 0; they are not separately materialized as a flat trajectory file anywhere -- extracting them requires this pool+picks indexing step.",
+    "unrelated_but_adjacent_asset": "training/distill_corpus_b00..b09.npz (10 shards, made by training/make_distill_corpus.py) are a SEPARATE, already-built per-item-SIR-selected corpus (K=16 GBM judge, N=20000 specs on a different random start-point distribution, tokens not pixels) intended for W1-style distillation experiments. These are NOT set-level-selected winners and were not counted above; flagging because they exist and are adjacent to this workstream's concerns.",
+    "marginal_cost_to_mint_more_winners": {
+      "gpu_pool_generation": "~40 min/seed on GPU for 2000 specs x K=16 candidates (measured directly: eval_poolgen_s47.log logs 'Generated 2000 trajectories in 2361.9s' = 39.4 min; cross-checked against consecutive pool-completion file-mtime deltas in the seed 47->48->49->50 batch, all 42-43 min apart). This dominates the total cost and is the only GPU-touching stage.",
+      "cpu_selection_trust33": "~85-92s on CPU (trust33.py fitting the 33-feature trust-region loop, 30 rounds)",
+      "cpu_honest_replay": "~2-2.5 min on CPU (evaluate.py replay via EVENT_POOL_LOAD/EVENT_POOL_PICKS, no checkpoint load, produces the final disclosed RF-OOB AUC)",
+      "total_per_additional_seed": "~44 minutes wall clock, ~40 of which is GPU, to mint 2000 more winner trajectories plus a confirmed final AUC number",
+      "driver_scripts": "scripts/run_poolgen.sh / run_poolgen32.sh (GPU pool gen) + scripts/run_oos.sh (full skip-safe pipeline: poolgen -> trust33 -> honest replay, one call per seed)"
+    }
+  },
+  "gpu_safety": {
+    "temperature_before_task_a_gpu_run": "45C",
+    "temperature_after_all_gpu_work": "46C",
+    "checkpoint_md5_before": "91326a29750789f3167055324ef377c5",
+    "checkpoint_md5_after": "91326a29750789f3167055324ef377c5 (unchanged)",
+    "watchdog_used": false,
+    "watchdog_rationale": "Task A's GPU load was 4 short inference bursts (~35s each, no training/backward pass) and never approached sustained load; Task B did no GPU work at all (reused an existing pool). Neither warranted the ~40-min sustained-load watchdog described in the task's generic worst case."
+  },
+  "deviations_summary": [
+    "Task A: measured latency is CANDI's own number; does not match the '~700ms/spec K=32 CPU' prior because that prior is from a different model/architecture (event_polar_4m_fc_v2.pt's autoregressive sampler), not candi_polar_flow_best.pt's 200-step diffusion sampler. Reported both numbers side by side rather than reconciling them.",
+    "Task B: used the EXISTING pool_s42_k32.npz (event_polar_4m_fc_v2.pt, seed 42) instead of running a fresh ~64k-generation GPU burst, since it already satisfies the exact spec (same model, same convention, K=32, honest-split-compatible). No GPU time spent, no watchdog needed. Task B necessarily used event_polar_4m_fc_v2.pt, not candi_polar_flow_best.pt, because that is the model the per-item SIR judge and the '~0.56' PLAN.md figure both refer to; Task A's candi latency numbers and Task B's SIR floor are about two different models by design of the existing pipeline.",
+    "Task C: counted trust33 set-level winners only (the literal ask); flagged the adjacent per-item-SIR distillation corpus (training/distill_corpus_b*.npz) as a related but separately-built asset rather than folding it into the winner count."
+  ]
+}

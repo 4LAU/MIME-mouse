@@ -1,0 +1,73 @@
+{
+  "covered_features": [
+    "mean_velocity",
+    "std_velocity",
+    "mean_acceleration",
+    "std_acceleration",
+    "mean_jerk",
+    "std_jerk",
+    "path_efficiency",
+    "curvature_mean",
+    "curvature_std",
+    "angular_velocity_mean",
+    "angular_velocity_std"
+  ],
+  "n_buckets": 6,
+  "n_sample_usable": 6000,
+  "seed": 20260719,
+  "ridge": 0.0001,
+  "weight_cap_ratio": 10.0,
+  "bucket_edges": [
+    -Infinity,
+    49.64876454643403,
+    103.384404669751,
+    192.2407258628328,
+    322.5756322993357,
+    564.4452015856161,
+    Infinity
+  ],
+  "buckets": [
+    {
+      "bucket": 0,
+      "n": 997,
+      "dist_lo": -Infinity,
+      "dist_hi": 49.64876454643403,
+      "mean_dist": 32.65502273330487
+    },
+    {
+      "bucket": 1,
+      "n": 1003,
+      "dist_lo": 49.64876454643403,
+      "dist_hi": 103.384404669751,
+      "mean_dist": 73.67059199461283
+    },
+    {
+      "bucket": 2,
+      "n": 1000,
+      "dist_lo": 103.384404669751,
+      "dist_hi": 192.2407258628328,
+      "mean_dist": 144.99113488915648
+    },
+    {
+      "bucket": 3,
+      "n": 1000,
+      "dist_lo": 192.2407258628328,
+      "dist_hi": 322.5756322993357,
+      "mean_dist": 251.87317339788544
+    },
+    {
+      "bucket": 4,
+      "n": 1000,
+      "dist_lo": 322.5756322993357,
+      "dist_hi": 564.4452015856161,
+      "mean_dist": 428.7509259486981
+    },
+    {
+      "bucket": 5,
+      "n": 1000,
+      "dist_lo": 564.4452015856161,
+      "dist_hi": Infinity,
+      "mean_dist": 899.2016148832491
+    }
+  ]
+}

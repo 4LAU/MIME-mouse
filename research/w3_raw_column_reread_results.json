@@ -1,0 +1,481 @@
+{
+  "seed": 42,
+  "audit": {
+    "w3_stall_pattern": "HAS a raw column already; it is how the operator was found",
+    "w3_envelope_ceiling": "single additive arm; conclusion is about turning",
+    "w3_turn_floor": "single additive arm; conclusion is about turning",
+    "w3_style_variance": "single additive arm; conclusion is about turning",
+    "w3_missing_paths": "single additive arm; conclusion is about turning",
+    "w3_stall_surgery": "single additive arm; scores a hold-deletion surgery",
+    "w3_gap_anatomy": "single additive arm; conclusion is about timestamps",
+    "w3_critic_coverage": "single additive arm; trains a critic on it",
+    "w3_corpus_coverage": "single additive arm; conclusion is about the corpus builder, independent of the arm's motion"
+  },
+  "arms": {
+    "fc_v2": {
+      "families": {
+        "_all18": {
+          "raw": {
+            "contract_vs_rebuilt": 0.6451275000000001,
+            "all18": 0.6451275000000001
+          },
+          "additive": {
+            "contract_vs_rebuilt": 0.73527275,
+            "all18": 0.73527275
+          },
+          "jog": {
+            "contract_vs_rebuilt": 0.7165118749999999,
+            "all18": 0.7165118749999999
+          }
+        },
+        "envelope": {
+          "raw": {
+            "alone": 0.5349548749999999,
+            "without": 0.6423467500000001,
+            "worth": 0.0027807499999999985
+          },
+          "additive": {
+            "alone": 0.547633375,
+            "without": 0.718410875,
+            "worth": 0.016861875000000026
+          },
+          "jog": {
+            "alone": 0.5669295000000001,
+            "without": 0.703668,
+            "worth": 0.012843874999999949
+          }
+        },
+        "turning": {
+          "raw": {
+            "alone": 0.6097773750000001,
+            "without": 0.5850583749999999,
+            "worth": 0.06006912500000017
+          },
+          "additive": {
+            "alone": 0.7076061250000001,
+            "without": 0.59210475,
+            "worth": 0.14316800000000007
+          },
+          "jog": {
+            "alone": 0.690293,
+            "without": 0.5997942500000001,
+            "worth": 0.11671762499999982
+          }
+        },
+        "derivatives": {
+          "raw": {
+            "alone": 0.560135875,
+            "without": 0.641544,
+            "worth": 0.0035835000000000727
+          },
+          "additive": {
+            "alone": 0.55510625,
+            "without": 0.7368017500000001,
+            "worth": -0.0015290000000001136
+          },
+          "jog": {
+            "alone": 0.56427925,
+            "without": 0.7049886249999999,
+            "worth": 0.011523249999999985
+          }
+        },
+        "turning: wobble": {
+          "raw": {
+            "alone": 0.569277625,
+            "without": 0.626629,
+            "worth": 0.018498500000000084
+          },
+          "additive": {
+            "alone": 0.6808015000000001,
+            "without": 0.6331034999999999,
+            "worth": 0.1021692500000001
+          },
+          "jog": {
+            "alone": 0.6475395,
+            "without": 0.6456875,
+            "worth": 0.07082437499999994
+          }
+        },
+        "turning: excursion": {
+          "raw": {
+            "alone": 0.530858375,
+            "without": 0.627703625,
+            "worth": 0.01742387500000009
+          },
+          "additive": {
+            "alone": 0.517267375,
+            "without": 0.7160692499999999,
+            "worth": 0.01920350000000015
+          },
+          "jog": {
+            "alone": 0.557928875,
+            "without": 0.690347875,
+            "worth": 0.026163999999999854
+          }
+        }
+      },
+      "rf_importance": {
+        "raw": {
+          "mean_velocity": 0.04889722009629231,
+          "std_velocity": 0.05130477256986631,
+          "max_velocity": 0.05305308037650979,
+          "velocity_skewness": 0.0532802686445711,
+          "mean_acceleration": 0.052658599712327475,
+          "std_acceleration": 0.04936602875952833,
+          "max_acceleration": 0.05150802905779174,
+          "mean_jerk": 0.05105958584316828,
+          "std_jerk": 0.05373433179830708,
+          "path_efficiency": 0.06709882456106232,
+          "max_deviation": 0.06338568225677686,
+          "curvature_mean": 0.06813874732186592,
+          "curvature_std": 0.06542671077603664,
+          "num_direction_changes": 0.043599983626690667,
+          "movement_duration": 0.05318613737183256,
+          "time_to_peak_velocity": 0.0592340936296894,
+          "angular_velocity_mean": 0.06038989227083775,
+          "angular_velocity_std": 0.05467801132684544
+        },
+        "additive": {
+          "mean_velocity": 0.04766066921428487,
+          "std_velocity": 0.045680800420561996,
+          "max_velocity": 0.04517249013022339,
+          "velocity_skewness": 0.04777226081534848,
+          "mean_acceleration": 0.0483283504790835,
+          "std_acceleration": 0.04438735916312509,
+          "max_acceleration": 0.044200460937173995,
+          "mean_jerk": 0.04501724946009442,
+          "std_jerk": 0.05041348511458575,
+          "path_efficiency": 0.06533711443948433,
+          "max_deviation": 0.051626058448923914,
+          "curvature_mean": 0.0648139045112361,
+          "curvature_std": 0.05998106330094337,
+          "num_direction_changes": 0.04733477313246601,
+          "movement_duration": 0.050877903299138626,
+          "time_to_peak_velocity": 0.05603417729329881,
+          "angular_velocity_mean": 0.11297842879190573,
+          "angular_velocity_std": 0.07238345104812169
+        },
+        "jog": {
+          "mean_velocity": 0.04635829262297877,
+          "std_velocity": 0.044844832700723605,
+          "max_velocity": 0.04321188642440137,
+          "velocity_skewness": 0.05354223622702423,
+          "mean_acceleration": 0.05367903302371245,
+          "std_acceleration": 0.04279569125625609,
+          "max_acceleration": 0.045556950030873206,
+          "mean_jerk": 0.048570996716947305,
+          "std_jerk": 0.04672489307659373,
+          "path_efficiency": 0.07616573284433602,
+          "max_deviation": 0.05657514231806097,
+          "curvature_mean": 0.08161044114165532,
+          "curvature_std": 0.0760838638973806,
+          "num_direction_changes": 0.04373139310938978,
+          "movement_duration": 0.05223299439770025,
+          "time_to_peak_velocity": 0.06047452096015811,
+          "angular_velocity_mean": 0.06577816576084512,
+          "angular_velocity_std": 0.062062933490963146
+        }
+      },
+      "turn_by_class": [
+        {
+          "class_lo": 1,
+          "class_hi": 5,
+          "median_velocity": 125.00160934612863,
+          "human_mean_turn": 31.935754441384287,
+          "arm_mean_turn": {
+            "raw": 26.56737304278618,
+            "additive": 37.723849667021284,
+            "jog": 28.79793289952114
+          },
+          "human_event_share": 0.22741988151327144,
+          "n_human_events": 24376
+        },
+        {
+          "class_lo": 6,
+          "class_hi": 11,
+          "median_velocity": 202.03052955379866,
+          "human_mean_turn": 31.162866844866095,
+          "arm_mean_turn": {
+            "raw": 30.890069474444626,
+            "additive": 41.07591742225598,
+            "jog": 25.944458091987727
+          },
+          "human_event_share": 0.07422680412371134,
+          "n_human_events": 7956
+        },
+        {
+          "class_lo": 12,
+          "class_hi": 21,
+          "median_velocity": 250.00321869225726,
+          "human_mean_turn": 18.845612248891076,
+          "arm_mean_turn": {
+            "raw": 14.530848446772588,
+            "additive": 26.13642554609842,
+            "jog": 18.495739482662625
+          },
+          "human_event_share": 0.08272612772309558,
+          "n_human_events": 8867
+        },
+        {
+          "class_lo": 22,
+          "class_hi": 31,
+          "median_velocity": 319.43967514643316,
+          "human_mean_turn": 22.84019285506768,
+          "arm_mean_turn": {
+            "raw": 21.927198626940577,
+            "additive": 28.32810404860958,
+            "jog": 20.95082927476377
+          },
+          "human_event_share": 0.09281149414563605,
+          "n_human_events": 9948
+        },
+        {
+          "class_lo": 32,
+          "class_hi": 99,
+          "median_velocity": 1019.7805617938333,
+          "human_mean_turn": 9.79633971197789,
+          "arm_mean_turn": {
+            "raw": 9.416675824672055,
+            "additive": 11.394414580969645,
+            "jog": 10.6424728389443
+          },
+          "human_event_share": 0.4539814339693054,
+          "n_human_events": 48660
+        }
+      ]
+    },
+    "resid_v2": {
+      "families": {
+        "_all18": {
+          "raw": {
+            "contract_vs_rebuilt": 0.6534294554815075,
+            "all18": 0.6534294554815075
+          },
+          "additive": {
+            "contract_vs_rebuilt": 0.7178092757422087,
+            "all18": 0.7178092757422087
+          },
+          "jog": {
+            "contract_vs_rebuilt": 0.6991961931901871,
+            "all18": 0.6991961931901871
+          }
+        },
+        "envelope": {
+          "raw": {
+            "alone": 0.5698277105934764,
+            "without": 0.6359144429715,
+            "worth": 0.017515012510007533
+          },
+          "additive": {
+            "alone": 0.5624406939472004,
+            "without": 0.697479135792449,
+            "worth": 0.02033013994975963
+          },
+          "jog": {
+            "alone": 0.5840164488813138,
+            "without": 0.673654259865471,
+            "worth": 0.025541933324716104
+          }
+        },
+        "turning": {
+          "raw": {
+            "alone": 0.5971420619819018,
+            "without": 0.6024616959301643,
+            "worth": 0.05096775955134325
+          },
+          "additive": {
+            "alone": 0.6843902210518827,
+            "without": 0.6018113959805652,
+            "worth": 0.11599787976164344
+          },
+          "jog": {
+            "alone": 0.6506596686776867,
+            "without": 0.6187520102685268,
+            "worth": 0.08044418292166033
+          }
+        },
+        "derivatives": {
+          "raw": {
+            "alone": 0.5477122517913309,
+            "without": 0.6420232795357921,
+            "worth": 0.011406175945715469
+          },
+          "additive": {
+            "alone": 0.5611949537124712,
+            "without": 0.7058824339855372,
+            "worth": 0.011926841756671469
+          },
+          "jog": {
+            "alone": 0.5643491339187036,
+            "without": 0.6803294786277769,
+            "worth": 0.01886671456241018
+          }
+        },
+        "turning: wobble": {
+          "raw": {
+            "alone": 0.5645992589185782,
+            "without": 0.6344805766727689,
+            "worth": 0.018948878808738634
+          },
+          "additive": {
+            "alone": 0.6486823409996584,
+            "without": 0.6235497259020782,
+            "worth": 0.09425954984013041
+          },
+          "jog": {
+            "alone": 0.6220264308352397,
+            "without": 0.6393986579171764,
+            "worth": 0.05979753527301068
+          }
+        },
+        "turning: excursion": {
+          "raw": {
+            "alone": 0.520732819906994,
+            "without": 0.6405326748169591,
+            "worth": 0.012896780664548468
+          },
+          "additive": {
+            "alone": 0.5236262288314341,
+            "without": 0.710371282193104,
+            "worth": 0.007437993549104682
+          },
+          "jog": {
+            "alone": 0.5248814880947014,
+            "without": 0.6841374657941225,
+            "worth": 0.01505872739606462
+          }
+        }
+      },
+      "rf_importance": {
+        "raw": {
+          "mean_velocity": 0.05127482824799192,
+          "std_velocity": 0.052435579004463884,
+          "max_velocity": 0.0500507954252468,
+          "velocity_skewness": 0.054006947382756,
+          "mean_acceleration": 0.052764675502061896,
+          "std_acceleration": 0.05093118512574394,
+          "max_acceleration": 0.05131606305358694,
+          "mean_jerk": 0.05162459815400418,
+          "std_jerk": 0.0541208236372258,
+          "path_efficiency": 0.06725543639722394,
+          "max_deviation": 0.058977562983988305,
+          "curvature_mean": 0.06657892127165674,
+          "curvature_std": 0.06512450947500065,
+          "num_direction_changes": 0.04335909322925189,
+          "movement_duration": 0.05331154650166442,
+          "time_to_peak_velocity": 0.07132502001928565,
+          "angular_velocity_mean": 0.05208836972687725,
+          "angular_velocity_std": 0.053454044861969766
+        },
+        "additive": {
+          "mean_velocity": 0.04784068240979648,
+          "std_velocity": 0.04560026277729212,
+          "max_velocity": 0.04566763446944401,
+          "velocity_skewness": 0.05050636009850903,
+          "mean_acceleration": 0.052257694440733374,
+          "std_acceleration": 0.04569896791444902,
+          "max_acceleration": 0.04692235962856918,
+          "mean_jerk": 0.04840554554165835,
+          "std_jerk": 0.05118928364710709,
+          "path_efficiency": 0.05842236944021812,
+          "max_deviation": 0.05086752272144049,
+          "curvature_mean": 0.06643133775396846,
+          "curvature_std": 0.06193955414389058,
+          "num_direction_changes": 0.051291388084502065,
+          "movement_duration": 0.049469022454981464,
+          "time_to_peak_velocity": 0.06739657837443853,
+          "angular_velocity_mean": 0.09409798469251501,
+          "angular_velocity_std": 0.06599545140648676
+        },
+        "jog": {
+          "mean_velocity": 0.04716750479951238,
+          "std_velocity": 0.046057567032507366,
+          "max_velocity": 0.04317964685883079,
+          "velocity_skewness": 0.0497496803594462,
+          "mean_acceleration": 0.05490760609799021,
+          "std_acceleration": 0.046272957369392693,
+          "max_acceleration": 0.04784864221369356,
+          "mean_jerk": 0.04916647947227004,
+          "std_jerk": 0.04987055509240505,
+          "path_efficiency": 0.06911779237606626,
+          "max_deviation": 0.05596375115716596,
+          "curvature_mean": 0.07985772312389197,
+          "curvature_std": 0.07523192592842456,
+          "num_direction_changes": 0.04567967044411473,
+          "movement_duration": 0.04999571867824409,
+          "time_to_peak_velocity": 0.07173732006510278,
+          "angular_velocity_mean": 0.06206061274687132,
+          "angular_velocity_std": 0.05613484618406984
+        }
+      },
+      "turn_by_class": [
+        {
+          "class_lo": 1,
+          "class_hi": 5,
+          "median_velocity": 125.00160934612863,
+          "human_mean_turn": 31.935754441384287,
+          "arm_mean_turn": {
+            "raw": 26.253759715277877,
+            "additive": 36.893538163056895,
+            "jog": 28.874969657064778
+          },
+          "human_event_share": 0.22741988151327144,
+          "n_human_events": 24376
+        },
+        {
+          "class_lo": 6,
+          "class_hi": 11,
+          "median_velocity": 202.03052955379866,
+          "human_mean_turn": 31.162866844866095,
+          "arm_mean_turn": {
+            "raw": 28.033795384591553,
+            "additive": 40.351884346526816,
+            "jog": 26.275525020944695
+          },
+          "human_event_share": 0.07422680412371134,
+          "n_human_events": 7956
+        },
+        {
+          "class_lo": 12,
+          "class_hi": 21,
+          "median_velocity": 250.00321869225726,
+          "human_mean_turn": 18.845612248891076,
+          "arm_mean_turn": {
+            "raw": 14.434224837720482,
+            "additive": 25.67317202543847,
+            "jog": 18.531475795206422
+          },
+          "human_event_share": 0.08272612772309558,
+          "n_human_events": 8867
+        },
+        {
+          "class_lo": 22,
+          "class_hi": 31,
+          "median_velocity": 319.43967514643316,
+          "human_mean_turn": 22.84019285506768,
+          "arm_mean_turn": {
+            "raw": 21.342448741490863,
+            "additive": 27.671084165843418,
+            "jog": 21.42070337429905
+          },
+          "human_event_share": 0.09281149414563605,
+          "n_human_events": 9948
+        },
+        {
+          "class_lo": 32,
+          "class_hi": 99,
+          "median_velocity": 1019.7805617938333,
+          "human_mean_turn": 9.79633971197789,
+          "arm_mean_turn": {
+            "raw": 9.415479565108466,
+            "additive": 11.228781477006024,
+            "jog": 10.791123911764288
+          },
+          "human_event_share": 0.4539814339693054,
+          "n_human_events": 48660
+        }
+      ]
+    }
+  },
+  "wall_sec": 24.88515067100525
+}

@@ -1,0 +1,12 @@
+{
+  "as served": {
+    "contract": 0.6600845,
+    "all18": 0.6750808750000001,
+    "duration_only": 0.7239968750000001
+  },
+  "timestamps rounded to 1ms": {
+    "contract": 0.664394125,
+    "all18": 0.68533625,
+    "duration_only": 0.56487075
+  }
+}

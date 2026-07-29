@@ -1,0 +1,346 @@
+{
+  "status": "COMPLETE",
+  "tag": "units_jd_main",
+  "smoke": false,
+  "main_run": true,
+  "n_requested": 2000,
+  "n_completed": 2000,
+  "n_valid_real_features": 2000,
+  "args": {
+    "smoke": false,
+    "main_run": true,
+    "n": 2000,
+    "batch_size": 64,
+    "m_steps": 10,
+    "lr": 0.05,
+    "grad_clip": 5.0,
+    "k": 200,
+    "n_steps": 200,
+    "guide": 0.15,
+    "perp_scale": 0.85,
+    "seed": 42,
+    "target_seed": 20260719,
+    "max_minutes": 90.0,
+    "tag": "units_jd_main",
+    "resume": false,
+    "n_check": 300,
+    "skip_control_gate": false,
+    "skip_control": false,
+    "skip_validation": false,
+    "verbose_steps": false,
+    "joint_duration": true,
+    "loss_norm": "capped",
+    "pid_file": "research/w2_main.pid.txt"
+  },
+  "feature_builder_validation": {
+    "n_check": 300,
+    "n_compared": 300,
+    "n_skipped": 0,
+    "overall_max_abs_err_det_space": 5.291031529342057,
+    "median_abs_err_det_space": 6.180909699615711e-07,
+    "p95_abs_err_det_space": 0.00020816643112762855,
+    "per_feature_max_abs_err_det_space": {
+      "mean_velocity": 6.430558743275583e-07,
+      "std_velocity": 1.0926701881075473e-06,
+      "mean_acceleration": 7.288067839894552e-06,
+      "std_acceleration": 6.4515905409123775e-06,
+      "mean_jerk": 7.0860379492998504e-06,
+      "std_jerk": 1.3535115749974125e-05,
+      "path_efficiency": 4.5584588237446155e-07,
+      "curvature_mean": 4.897333852610032,
+      "curvature_std": 5.291031529342057,
+      "angular_velocity_mean": 0.18479816303939733,
+      "angular_velocity_std": 0.4094429660359049
+    }
+  },
+  "control_auc": 0.7576766250000001,
+  "control_n_per_class": 2000,
+  "control_reference_baseline": 0.7573,
+  "guided_auc": 0.780149625,
+  "guided_n_per_class": 2000,
+  "gate_pass_auc_leq_0.70": false,
+  "target_hit_per_feature": {
+    "mean_velocity": {
+      "n": 2000,
+      "hit_0.5": 1607,
+      "hit_1.0": 1906,
+      "mean_abs_err_std": 0.30472553340512876,
+      "frac_hit_0.5": 0.8035,
+      "frac_hit_1.0": 0.953
+    },
+    "std_velocity": {
+      "n": 2000,
+      "hit_0.5": 1078,
+      "hit_1.0": 1673,
+      "mean_abs_err_std": 0.5814769491637819,
+      "frac_hit_0.5": 0.539,
+      "frac_hit_1.0": 0.8365
+    },
+    "mean_acceleration": {
+      "n": 2000,
+      "hit_0.5": 772,
+      "hit_1.0": 1387,
+      "mean_abs_err_std": 0.8020065065171115,
+      "frac_hit_0.5": 0.386,
+      "frac_hit_1.0": 0.6935
+    },
+    "std_acceleration": {
+      "n": 2000,
+      "hit_0.5": 1236,
+      "hit_1.0": 1709,
+      "mean_abs_err_std": 0.5156107212233367,
+      "frac_hit_0.5": 0.618,
+      "frac_hit_1.0": 0.8545
+    },
+    "mean_jerk": {
+      "n": 2000,
+      "hit_0.5": 756,
+      "hit_1.0": 1455,
+      "mean_abs_err_std": 0.7572009313455833,
+      "frac_hit_0.5": 0.378,
+      "frac_hit_1.0": 0.7275
+    },
+    "std_jerk": {
+      "n": 2000,
+      "hit_0.5": 1161,
+      "hit_1.0": 1668,
+      "mean_abs_err_std": 0.5538504840481784,
+      "frac_hit_0.5": 0.5805,
+      "frac_hit_1.0": 0.834
+    },
+    "path_efficiency": {
+      "n": 2000,
+      "hit_0.5": 1013,
+      "hit_1.0": 1495,
+      "mean_abs_err_std": 0.6748504207469017,
+      "frac_hit_0.5": 0.5065,
+      "frac_hit_1.0": 0.7475
+    },
+    "curvature_mean": {
+      "n": 2000,
+      "hit_0.5": 1415,
+      "hit_1.0": 1776,
+      "mean_abs_err_std": 0.42243898229332605,
+      "frac_hit_0.5": 0.7075,
+      "frac_hit_1.0": 0.888
+    },
+    "curvature_std": {
+      "n": 2000,
+      "hit_0.5": 1437,
+      "hit_1.0": 1780,
+      "mean_abs_err_std": 0.40070963277462096,
+      "frac_hit_0.5": 0.7185,
+      "frac_hit_1.0": 0.89
+    },
+    "angular_velocity_mean": {
+      "n": 2000,
+      "hit_0.5": 897,
+      "hit_1.0": 1469,
+      "mean_abs_err_std": 0.7262303056779087,
+      "frac_hit_0.5": 0.4485,
+      "frac_hit_1.0": 0.7345
+    },
+    "angular_velocity_std": {
+      "n": 2000,
+      "hit_0.5": 898,
+      "hit_1.0": 1533,
+      "mean_abs_err_std": 0.6977052631182786,
+      "frac_hit_0.5": 0.449,
+      "frac_hit_1.0": 0.7665
+    }
+  },
+  "target_hit_overall": {
+    "n_pairs": 22000,
+    "frac_hit_0.5": 0.5577272727272727,
+    "frac_hit_1.0": 0.8114090909090909
+  },
+  "dispersion_table_18_features": [
+    {
+      "feature": "mean_velocity",
+      "covered": true,
+      "synth_std_raw": 1026.7407901278223,
+      "human_std_raw": 1333.4389365700306,
+      "raw_dispersion_ratio": 0.7699946071538005,
+      "det_dispersion_ratio": 1.0056628233650455
+    },
+    {
+      "feature": "std_velocity",
+      "covered": true,
+      "synth_std_raw": 995.4831441112389,
+      "human_std_raw": 5177.790535968972,
+      "raw_dispersion_ratio": 0.19226021933406467,
+      "det_dispersion_ratio": 0.9825889245995237
+    },
+    {
+      "feature": "max_velocity",
+      "covered": false,
+      "synth_std_raw": 4237.160166862404,
+      "human_std_raw": 32245.695747804722,
+      "raw_dispersion_ratio": 0.1314023490143136,
+      "det_dispersion_ratio": null
+    },
+    {
+      "feature": "velocity_skewness",
+      "covered": false,
+      "synth_std_raw": 0.9290275392327789,
+      "human_std_raw": 1.0956919519662343,
+      "raw_dispersion_ratio": 0.8478911774113392,
+      "det_dispersion_ratio": null
+    },
+    {
+      "feature": "mean_acceleration",
+      "covered": true,
+      "synth_std_raw": 6374.15745658699,
+      "human_std_raw": 108219.25185131641,
+      "raw_dispersion_ratio": 0.058900402170073335,
+      "det_dispersion_ratio": 0.058900402170073335
+    },
+    {
+      "feature": "std_acceleration",
+      "covered": true,
+      "synth_std_raw": 65372.210618294484,
+      "human_std_raw": 649378.8015703395,
+      "raw_dispersion_ratio": 0.10066883991317584,
+      "det_dispersion_ratio": 0.9593845166965371
+    },
+    {
+      "feature": "max_acceleration",
+      "covered": false,
+      "synth_std_raw": 304071.1197503263,
+      "human_std_raw": 4000857.812606546,
+      "raw_dispersion_ratio": 0.0760014811804134,
+      "det_dispersion_ratio": null
+    },
+    {
+      "feature": "mean_jerk",
+      "covered": true,
+      "synth_std_raw": 500807.19695555884,
+      "human_std_raw": 13837430.786700431,
+      "raw_dispersion_ratio": 0.0361922097154697,
+      "det_dispersion_ratio": 0.036192209715469686
+    },
+    {
+      "feature": "std_jerk",
+      "covered": true,
+      "synth_std_raw": 12833626.653432935,
+      "human_std_raw": 83708109.13645601,
+      "raw_dispersion_ratio": 0.15331401922497515,
+      "det_dispersion_ratio": 0.9535470484709369
+    },
+    {
+      "feature": "path_efficiency",
+      "covered": true,
+      "synth_std_raw": 0.17199439243909664,
+      "human_std_raw": 0.22239880011198054,
+      "raw_dispersion_ratio": 0.773360253528775,
+      "det_dispersion_ratio": 0.773360253528775
+    },
+    {
+      "feature": "max_deviation",
+      "covered": false,
+      "synth_std_raw": 139.5848896625846,
+      "human_std_raw": 115.87296408030998,
+      "raw_dispersion_ratio": 1.2046372574523958,
+      "det_dispersion_ratio": null
+    },
+    {
+      "feature": "curvature_mean",
+      "covered": true,
+      "synth_std_raw": 806.1947629746076,
+      "human_std_raw": 5922.447407355087,
+      "raw_dispersion_ratio": 0.13612527178770625,
+      "det_dispersion_ratio": 0.7877806860288504
+    },
+    {
+      "feature": "curvature_std",
+      "covered": true,
+      "synth_std_raw": 7086.177538393688,
+      "human_std_raw": 29813.49254607423,
+      "raw_dispersion_ratio": 0.23768357656999092,
+      "det_dispersion_ratio": 0.8283297655748146
+    },
+    {
+      "feature": "num_direction_changes",
+      "covered": false,
+      "synth_std_raw": 23.242232202393986,
+      "human_std_raw": 25.119821252349706,
+      "raw_dispersion_ratio": 0.9252546811104362,
+      "det_dispersion_ratio": null
+    },
+    {
+      "feature": "movement_duration",
+      "covered": false,
+      "synth_std_raw": 0.44576711150106174,
+      "human_std_raw": 0.49052833058947826,
+      "raw_dispersion_ratio": 0.9087489625020719,
+      "det_dispersion_ratio": null
+    },
+    {
+      "feature": "time_to_peak_velocity",
+      "covered": false,
+      "synth_std_raw": 0.2504233369772133,
+      "human_std_raw": 0.25683743724267777,
+      "raw_dispersion_ratio": 0.9750266147555273,
+      "det_dispersion_ratio": null
+    },
+    {
+      "feature": "angular_velocity_mean",
+      "covered": true,
+      "synth_std_raw": 15.73315333184289,
+      "human_std_raw": 16.54261991147344,
+      "raw_dispersion_ratio": 0.9510678124769626,
+      "det_dispersion_ratio": 0.936303520436762
+    },
+    {
+      "feature": "angular_velocity_std",
+      "covered": true,
+      "synth_std_raw": 27.513792588216813,
+      "human_std_raw": 29.57770435473542,
+      "raw_dispersion_ratio": 0.9302206911744936,
+      "det_dispersion_ratio": 0.8821022367295417
+    }
+  ],
+  "guided_rf_top8_importances": [
+    {
+      "feature": "curvature_mean",
+      "importance": 0.09860567404376597
+    },
+    {
+      "feature": "mean_jerk",
+      "importance": 0.09046762191501147
+    },
+    {
+      "feature": "curvature_std",
+      "importance": 0.07645548442902515
+    },
+    {
+      "feature": "angular_velocity_mean",
+      "importance": 0.06455262240140429
+    },
+    {
+      "feature": "mean_acceleration",
+      "importance": 0.05874152000178882
+    },
+    {
+      "feature": "angular_velocity_std",
+      "importance": 0.05654852040018265
+    },
+    {
+      "feature": "path_efficiency",
+      "importance": 0.054771795271001095
+    },
+    {
+      "feature": "max_deviation",
+      "importance": 0.0508492310398965
+    }
+  ],
+  "mean_step_time_sec_per_optimizer_step_full_chain": 8.150507158456247,
+  "implied_per_path_latency_sec": 81.50507158456247,
+  "mean_optimization_loss_init": 33.762796508789066,
+  "mean_optimization_loss_final": 16.274833755493162,
+  "guided_elapsed_sec": 2610.9658171789997,
+  "control_elapsed_sec": 186.96794812999997,
+  "md5_before": "91326a29750789f3167055324ef377c5",
+  "md5_after": "91326a29750789f3167055324ef377c5",
+  "md5_unchanged": true
+}

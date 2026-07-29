@@ -1,0 +1,344 @@
+{
+  "rendered, n_frames=256, snap=2.5": {
+    "auc": 0.58775,
+    "n": 2000,
+    "rows": [
+      {
+        "feature": "mean_jerk",
+        "imp": 0.08189448863164693,
+        "shift": -0.07351112950733657,
+        "spread_ratio": 1.0608316468849508
+      },
+      {
+        "feature": "mean_acceleration",
+        "imp": 0.06329473727363051,
+        "shift": 0.04698699157023811,
+        "spread_ratio": 0.9079764487566704
+      },
+      {
+        "feature": "angular_velocity_std",
+        "imp": 0.062039842303958315,
+        "shift": 0.018240369709030247,
+        "spread_ratio": 1.147815184492972
+      },
+      {
+        "feature": "time_to_peak_velocity",
+        "imp": 0.05871561410899202,
+        "shift": -0.02776026425352488,
+        "spread_ratio": 0.9969708274102657
+      },
+      {
+        "feature": "angular_velocity_mean",
+        "imp": 0.05851002004427834,
+        "shift": 0.0977736662093557,
+        "spread_ratio": 1.1018035948761509
+      },
+      {
+        "feature": "velocity_skewness",
+        "imp": 0.05676186070749371,
+        "shift": -0.011353835984066083,
+        "spread_ratio": 0.9598379665619102
+      },
+      {
+        "feature": "movement_duration",
+        "imp": 0.05666604682302544,
+        "shift": 0.008163343329208107,
+        "spread_ratio": 0.9904762113600211
+      },
+      {
+        "feature": "path_efficiency",
+        "imp": 0.055495914422692035,
+        "shift": 0.015229627355531473,
+        "spread_ratio": 0.9102152000623704
+      },
+      {
+        "feature": "std_jerk",
+        "imp": 0.05299274421072998,
+        "shift": -0.06221788362314181,
+        "spread_ratio": 0.8596786223207441
+      },
+      {
+        "feature": "mean_velocity",
+        "imp": 0.0528406985842705,
+        "shift": -0.0358559571556958,
+        "spread_ratio": 1.0063551817140846
+      },
+      {
+        "feature": "max_deviation",
+        "imp": 0.05261329102171146,
+        "shift": 0.01122332055701945,
+        "spread_ratio": 0.9745183741374882
+      },
+      {
+        "feature": "max_acceleration",
+        "imp": 0.05142313492699787,
+        "shift": -0.046981191538074694,
+        "spread_ratio": 0.8685002055514194
+      },
+      {
+        "feature": "curvature_mean",
+        "imp": 0.051313024994949906,
+        "shift": -0.0073091001770131695,
+        "spread_ratio": 0.7636014459798084
+      },
+      {
+        "feature": "std_acceleration",
+        "imp": 0.050957675256878505,
+        "shift": -0.07362126681734228,
+        "spread_ratio": 0.9082822454114766
+      },
+      {
+        "feature": "curvature_std",
+        "imp": 0.050502759330156174,
+        "shift": -0.0008246376535161198,
+        "spread_ratio": 0.7152610374877131
+      },
+      {
+        "feature": "std_velocity",
+        "imp": 0.04978484588953228,
+        "shift": -0.024950118536760168,
+        "spread_ratio": 0.9737916321552176
+      },
+      {
+        "feature": "max_velocity",
+        "imp": 0.047514468718416865,
+        "shift": -0.03813787412496092,
+        "spread_ratio": 0.9123584426035674
+      },
+      {
+        "feature": "num_direction_changes",
+        "imp": 0.04667883275063927,
+        "shift": 0.0975609756097561,
+        "spread_ratio": 1.048780487804878
+      }
+    ]
+  },
+  "rendered, n_frames=1024, snap=2.5": {
+    "auc": 0.58725,
+    "n": 2000,
+    "rows": [
+      {
+        "feature": "mean_jerk",
+        "imp": 0.08162882934926817,
+        "shift": -0.065580650166227,
+        "spread_ratio": 1.0945312290992697
+      },
+      {
+        "feature": "mean_acceleration",
+        "imp": 0.069521204232931,
+        "shift": 0.050038145535975666,
+        "spread_ratio": 0.875791780772223
+      },
+      {
+        "feature": "angular_velocity_std",
+        "imp": 0.059792340790071695,
+        "shift": 0.03760836450021538,
+        "spread_ratio": 1.1108633574196083
+      },
+      {
+        "feature": "angular_velocity_mean",
+        "imp": 0.05885031671505328,
+        "shift": 0.08955933689642223,
+        "spread_ratio": 1.0952235370788805
+      },
+      {
+        "feature": "velocity_skewness",
+        "imp": 0.057967702429883,
+        "shift": -0.03793063573127612,
+        "spread_ratio": 0.9004301145855386
+      },
+      {
+        "feature": "time_to_peak_velocity",
+        "imp": 0.0573966455057835,
+        "shift": 0.04947520205666881,
+        "spread_ratio": 1.0132992140321024
+      },
+      {
+        "feature": "path_efficiency",
+        "imp": 0.05519496289042863,
+        "shift": 0.008320064151372875,
+        "spread_ratio": 0.8932380255713342
+      },
+      {
+        "feature": "movement_duration",
+        "imp": 0.05395817181738246,
+        "shift": 0.008163343329208107,
+        "spread_ratio": 0.9795918573890319
+      },
+      {
+        "feature": "std_jerk",
+        "imp": 0.05343600936549406,
+        "shift": -0.07596262225925066,
+        "spread_ratio": 0.8369494860542239
+      },
+      {
+        "feature": "max_deviation",
+        "imp": 0.053409022402863264,
+        "shift": 0.005192156048872541,
+        "spread_ratio": 1.032841478204586
+      },
+      {
+        "feature": "curvature_mean",
+        "imp": 0.051477146976237814,
+        "shift": 0.0010124943297531036,
+        "spread_ratio": 0.9522983092655375
+      },
+      {
+        "feature": "mean_velocity",
+        "imp": 0.050653590055236605,
+        "shift": -0.022832193985333097,
+        "spread_ratio": 0.9750505527831755
+      },
+      {
+        "feature": "max_acceleration",
+        "imp": 0.05052237997951738,
+        "shift": -0.07871472491588798,
+        "spread_ratio": 0.8526900626870851
+      },
+      {
+        "feature": "std_velocity",
+        "imp": 0.05051546968353126,
+        "shift": -0.0530518354548363,
+        "spread_ratio": 0.9213018119975748
+      },
+      {
+        "feature": "curvature_std",
+        "imp": 0.05030950166363386,
+        "shift": -0.002862899457273287,
+        "spread_ratio": 0.932386506107091
+      },
+      {
+        "feature": "std_acceleration",
+        "imp": 0.050092876349882,
+        "shift": -0.06040543706996015,
+        "spread_ratio": 0.8617373953174307
+      },
+      {
+        "feature": "max_velocity",
+        "imp": 0.04855696544917325,
+        "shift": -0.055258876294242885,
+        "spread_ratio": 0.8844307149273785
+      },
+      {
+        "feature": "num_direction_changes",
+        "imp": 0.04671686434362872,
+        "shift": 0.0975609756097561,
+        "spread_ratio": 1.0731707317073171
+      }
+    ]
+  },
+  "rendered, n_frames=1024, snap=0": {
+    "auc": 0.574,
+    "n": 2000,
+    "rows": [
+      {
+        "feature": "mean_jerk",
+        "imp": 0.07450156472620702,
+        "shift": -0.07920347015092846,
+        "spread_ratio": 1.1545578781898462
+      },
+      {
+        "feature": "mean_acceleration",
+        "imp": 0.06418075153618118,
+        "shift": 0.042675880991697876,
+        "spread_ratio": 0.952102223804462
+      },
+      {
+        "feature": "velocity_skewness",
+        "imp": 0.06267965072926719,
+        "shift": -0.0365238343809734,
+        "spread_ratio": 0.9438561021042234
+      },
+      {
+        "feature": "angular_velocity_mean",
+        "imp": 0.05996589199039233,
+        "shift": 0.13718078522874383,
+        "spread_ratio": 1.1186179530038278
+      },
+      {
+        "feature": "angular_velocity_std",
+        "imp": 0.05863504961704699,
+        "shift": 0.02203972680520719,
+        "spread_ratio": 1.1131707849597774
+      },
+      {
+        "feature": "time_to_peak_velocity",
+        "imp": 0.057130545518380434,
+        "shift": -0.015549346437370064,
+        "spread_ratio": 0.9757564336702458
+      },
+      {
+        "feature": "path_efficiency",
+        "imp": 0.055049457820920286,
+        "shift": 0.016666512421995332,
+        "spread_ratio": 0.9658846290376379
+      },
+      {
+        "feature": "max_deviation",
+        "imp": 0.05395858354011332,
+        "shift": 0.01693108186711691,
+        "spread_ratio": 1.008674529262531
+      },
+      {
+        "feature": "curvature_mean",
+        "imp": 0.05392625566925802,
+        "shift": 0.008876054911410601,
+        "spread_ratio": 0.7733677009098158
+      },
+      {
+        "feature": "curvature_std",
+        "imp": 0.05351613274890437,
+        "shift": 0.003379593938784218,
+        "spread_ratio": 0.6558077743755959
+      },
+      {
+        "feature": "movement_duration",
+        "imp": 0.053336572497322626,
+        "shift": -0.013605364612770248,
+        "spread_ratio": 0.95956464608241
+      },
+      {
+        "feature": "mean_velocity",
+        "imp": 0.0531511371336197,
+        "shift": -0.009020856519144868,
+        "spread_ratio": 1.084944943683098
+      },
+      {
+        "feature": "std_jerk",
+        "imp": 0.052698090418444504,
+        "shift": -0.07055182219323317,
+        "spread_ratio": 0.9275117635379405
+      },
+      {
+        "feature": "max_acceleration",
+        "imp": 0.05065561309714743,
+        "shift": -0.06103793164536507,
+        "spread_ratio": 0.8777471537859454
+      },
+      {
+        "feature": "std_acceleration",
+        "imp": 0.050652540337863865,
+        "shift": -0.0726823119661872,
+        "spread_ratio": 0.9659551215950053
+      },
+      {
+        "feature": "std_velocity",
+        "imp": 0.04994248937633949,
+        "shift": -0.030479044458338583,
+        "spread_ratio": 0.9541787263283812
+      },
+      {
+        "feature": "max_velocity",
+        "imp": 0.04829816095550881,
+        "shift": -0.04832800559118589,
+        "spread_ratio": 0.9296727452187208
+      },
+      {
+        "feature": "num_direction_changes",
+        "imp": 0.047721512287082296,
+        "shift": 0.0975609756097561,
+        "spread_ratio": 1.0770731707317038
+      }
+    ]
+  }
+}

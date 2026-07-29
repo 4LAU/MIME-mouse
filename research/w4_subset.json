@@ -1,0 +1,49 @@
+{
+  "full": 0.6611312500000001,
+  "steps": [
+    {
+      "k": 1,
+      "added": "movement_duration",
+      "auc": 0.719084125,
+      "floor": 0.45695949999999996
+    },
+    {
+      "k": 2,
+      "added": "curvature_std",
+      "auc": 0.575155625,
+      "floor": 0.4762314999999999
+    },
+    {
+      "k": 3,
+      "added": "angular_velocity_mean",
+      "auc": 0.594306625,
+      "floor": 0.502942
+    },
+    {
+      "k": 4,
+      "added": "max_deviation",
+      "auc": 0.61407225,
+      "floor": 0.513285
+    },
+    {
+      "k": 5,
+      "added": "path_efficiency",
+      "auc": 0.635478875,
+      "floor": 0.522354
+    },
+    {
+      "k": 6,
+      "added": "mean_acceleration",
+      "auc": 0.646738375,
+      "floor": 0.5166625
+    }
+  ],
+  "selected": [
+    "movement_duration",
+    "curvature_std",
+    "angular_velocity_mean",
+    "max_deviation",
+    "path_efficiency",
+    "mean_acceleration"
+  ]
+}

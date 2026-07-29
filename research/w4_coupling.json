@@ -1,0 +1,1844 @@
+{
+  "pairs": [
+    {
+      "auc": 0.6155883750000001,
+      "f1": "curvature_std",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.59029475,
+      "f1": "curvature_std",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.585362875,
+      "f1": "curvature_mean",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.5844115000000001,
+      "f1": "curvature_mean",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.5801402499999999,
+      "f1": "path_efficiency",
+      "f2": "curvature_std"
+    },
+    {
+      "auc": 0.575053625,
+      "f1": "path_efficiency",
+      "f2": "curvature_mean"
+    },
+    {
+      "auc": 0.5731105000000001,
+      "f1": "curvature_mean",
+      "f2": "num_direction_changes"
+    },
+    {
+      "auc": 0.56873925,
+      "f1": "max_velocity",
+      "f2": "curvature_mean"
+    },
+    {
+      "auc": 0.56616675,
+      "f1": "std_velocity",
+      "f2": "curvature_std"
+    },
+    {
+      "auc": 0.565454,
+      "f1": "curvature_std",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.563852,
+      "f1": "max_deviation",
+      "f2": "curvature_mean"
+    },
+    {
+      "auc": 0.5629031250000001,
+      "f1": "curvature_mean",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.5621173749999999,
+      "f1": "curvature_mean",
+      "f2": "curvature_std"
+    },
+    {
+      "auc": 0.5620996250000001,
+      "f1": "movement_duration",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.56191375,
+      "f1": "curvature_std",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.56092325,
+      "f1": "mean_velocity",
+      "f2": "curvature_mean"
+    },
+    {
+      "auc": 0.5606718749999999,
+      "f1": "path_efficiency",
+      "f2": "max_deviation"
+    },
+    {
+      "auc": 0.5598628750000001,
+      "f1": "mean_jerk",
+      "f2": "curvature_std"
+    },
+    {
+      "auc": 0.5582597499999999,
+      "f1": "std_velocity",
+      "f2": "curvature_mean"
+    },
+    {
+      "auc": 0.5582541249999999,
+      "f1": "velocity_skewness",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.557414125,
+      "f1": "curvature_mean",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.5562303749999999,
+      "f1": "max_deviation",
+      "f2": "curvature_std"
+    },
+    {
+      "auc": 0.554798,
+      "f1": "mean_acceleration",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.5547081250000001,
+      "f1": "mean_acceleration",
+      "f2": "curvature_mean"
+    },
+    {
+      "auc": 0.55382425,
+      "f1": "max_velocity",
+      "f2": "curvature_std"
+    },
+    {
+      "auc": 0.5534205,
+      "f1": "std_jerk",
+      "f2": "curvature_mean"
+    },
+    {
+      "auc": 0.55205075,
+      "f1": "path_efficiency",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.55082225,
+      "f1": "time_to_peak_velocity",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.5504065,
+      "f1": "angular_velocity_mean",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.55035075,
+      "f1": "mean_velocity",
+      "f2": "curvature_std"
+    },
+    {
+      "auc": 0.5502616250000001,
+      "f1": "curvature_std",
+      "f2": "num_direction_changes"
+    },
+    {
+      "auc": 0.549975125,
+      "f1": "path_efficiency",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.54947975,
+      "f1": "velocity_skewness",
+      "f2": "curvature_std"
+    },
+    {
+      "auc": 0.5473255,
+      "f1": "std_acceleration",
+      "f2": "curvature_std"
+    },
+    {
+      "auc": 0.546205375,
+      "f1": "mean_acceleration",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.545842,
+      "f1": "mean_acceleration",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.5453270000000001,
+      "f1": "velocity_skewness",
+      "f2": "curvature_mean"
+    },
+    {
+      "auc": 0.54523225,
+      "f1": "std_jerk",
+      "f2": "curvature_std"
+    },
+    {
+      "auc": 0.54515775,
+      "f1": "mean_acceleration",
+      "f2": "curvature_std"
+    },
+    {
+      "auc": 0.544927625,
+      "f1": "max_acceleration",
+      "f2": "curvature_mean"
+    },
+    {
+      "auc": 0.54472475,
+      "f1": "mean_acceleration",
+      "f2": "num_direction_changes"
+    },
+    {
+      "auc": 0.54466775,
+      "f1": "max_deviation",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.543576375,
+      "f1": "mean_velocity",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.543243125,
+      "f1": "max_acceleration",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.54281025,
+      "f1": "movement_duration",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.54183375,
+      "f1": "max_velocity",
+      "f2": "path_efficiency"
+    },
+    {
+      "auc": 0.5416889999999999,
+      "f1": "max_deviation",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.541213375,
+      "f1": "velocity_skewness",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.540488,
+      "f1": "velocity_skewness",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.5403465,
+      "f1": "path_efficiency",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.539923,
+      "f1": "max_deviation",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.5386665,
+      "f1": "max_acceleration",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.538269875,
+      "f1": "max_velocity",
+      "f2": "velocity_skewness"
+    },
+    {
+      "auc": 0.5382405,
+      "f1": "max_acceleration",
+      "f2": "max_deviation"
+    },
+    {
+      "auc": 0.5380545,
+      "f1": "time_to_peak_velocity",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.5379827500000001,
+      "f1": "mean_acceleration",
+      "f2": "std_jerk"
+    },
+    {
+      "auc": 0.5371515,
+      "f1": "num_direction_changes",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.5364065,
+      "f1": "mean_acceleration",
+      "f2": "max_acceleration"
+    },
+    {
+      "auc": 0.53613,
+      "f1": "mean_velocity",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.5355872500000001,
+      "f1": "mean_velocity",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.534758375,
+      "f1": "std_velocity",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.5345635,
+      "f1": "max_acceleration",
+      "f2": "curvature_std"
+    },
+    {
+      "auc": 0.534162375,
+      "f1": "max_velocity",
+      "f2": "max_deviation"
+    },
+    {
+      "auc": 0.5339605000000001,
+      "f1": "max_acceleration",
+      "f2": "std_jerk"
+    },
+    {
+      "auc": 0.5338873749999999,
+      "f1": "std_acceleration",
+      "f2": "curvature_mean"
+    },
+    {
+      "auc": 0.5333955,
+      "f1": "std_velocity",
+      "f2": "max_deviation"
+    },
+    {
+      "auc": 0.532844875,
+      "f1": "std_velocity",
+      "f2": "mean_jerk"
+    },
+    {
+      "auc": 0.53278075,
+      "f1": "std_jerk",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.5327035,
+      "f1": "mean_acceleration",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.531334375,
+      "f1": "max_deviation",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.5312775000000001,
+      "f1": "std_acceleration",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.5311358749999999,
+      "f1": "std_velocity",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.5308134999999999,
+      "f1": "mean_acceleration",
+      "f2": "max_deviation"
+    },
+    {
+      "auc": 0.5305115,
+      "f1": "velocity_skewness",
+      "f2": "mean_acceleration"
+    },
+    {
+      "auc": 0.530025,
+      "f1": "mean_velocity",
+      "f2": "velocity_skewness"
+    },
+    {
+      "auc": 0.529905125,
+      "f1": "mean_jerk",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.529904,
+      "f1": "std_velocity",
+      "f2": "path_efficiency"
+    },
+    {
+      "auc": 0.529473,
+      "f1": "mean_jerk",
+      "f2": "curvature_mean"
+    },
+    {
+      "auc": 0.52923125,
+      "f1": "num_direction_changes",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.528205375,
+      "f1": "num_direction_changes",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.528170625,
+      "f1": "max_acceleration",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.528068,
+      "f1": "movement_duration",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.527587125,
+      "f1": "mean_jerk",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.526928125,
+      "f1": "velocity_skewness",
+      "f2": "path_efficiency"
+    },
+    {
+      "auc": 0.526760625,
+      "f1": "mean_velocity",
+      "f2": "std_velocity"
+    },
+    {
+      "auc": 0.52664325,
+      "f1": "std_jerk",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.5262773749999999,
+      "f1": "std_acceleration",
+      "f2": "path_efficiency"
+    },
+    {
+      "auc": 0.52528525,
+      "f1": "std_velocity",
+      "f2": "mean_acceleration"
+    },
+    {
+      "auc": 0.525140375,
+      "f1": "velocity_skewness",
+      "f2": "max_deviation"
+    },
+    {
+      "auc": 0.5249275,
+      "f1": "std_jerk",
+      "f2": "path_efficiency"
+    },
+    {
+      "auc": 0.5249275,
+      "f1": "mean_jerk",
+      "f2": "max_deviation"
+    },
+    {
+      "auc": 0.524600875,
+      "f1": "mean_velocity",
+      "f2": "mean_jerk"
+    },
+    {
+      "auc": 0.524191125,
+      "f1": "mean_jerk",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.52401625,
+      "f1": "mean_velocity",
+      "f2": "num_direction_changes"
+    },
+    {
+      "auc": 0.523434125,
+      "f1": "max_acceleration",
+      "f2": "path_efficiency"
+    },
+    {
+      "auc": 0.523326375,
+      "f1": "mean_velocity",
+      "f2": "max_deviation"
+    },
+    {
+      "auc": 0.5230195,
+      "f1": "velocity_skewness",
+      "f2": "num_direction_changes"
+    },
+    {
+      "auc": 0.522466375,
+      "f1": "std_acceleration",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.52219925,
+      "f1": "path_efficiency",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.522097125,
+      "f1": "max_deviation",
+      "f2": "num_direction_changes"
+    },
+    {
+      "auc": 0.521872375,
+      "f1": "std_velocity",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.521281375,
+      "f1": "std_acceleration",
+      "f2": "std_jerk"
+    },
+    {
+      "auc": 0.52093725,
+      "f1": "velocity_skewness",
+      "f2": "max_acceleration"
+    },
+    {
+      "auc": 0.51984475,
+      "f1": "std_velocity",
+      "f2": "num_direction_changes"
+    },
+    {
+      "auc": 0.518998375,
+      "f1": "std_jerk",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.518818625,
+      "f1": "mean_acceleration",
+      "f2": "std_acceleration"
+    },
+    {
+      "auc": 0.5182727500000001,
+      "f1": "mean_velocity",
+      "f2": "max_velocity"
+    },
+    {
+      "auc": 0.518072,
+      "f1": "mean_acceleration",
+      "f2": "path_efficiency"
+    },
+    {
+      "auc": 0.518071875,
+      "f1": "std_velocity",
+      "f2": "max_velocity"
+    },
+    {
+      "auc": 0.517940375,
+      "f1": "num_direction_changes",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.5178946249999999,
+      "f1": "std_velocity",
+      "f2": "velocity_skewness"
+    },
+    {
+      "auc": 0.517778875,
+      "f1": "max_velocity",
+      "f2": "num_direction_changes"
+    },
+    {
+      "auc": 0.5175142500000001,
+      "f1": "mean_velocity",
+      "f2": "std_jerk"
+    },
+    {
+      "auc": 0.51713075,
+      "f1": "std_velocity",
+      "f2": "std_jerk"
+    },
+    {
+      "auc": 0.517029875,
+      "f1": "max_velocity",
+      "f2": "std_jerk"
+    },
+    {
+      "auc": 0.51619975,
+      "f1": "max_acceleration",
+      "f2": "num_direction_changes"
+    },
+    {
+      "auc": 0.51596525,
+      "f1": "velocity_skewness",
+      "f2": "std_jerk"
+    },
+    {
+      "auc": 0.5158205,
+      "f1": "max_velocity",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "auc": 0.5156835,
+      "f1": "std_jerk",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.515642375,
+      "f1": "mean_velocity",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.5149945,
+      "f1": "max_velocity",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "auc": 0.5146151250000001,
+      "f1": "mean_velocity",
+      "f2": "path_efficiency"
+    },
+    {
+      "auc": 0.513100125,
+      "f1": "mean_jerk",
+      "f2": "std_jerk"
+    },
+    {
+      "auc": 0.513093875,
+      "f1": "std_jerk",
+      "f2": "max_deviation"
+    },
+    {
+      "auc": 0.512967375,
+      "f1": "mean_jerk",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.512323375,
+      "f1": "max_velocity",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.51219925,
+      "f1": "std_velocity",
+      "f2": "std_acceleration"
+    },
+    {
+      "auc": 0.5120965,
+      "f1": "std_jerk",
+      "f2": "num_direction_changes"
+    },
+    {
+      "auc": 0.512066375,
+      "f1": "std_velocity",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.511024,
+      "f1": "std_acceleration",
+      "f2": "max_deviation"
+    },
+    {
+      "auc": 0.51065225,
+      "f1": "std_acceleration",
+      "f2": "num_direction_changes"
+    },
+    {
+      "auc": 0.5103172500000001,
+      "f1": "max_acceleration",
+      "f2": "mean_jerk"
+    },
+    {
+      "auc": 0.510212,
+      "f1": "mean_velocity",
+      "f2": "std_acceleration"
+    },
+    {
+      "auc": 0.5093632499999999,
+      "f1": "path_efficiency",
+      "f2": "num_direction_changes"
+    },
+    {
+      "auc": 0.509102375,
+      "f1": "max_velocity",
+      "f2": "max_acceleration"
+    },
+    {
+      "auc": 0.5082416249999999,
+      "f1": "std_acceleration",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.5069866249999999,
+      "f1": "std_acceleration",
+      "f2": "mean_jerk"
+    },
+    {
+      "auc": 0.5068566250000001,
+      "f1": "max_acceleration",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.5062795,
+      "f1": "velocity_skewness",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "auc": 0.5033127500000001,
+      "f1": "velocity_skewness",
+      "f2": "mean_jerk"
+    },
+    {
+      "auc": 0.5032325,
+      "f1": "std_velocity",
+      "f2": "max_acceleration"
+    },
+    {
+      "auc": 0.503169625,
+      "f1": "max_velocity",
+      "f2": "mean_jerk"
+    },
+    {
+      "auc": 0.502963625,
+      "f1": "max_velocity",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.5028361250000001,
+      "f1": "max_velocity",
+      "f2": "std_acceleration"
+    },
+    {
+      "auc": 0.5021465,
+      "f1": "std_acceleration",
+      "f2": "movement_duration"
+    },
+    {
+      "auc": 0.501904125,
+      "f1": "velocity_skewness",
+      "f2": "std_acceleration"
+    },
+    {
+      "auc": 0.50075775,
+      "f1": "mean_acceleration",
+      "f2": "mean_jerk"
+    },
+    {
+      "auc": 0.499051625,
+      "f1": "mean_velocity",
+      "f2": "max_acceleration"
+    },
+    {
+      "auc": 0.4956625,
+      "f1": "mean_velocity",
+      "f2": "mean_acceleration"
+    },
+    {
+      "auc": 0.494979625,
+      "f1": "mean_jerk",
+      "f2": "path_efficiency"
+    },
+    {
+      "auc": 0.4943365,
+      "f1": "max_velocity",
+      "f2": "mean_acceleration"
+    },
+    {
+      "auc": 0.492459125,
+      "f1": "mean_jerk",
+      "f2": "num_direction_changes"
+    },
+    {
+      "auc": 0.48794787500000003,
+      "f1": "std_acceleration",
+      "f2": "max_acceleration"
+    }
+  ],
+  "copula_auc": 0.676074125,
+  "full_auc": 0.6834939999999999,
+  "spearman_diff": [
+    {
+      "d": 0.20815408913943378,
+      "human": -0.13983504759041385,
+      "gen": 0.06831904154901995,
+      "f1": "max_velocity",
+      "f2": "path_efficiency"
+    },
+    {
+      "d": 0.20707938923944505,
+      "human": -0.16837000527345217,
+      "gen": 0.038709383965992876,
+      "f1": "max_acceleration",
+      "f2": "path_efficiency"
+    },
+    {
+      "d": 0.19412107341815837,
+      "human": 0.3971255809925629,
+      "gen": 0.20300450757440452,
+      "f1": "num_direction_changes",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.187895043997657,
+      "human": -0.06943553227102431,
+      "gen": 0.11845951172663269,
+      "f1": "std_velocity",
+      "f2": "path_efficiency"
+    },
+    {
+      "d": 0.18763434504276488,
+      "human": 0.2686567413495287,
+      "gen": 0.08102239630676383,
+      "f1": "num_direction_changes",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.18589071591621903,
+      "human": 0.13349640016850792,
+      "gen": -0.05239431574771112,
+      "f1": "movement_duration",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.18360639956243863,
+      "human": 0.17210192931806043,
+      "gen": -0.011504470244378196,
+      "f1": "max_deviation",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.18134855026500418,
+      "human": -0.47757337623192847,
+      "gen": -0.2962248259669243,
+      "f1": "velocity_skewness",
+      "f2": "path_efficiency"
+    },
+    {
+      "d": 0.1750487673647778,
+      "human": -0.6094671120383385,
+      "gen": -0.43441834467356066,
+      "f1": "path_efficiency",
+      "f2": "movement_duration"
+    },
+    {
+      "d": 0.17310586954966292,
+      "human": 0.33113378180063724,
+      "gen": 0.15802791225097432,
+      "f1": "movement_duration",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.1713798448174666,
+      "human": -0.5978347146682613,
+      "gen": -0.4264548698507947,
+      "f1": "path_efficiency",
+      "f2": "num_direction_changes"
+    },
+    {
+      "d": 0.16639516317127206,
+      "human": 0.24724533166814186,
+      "gen": 0.08085016849686981,
+      "f1": "max_deviation",
+      "f2": "curvature_mean"
+    },
+    {
+      "d": 0.15854680097735643,
+      "human": 0.0890179847931588,
+      "gen": -0.06952881618419764,
+      "f1": "max_deviation",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.15555904158033,
+      "human": -0.01355557600767459,
+      "gen": 0.1420034655726554,
+      "f1": "std_jerk",
+      "f2": "path_efficiency"
+    },
+    {
+      "d": 0.154810490426682,
+      "human": -0.010690422148668761,
+      "gen": 0.14412006827801324,
+      "f1": "std_acceleration",
+      "f2": "path_efficiency"
+    },
+    {
+      "d": 0.144046564180921,
+      "human": -0.02401479290999076,
+      "gen": -0.16806135709091174,
+      "f1": "max_velocity",
+      "f2": "curvature_mean"
+    },
+    {
+      "d": 0.13974970554126367,
+      "human": 0.3208317507225137,
+      "gen": 0.18108204518125,
+      "f1": "max_deviation",
+      "f2": "curvature_std"
+    },
+    {
+      "d": 0.13772783707566977,
+      "human": 0.44689286449545096,
+      "gen": 0.3091650274197812,
+      "f1": "velocity_skewness",
+      "f2": "max_deviation"
+    },
+    {
+      "d": 0.13472701598132064,
+      "human": 0.17083195202205,
+      "gen": 0.036104936040729355,
+      "f1": "velocity_skewness",
+      "f2": "mean_acceleration"
+    },
+    {
+      "d": 0.13318259827695308,
+      "human": 0.010042316021071961,
+      "gen": -0.12314028225588113,
+      "f1": "max_acceleration",
+      "f2": "curvature_mean"
+    },
+    {
+      "d": 0.12879074561286347,
+      "human": -0.061589541040511696,
+      "gen": -0.19038028665337517,
+      "f1": "std_velocity",
+      "f2": "curvature_mean"
+    },
+    {
+      "d": 0.12333811344191903,
+      "human": 0.29466684672062327,
+      "gen": 0.17132873327870424,
+      "f1": "mean_acceleration",
+      "f2": "movement_duration"
+    },
+    {
+      "d": 0.1198318843016884,
+      "human": 0.43179660379778767,
+      "gen": 0.3119647194960993,
+      "f1": "curvature_mean",
+      "f2": "movement_duration"
+    },
+    {
+      "d": 0.11908564744697764,
+      "human": -0.5132558788940541,
+      "gen": -0.39417023144707647,
+      "f1": "path_efficiency",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.11786407108066223,
+      "human": -0.08130407400647359,
+      "gen": -0.19916814508713582,
+      "f1": "max_velocity",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.11617519468149728,
+      "human": 0.4791390681716785,
+      "gen": 0.3629638734901812,
+      "f1": "curvature_mean",
+      "f2": "num_direction_changes"
+    },
+    {
+      "d": 0.11067685621566486,
+      "human": -0.09626766891057448,
+      "gen": -0.20694452512623934,
+      "f1": "std_velocity",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.10849921501908805,
+      "human": 0.5729958714865829,
+      "gen": 0.4644966564674949,
+      "f1": "velocity_skewness",
+      "f2": "num_direction_changes"
+    },
+    {
+      "d": 0.10798890961033597,
+      "human": -0.03938595753099316,
+      "gen": 0.06860295207934282,
+      "f1": "mean_jerk",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.1059050188131872,
+      "human": -0.0990442694765706,
+      "gen": -0.2049492882897578,
+      "f1": "std_acceleration",
+      "f2": "curvature_mean"
+    },
+    {
+      "d": 0.1047375380705938,
+      "human": 0.24849870058604648,
+      "gen": 0.14376116251545268,
+      "f1": "mean_acceleration",
+      "f2": "num_direction_changes"
+    },
+    {
+      "d": 0.10436893352147192,
+      "human": -0.08683991445245293,
+      "gen": -0.19120884797392484,
+      "f1": "std_jerk",
+      "f2": "curvature_mean"
+    },
+    {
+      "d": 0.10333765038738996,
+      "human": 0.4132224597740784,
+      "gen": 0.30988480938668844,
+      "f1": "velocity_skewness",
+      "f2": "curvature_mean"
+    },
+    {
+      "d": 0.10149251713249542,
+      "human": 0.03633647287420429,
+      "gen": -0.06515604425829113,
+      "f1": "max_velocity",
+      "f2": "curvature_std"
+    },
+    {
+      "d": 0.10050969492119766,
+      "human": -0.023747203984529654,
+      "gen": -0.12425689890572732,
+      "f1": "max_velocity",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.09564733053521945,
+      "human": -0.6617157984695372,
+      "gen": -0.5660684679343178,
+      "f1": "path_efficiency",
+      "f2": "max_deviation"
+    },
+    {
+      "d": 0.09458271828757941,
+      "human": -0.2734803741068329,
+      "gen": -0.3680630923944123,
+      "f1": "mean_velocity",
+      "f2": "curvature_mean"
+    },
+    {
+      "d": 0.09430422708417482,
+      "human": 0.12168468264413013,
+      "gen": 0.21598890972830495,
+      "f1": "mean_velocity",
+      "f2": "path_efficiency"
+    },
+    {
+      "d": 0.09320370333600972,
+      "human": 0.0708206129971647,
+      "gen": -0.02238309033884502,
+      "f1": "max_acceleration",
+      "f2": "curvature_std"
+    },
+    {
+      "d": 0.09120937891405248,
+      "human": 0.06535047174291268,
+      "gen": -0.025858907171139794,
+      "f1": "mean_acceleration",
+      "f2": "max_deviation"
+    },
+    {
+      "d": 0.08881133492780358,
+      "human": -0.15774937249649915,
+      "gen": -0.24656070742430272,
+      "f1": "mean_jerk",
+      "f2": "std_jerk"
+    },
+    {
+      "d": 0.0878991884622231,
+      "human": -0.05496602830875898,
+      "gen": -0.14286521677098207,
+      "f1": "std_jerk",
+      "f2": "curvature_std"
+    },
+    {
+      "d": 0.0861049312287383,
+      "human": 0.29994197634374686,
+      "gen": 0.21383704511500856,
+      "f1": "mean_acceleration",
+      "f2": "curvature_mean"
+    },
+    {
+      "d": 0.08569117999016013,
+      "human": 0.4382335657917337,
+      "gen": 0.5239247457818939,
+      "f1": "mean_acceleration",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.08514531701749783,
+      "human": -0.5255488357319,
+      "gen": -0.4404035187144022,
+      "f1": "path_efficiency",
+      "f2": "curvature_std"
+    },
+    {
+      "d": 0.08503723858237452,
+      "human": 0.31676729736129855,
+      "gen": 0.23173005877892403,
+      "f1": "mean_acceleration",
+      "f2": "curvature_std"
+    },
+    {
+      "d": 0.08415307898607893,
+      "human": 0.5523674841839823,
+      "gen": 0.46821440519790336,
+      "f1": "curvature_std",
+      "f2": "num_direction_changes"
+    },
+    {
+      "d": 0.08390740300383014,
+      "human": -0.07523329882989462,
+      "gen": -0.15914070183372475,
+      "f1": "max_acceleration",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.08363381241113826,
+      "human": -0.006238725358300619,
+      "gen": -0.08987253776943889,
+      "f1": "std_velocity",
+      "f2": "curvature_std"
+    },
+    {
+      "d": 0.0833650309130563,
+      "human": -0.2405713222696444,
+      "gen": -0.3239363531827007,
+      "f1": "mean_velocity",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.08273899106304994,
+      "human": -0.04909743237813377,
+      "gen": -0.1318364234411837,
+      "f1": "std_velocity",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.08244354468150131,
+      "human": -0.17656583095766995,
+      "gen": -0.25900937563917126,
+      "f1": "std_acceleration",
+      "f2": "mean_jerk"
+    },
+    {
+      "d": 0.08226102622276316,
+      "human": -0.2119115171684522,
+      "gen": -0.29417254339121535,
+      "f1": "mean_velocity",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.0816055354677295,
+      "human": -0.06535186138641477,
+      "gen": -0.14695739685414427,
+      "f1": "std_acceleration",
+      "f2": "curvature_std"
+    },
+    {
+      "d": 0.0809430754825696,
+      "human": 0.14467912866904306,
+      "gen": 0.06373605318647346,
+      "f1": "mean_acceleration",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.08074750181905851,
+      "human": 0.23783664995916243,
+      "gen": 0.1570891481401039,
+      "f1": "velocity_skewness",
+      "f2": "std_jerk"
+    },
+    {
+      "d": 0.07984050850197472,
+      "human": -0.2407103265111325,
+      "gen": -0.3205508350131072,
+      "f1": "mean_velocity",
+      "f2": "curvature_std"
+    },
+    {
+      "d": 0.07924836719448518,
+      "human": -0.08905919304819547,
+      "gen": -0.16830756024268065,
+      "f1": "max_acceleration",
+      "f2": "mean_jerk"
+    },
+    {
+      "d": 0.07813078185916582,
+      "human": -0.008312039040633054,
+      "gen": -0.08644282089979888,
+      "f1": "std_jerk",
+      "f2": "movement_duration"
+    },
+    {
+      "d": 0.07804559446831343,
+      "human": -0.10270853721565,
+      "gen": -0.18075413168396343,
+      "f1": "max_velocity",
+      "f2": "mean_jerk"
+    },
+    {
+      "d": 0.07727389345519198,
+      "human": 0.6278274179494822,
+      "gen": 0.5505535244942902,
+      "f1": "max_acceleration",
+      "f2": "max_deviation"
+    },
+    {
+      "d": 0.07715446820094055,
+      "human": 0.027455044821040202,
+      "gen": -0.04969942337990035,
+      "f1": "std_jerk",
+      "f2": "num_direction_changes"
+    },
+    {
+      "d": 0.07575092785361345,
+      "human": 0.18527792688896097,
+      "gen": 0.10952699903534752,
+      "f1": "velocity_skewness",
+      "f2": "mean_jerk"
+    },
+    {
+      "d": 0.07440579756251664,
+      "human": 0.652334733587265,
+      "gen": 0.5779289360247484,
+      "f1": "velocity_skewness",
+      "f2": "movement_duration"
+    },
+    {
+      "d": 0.07319470353241442,
+      "human": 0.6549451404238593,
+      "gen": 0.5817504368914449,
+      "f1": "max_deviation",
+      "f2": "movement_duration"
+    },
+    {
+      "d": 0.07271111837889366,
+      "human": 0.6622234639213066,
+      "gen": 0.5895123455424129,
+      "f1": "max_velocity",
+      "f2": "max_deviation"
+    },
+    {
+      "d": 0.07166009740275231,
+      "human": 0.24835315115587206,
+      "gen": 0.17669305375311975,
+      "f1": "max_acceleration",
+      "f2": "num_direction_changes"
+    },
+    {
+      "d": 0.07118806207084089,
+      "human": 0.556238741370211,
+      "gen": 0.4850506792993701,
+      "f1": "curvature_std",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.07029112671537086,
+      "human": 0.5291422912705755,
+      "gen": 0.4588511645552047,
+      "f1": "curvature_std",
+      "f2": "movement_duration"
+    },
+    {
+      "d": 0.06984125658200702,
+      "human": -0.1327622229903416,
+      "gen": -0.20260347957234862,
+      "f1": "std_velocity",
+      "f2": "mean_jerk"
+    },
+    {
+      "d": 0.06951994453364219,
+      "human": 0.6685672646994371,
+      "gen": 0.5990473201657949,
+      "f1": "max_deviation",
+      "f2": "num_direction_changes"
+    },
+    {
+      "d": 0.06942299937280327,
+      "human": 0.46844175074318645,
+      "gen": 0.3990187513703832,
+      "f1": "velocity_skewness",
+      "f2": "curvature_std"
+    },
+    {
+      "d": 0.06839649614861742,
+      "human": 0.2568970129503369,
+      "gen": 0.18850051680171948,
+      "f1": "max_velocity",
+      "f2": "num_direction_changes"
+    },
+    {
+      "d": 0.06784028739339243,
+      "human": 0.5799815318823416,
+      "gen": 0.5121412444889492,
+      "f1": "curvature_mean",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.06767860865854679,
+      "human": 0.01592636557030352,
+      "gen": -0.05175224308824326,
+      "f1": "std_acceleration",
+      "f2": "num_direction_changes"
+    },
+    {
+      "d": 0.06468321634616035,
+      "human": -0.013279079885268706,
+      "gen": -0.07796229623142906,
+      "f1": "max_acceleration",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.06388495986517817,
+      "human": 0.19566813179063272,
+      "gen": 0.13178317192545455,
+      "f1": "velocity_skewness",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.05979857334940297,
+      "human": 0.6060308983568988,
+      "gen": 0.5462323250074959,
+      "f1": "std_velocity",
+      "f2": "max_deviation"
+    },
+    {
+      "d": 0.059338223036710436,
+      "human": -0.20864752968845135,
+      "gen": -0.2679857527251618,
+      "f1": "velocity_skewness",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.05914334367116014,
+      "human": -0.49501089325649184,
+      "gen": -0.4358675495853317,
+      "f1": "path_efficiency",
+      "f2": "curvature_mean"
+    },
+    {
+      "d": 0.057663519277317124,
+      "human": -0.1142193165976614,
+      "gen": -0.17188283587497852,
+      "f1": "max_velocity",
+      "f2": "mean_acceleration"
+    },
+    {
+      "d": 0.056869710322604294,
+      "human": 0.48620543958097323,
+      "gen": 0.42933572925836894,
+      "f1": "curvature_std",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.05626063017551286,
+      "human": 0.07179291447304718,
+      "gen": 0.015532284297534322,
+      "f1": "mean_acceleration",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.055833189074961764,
+      "human": 0.46119828796467166,
+      "gen": 0.4053650988897099,
+      "f1": "std_jerk",
+      "f2": "max_deviation"
+    },
+    {
+      "d": 0.055452657556471885,
+      "human": -0.023572797438029258,
+      "gen": -0.07902545499450114,
+      "f1": "std_acceleration",
+      "f2": "movement_duration"
+    },
+    {
+      "d": 0.05512927919471383,
+      "human": 0.34299638322346,
+      "gen": 0.28786710402874616,
+      "f1": "velocity_skewness",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.055024720088975736,
+      "human": -0.05536954534238634,
+      "gen": -0.11039426543136208,
+      "f1": "mean_velocity",
+      "f2": "velocity_skewness"
+    },
+    {
+      "d": 0.053855452638459866,
+      "human": 0.48054164233273494,
+      "gen": 0.4266861896942751,
+      "f1": "std_acceleration",
+      "f2": "max_deviation"
+    },
+    {
+      "d": 0.05307653120944755,
+      "human": -0.42767745076177033,
+      "gen": -0.3746009195523228,
+      "f1": "path_efficiency",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.052379859503462994,
+      "human": -0.155512897014844,
+      "gen": -0.103133037511381,
+      "f1": "mean_acceleration",
+      "f2": "path_efficiency"
+    },
+    {
+      "d": 0.050386506313166185,
+      "human": -0.0880358490733372,
+      "gen": -0.13842235538650338,
+      "f1": "std_acceleration",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.0499785283262896,
+      "human": 0.23282704826532694,
+      "gen": 0.18284851993903734,
+      "f1": "max_acceleration",
+      "f2": "movement_duration"
+    },
+    {
+      "d": 0.048595055532215124,
+      "human": 0.03721381751386353,
+      "gen": -0.011381238018351591,
+      "f1": "mean_jerk",
+      "f2": "max_deviation"
+    },
+    {
+      "d": 0.04753900699231031,
+      "human": 0.2374608233652058,
+      "gen": 0.18992181637289549,
+      "f1": "velocity_skewness",
+      "f2": "std_acceleration"
+    },
+    {
+      "d": 0.047520844364071446,
+      "human": 0.23361590388431916,
+      "gen": 0.1860950595202477,
+      "f1": "max_velocity",
+      "f2": "movement_duration"
+    },
+    {
+      "d": 0.04609972579998953,
+      "human": -0.20885527779214016,
+      "gen": -0.2549550035921297,
+      "f1": "mean_velocity",
+      "f2": "mean_jerk"
+    },
+    {
+      "d": 0.045504815020747144,
+      "human": -0.0857538622497848,
+      "gen": -0.13125867727053195,
+      "f1": "std_jerk",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.04492094341800758,
+      "human": 0.004654068263654582,
+      "gen": 0.04957501168166216,
+      "f1": "mean_velocity",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.04411737470365723,
+      "human": 0.17137930111531366,
+      "gen": 0.12726192641165643,
+      "f1": "std_velocity",
+      "f2": "num_direction_changes"
+    },
+    {
+      "d": 0.04325964820046707,
+      "human": -0.14552108293484114,
+      "gen": -0.18878073113530822,
+      "f1": "std_velocity",
+      "f2": "mean_acceleration"
+    },
+    {
+      "d": 0.043128143530604186,
+      "human": -0.014864351733361576,
+      "gen": 0.02826379179724261,
+      "f1": "std_jerk",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.04284946374501798,
+      "human": -0.09026304157308841,
+      "gen": -0.1331125053181064,
+      "f1": "std_acceleration",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.04230515063826251,
+      "human": 0.4444933501233375,
+      "gen": 0.402188199485075,
+      "f1": "velocity_skewness",
+      "f2": "max_acceleration"
+    },
+    {
+      "d": 0.04020888651230316,
+      "human": -0.07999462549280933,
+      "gen": -0.12020351200511249,
+      "f1": "std_jerk",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.0389705975542399,
+      "human": 0.09342687291001359,
+      "gen": 0.13239747046425349,
+      "f1": "mean_jerk",
+      "f2": "curvature_mean"
+    },
+    {
+      "d": 0.03884794875153716,
+      "human": 0.11524486501881753,
+      "gen": 0.1540928137703547,
+      "f1": "mean_jerk",
+      "f2": "curvature_std"
+    },
+    {
+      "d": 0.037197961067260185,
+      "human": -0.09236210687516251,
+      "gen": -0.1295600679424227,
+      "f1": "mean_acceleration",
+      "f2": "max_acceleration"
+    },
+    {
+      "d": 0.036985063304767404,
+      "human": -0.010065744163404312,
+      "gen": -0.04705080746817172,
+      "f1": "curvature_std",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.033509001455879664,
+      "human": -0.000497131186297187,
+      "gen": -0.03400613264217685,
+      "f1": "curvature_mean",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.031713452019910715,
+      "human": 0.9096494709123676,
+      "gen": 0.8779360188924569,
+      "f1": "mean_velocity",
+      "f2": "std_velocity"
+    },
+    {
+      "d": 0.03171157664077906,
+      "human": -0.11141707127156292,
+      "gen": -0.14312864791234198,
+      "f1": "movement_duration",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.03131629785872975,
+      "human": 0.3893328463332115,
+      "gen": 0.3580165484744818,
+      "f1": "max_velocity",
+      "f2": "velocity_skewness"
+    },
+    {
+      "d": 0.02913572617071382,
+      "human": 0.09785715433429028,
+      "gen": 0.06872142816357646,
+      "f1": "path_efficiency",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.026693812066108425,
+      "human": -0.00769406126015429,
+      "gen": 0.018999750805954136,
+      "f1": "std_acceleration",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.025147429618950667,
+      "human": -0.11860128548600443,
+      "gen": -0.1437487151049551,
+      "f1": "mean_velocity",
+      "f2": "movement_duration"
+    },
+    {
+      "d": 0.025034746088827498,
+      "human": 0.564084797688927,
+      "gen": 0.5390500516000996,
+      "f1": "curvature_mean",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.022288838716605586,
+      "human": 0.9018850489712622,
+      "gen": 0.9241738876878678,
+      "f1": "std_velocity",
+      "f2": "max_acceleration"
+    },
+    {
+      "d": 0.021896097940357517,
+      "human": 0.9793267266765763,
+      "gen": 0.9574306287362188,
+      "f1": "curvature_mean",
+      "f2": "curvature_std"
+    },
+    {
+      "d": 0.02111864113208485,
+      "human": 0.13959292051265304,
+      "gen": 0.11847427938056819,
+      "f1": "std_velocity",
+      "f2": "movement_duration"
+    },
+    {
+      "d": 0.020872537048062828,
+      "human": -0.09525831152342257,
+      "gen": -0.07438577447535974,
+      "f1": "max_deviation",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.01978868614900922,
+      "human": -0.03078922073079614,
+      "gen": -0.011000534581786918,
+      "f1": "mean_jerk",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.018013922044091912,
+      "human": 0.22087644814622112,
+      "gen": 0.2028625261021292,
+      "f1": "mean_jerk",
+      "f2": "movement_duration"
+    },
+    {
+      "d": 0.01738452985549896,
+      "human": -0.10298872603929883,
+      "gen": -0.12037325589479779,
+      "f1": "num_direction_changes",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.017265402990859324,
+      "human": 0.8698024844506211,
+      "gen": 0.8525370814597618,
+      "f1": "mean_velocity",
+      "f2": "max_velocity"
+    },
+    {
+      "d": 0.017019660297673322,
+      "human": -0.051624664391006894,
+      "gen": -0.06864432468868022,
+      "f1": "mean_velocity",
+      "f2": "num_direction_changes"
+    },
+    {
+      "d": 0.016423363420825815,
+      "human": 0.14486777207559387,
+      "gen": 0.12844440865476806,
+      "f1": "mean_acceleration",
+      "f2": "mean_jerk"
+    },
+    {
+      "d": 0.015118838196129775,
+      "human": -0.06898276003668903,
+      "gen": -0.053863921840559256,
+      "f1": "time_to_peak_velocity",
+      "f2": "angular_velocity_mean"
+    },
+    {
+      "d": 0.014917758841767381,
+      "human": -0.22344146744415744,
+      "gen": -0.20852370860239006,
+      "f1": "mean_velocity",
+      "f2": "mean_acceleration"
+    },
+    {
+      "d": 0.013349033974481839,
+      "human": 0.9220880185220046,
+      "gen": 0.9087389845475228,
+      "f1": "max_acceleration",
+      "f2": "std_jerk"
+    },
+    {
+      "d": 0.012678981035030512,
+      "human": 0.8077011564252892,
+      "gen": 0.8203801374603197,
+      "f1": "mean_velocity",
+      "f2": "std_jerk"
+    },
+    {
+      "d": 0.011924777459608432,
+      "human": -0.15794695329596842,
+      "gen": -0.14602217583635999,
+      "f1": "mean_acceleration",
+      "f2": "std_jerk"
+    },
+    {
+      "d": 0.011226295939366415,
+      "human": 0.9007117888644341,
+      "gen": 0.8894854929250677,
+      "f1": "angular_velocity_mean",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.01061432954516861,
+      "human": 0.844833632708408,
+      "gen": 0.8554479622535767,
+      "f1": "std_velocity",
+      "f2": "std_jerk"
+    },
+    {
+      "d": 0.009059843198865325,
+      "human": 0.9028128082032021,
+      "gen": 0.9118726514020674,
+      "f1": "std_velocity",
+      "f2": "std_acceleration"
+    },
+    {
+      "d": 0.008641334286270702,
+      "human": -0.1619604945508588,
+      "gen": -0.1533191602645881,
+      "f1": "mean_acceleration",
+      "f2": "std_acceleration"
+    },
+    {
+      "d": 0.008054003214803651,
+      "human": 0.7757553559388389,
+      "gen": 0.7677013527240353,
+      "f1": "mean_velocity",
+      "f2": "max_acceleration"
+    },
+    {
+      "d": 0.00701429389475524,
+      "human": -0.06791744811191047,
+      "gen": -0.06090315421715523,
+      "f1": "std_velocity",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.006202455057028225,
+      "human": 0.032623837952485295,
+      "gen": 0.03882629300951352,
+      "f1": "mean_jerk",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.005995570605403677,
+      "human": 0.8639807669951918,
+      "gen": 0.8579851963897881,
+      "f1": "mean_velocity",
+      "f2": "std_acceleration"
+    },
+    {
+      "d": 0.005417156482469099,
+      "human": 0.9387487866871965,
+      "gen": 0.9441659431696656,
+      "f1": "max_velocity",
+      "f2": "max_acceleration"
+    },
+    {
+      "d": 0.005257181099600605,
+      "human": 0.45975433552238965,
+      "gen": 0.46501151662199025,
+      "f1": "mean_velocity",
+      "f2": "max_deviation"
+    },
+    {
+      "d": 0.005074267275074873,
+      "human": -0.07433081504610395,
+      "gen": -0.06925654777102908,
+      "f1": "time_to_peak_velocity",
+      "f2": "angular_velocity_std"
+    },
+    {
+      "d": 0.0048308670972340775,
+      "human": -0.055747289231347835,
+      "gen": -0.06057815632858191,
+      "f1": "max_acceleration",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.004721271855637754,
+      "human": -0.0830233759521163,
+      "gen": -0.07830210409647854,
+      "f1": "max_velocity",
+      "f2": "time_to_peak_velocity"
+    },
+    {
+      "d": 0.004142307039869064,
+      "human": 0.8628076137019035,
+      "gen": 0.8586653066620344,
+      "f1": "max_velocity",
+      "f2": "std_jerk"
+    },
+    {
+      "d": 0.0036312125772770543,
+      "human": 0.9787612261903066,
+      "gen": 0.9823924387675836,
+      "f1": "std_velocity",
+      "f2": "max_velocity"
+    },
+    {
+      "d": 0.003523838978723326,
+      "human": 0.939153303788326,
+      "gen": 0.9356294648096026,
+      "f1": "std_acceleration",
+      "f2": "max_acceleration"
+    },
+    {
+      "d": 0.0021339431629466554,
+      "human": 0.18131468883091756,
+      "gen": 0.1791807456679709,
+      "f1": "mean_jerk",
+      "f2": "num_direction_changes"
+    },
+    {
+      "d": 0.0010837898133578827,
+      "human": 0.27786981946745487,
+      "gen": 0.276786029654097,
+      "f1": "std_velocity",
+      "f2": "velocity_skewness"
+    },
+    {
+      "d": 0.0005631273953576738,
+      "human": -0.10039390750575225,
+      "gen": -0.10095703490110992,
+      "f1": "mean_jerk",
+      "f2": "path_efficiency"
+    },
+    {
+      "d": 0.00022210458466309646,
+      "human": 0.9103673785918448,
+      "gen": 0.9105894831765079,
+      "f1": "max_velocity",
+      "f2": "std_acceleration"
+    },
+    {
+      "d": 0.00020908503692262936,
+      "human": 0.9793256553314138,
+      "gen": 0.9795347403683364,
+      "f1": "std_acceleration",
+      "f2": "std_jerk"
+    },
+    {
+      "d": 3.1915041427299506e-05,
+      "human": 0.9099110940833514,
+      "gen": 0.9098791790419241,
+      "f1": "num_direction_changes",
+      "f2": "movement_duration"
+    }
+  ]
+}

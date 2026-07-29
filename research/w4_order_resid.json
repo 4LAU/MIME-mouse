@@ -1,0 +1,17 @@
+{
+  "event_polar_4m_resid_v6.pt_gumbel_100": {
+    "contract": 0.645846842079732,
+    "path_eff": 0.9209404921169425,
+    "n": 1499
+  },
+  "event_polar_4m_resid_v6.pt_l2r_100": {
+    "contract": 0.8755370465539176,
+    "path_eff": 0.7864013639798635,
+    "n": 1492
+  },
+  "event_polar_4m_resid_v6.pt_l2r_256": {
+    "contract": 0.8448148933780868,
+    "path_eff": 0.7647420609881792,
+    "n": 1498
+  }
+}

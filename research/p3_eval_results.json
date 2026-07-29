@@ -1,0 +1,18 @@
+{
+  "ckpt": "training/inpaint_flow_v1.pt",
+  "n": 2000,
+  "seed": 42,
+  "flow_steps": 64,
+  "cfg": 0.0,
+  "auc_rf_oob": 0.9814501250000001,
+  "n_per_class": 2000,
+  "tell_spread": {
+    "max_velocity": 0.16679898870617565,
+    "max_acceleration": 0.13046878528847317,
+    "mean_jerk": 0.06529826931089527,
+    "std_jerk": 0.29143879608081563
+  },
+  "stall_frac_mean": 0.0,
+  "dur_clip_frac": 0.039,
+  "n_features_valid": 2000
+}

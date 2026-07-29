@@ -1,0 +1,22 @@
+{
+  "untouched real tokens": {
+    "auc": 0.5576175,
+    "n": 2427
+  },
+  "turn order shuffled in 16s": {
+    "auc": 0.736845875,
+    "n": 2427
+  },
+  "turn order shuffled whole path": {
+    "auc": 0.7921557499999999,
+    "n": 2427
+  },
+  "speed order shuffled in 16s": {
+    "auc": 0.859509,
+    "n": 2427
+  },
+  "timing order shuffled in 16s": {
+    "auc": 0.629545125,
+    "n": 2427
+  }
+}

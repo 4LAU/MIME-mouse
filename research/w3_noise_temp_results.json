@@ -1,0 +1,80 @@
+{
+ "status": "COMPLETE",
+ "n": 2000,
+ "seed": 888,
+ "scales": [
+  1.0,
+  1.15,
+  1.3,
+  1.5
+ ],
+ "md5_before": "91326a29750789f3167055324ef377c5",
+ "md5_after": "91326a29750789f3167055324ef377c5",
+ "md5_unchanged": true,
+ "arms": {
+  "1.0": {
+   "n_usable": 2000,
+   "auc_rf_oob": 0.763159125,
+   "n_per_class": 2000,
+   "gen_seconds": 184.39390653400005,
+   "raw_dispersion_ratio": {
+    "max_velocity": 0.1344316116586553,
+    "max_acceleration": 0.09482723678211447,
+    "mean_jerk": 0.06629695074243377,
+    "mean_acceleration": 0.07895166599579923,
+    "std_velocity": 0.1802836690788355,
+    "curvature_mean": 0.010633882591829529,
+    "curvature_std": 0.017983023355375882,
+    "movement_duration": 0.6093010571282867
+   }
+  },
+  "1.15": {
+   "n_usable": 2000,
+   "auc_rf_oob": 0.865253625,
+   "n_per_class": 2000,
+   "gen_seconds": 191.39989406399945,
+   "raw_dispersion_ratio": {
+    "max_velocity": 0.3627472433220924,
+    "max_acceleration": 0.2226417746917302,
+    "mean_jerk": 0.05376673877262953,
+    "mean_acceleration": 0.0683499687090462,
+    "std_velocity": 0.45575575018191444,
+    "curvature_mean": 0.055664771426222615,
+    "curvature_std": 0.10509792612603977,
+    "movement_duration": 0.650531754827204
+   }
+  },
+  "1.3": {
+   "n_usable": 2000,
+   "auc_rf_oob": 0.9588126250000001,
+   "n_per_class": 2000,
+   "gen_seconds": 192.44034467799975,
+   "raw_dispersion_ratio": {
+    "max_velocity": 1.6863894197845064,
+    "max_acceleration": 1.4297814403707767,
+    "mean_jerk": 0.40983084108361434,
+    "mean_acceleration": 0.49539178991762317,
+    "std_velocity": 2.2950723672959685,
+    "curvature_mean": 0.2249196609750524,
+    "curvature_std": 0.30118824596682975,
+    "movement_duration": 0.6355228482070963
+   }
+  },
+  "1.5": {
+   "n_usable": 2000,
+   "auc_rf_oob": 0.9915673750000001,
+   "n_per_class": 2000,
+   "gen_seconds": 191.680716122999,
+   "raw_dispersion_ratio": {
+    "max_velocity": 1.2688378758904462,
+    "max_acceleration": 1.157580516741251,
+    "mean_jerk": 0.3415508594676312,
+    "mean_acceleration": 0.37729431034922145,
+    "std_velocity": 1.3977389018591284,
+    "curvature_mean": 0.2970968904337873,
+    "curvature_std": 0.4483930006826507,
+    "movement_duration": 0.6399911319087126
+   }
+  }
+ }
+}

@@ -1,0 +1,83 @@
+{
+  "seed": 42,
+  "floor": 0.503864,
+  "theme": {
+    "fc_v2": "path_efficiency",
+    "resid_v2": "angular_velocity_mean"
+  },
+  "arms": {
+    "fc_v2": {
+      "n": 2000,
+      "base": 0.660209625,
+      "arms": {
+        "raw": {
+          "auc": 0.660209625,
+          "delta": 0.0,
+          "gap_closed": 0.0
+        },
+        "marginals only": {
+          "auc": 0.604814625,
+          "delta": -0.05539499999999997,
+          "gap_closed": 0.3543111615691194
+        },
+        "couplings only": {
+          "auc": 0.670221125,
+          "delta": 0.010011499999999951,
+          "gap_closed": -0.06403441094050408
+        },
+        "both": {
+          "auc": 0.589879,
+          "delta": -0.07033062499999998,
+          "gap_closed": 0.44984069749313393
+        },
+        "couplings: path_efficiency only": {
+          "auc": 0.66684,
+          "delta": 0.006630374999999966,
+          "gap_closed": -0.04240844603102878
+        },
+        "scrambled target (control)": {
+          "auc": 0.9998971249999999,
+          "delta": 0.3396874999999999,
+          "gap_closed": -2.1726703257606332
+        }
+      }
+    },
+    "resid_v2": {
+      "n": 1998,
+      "base": 0.65073557040524,
+      "arms": {
+        "raw": {
+          "auc": 0.65073557040524,
+          "delta": 0.0,
+          "gap_closed": 0.0
+        },
+        "marginals only": {
+          "auc": 0.5968422125829533,
+          "delta": -0.05389335782228666,
+          "gap_closed": 0.36694206832259674
+        },
+        "couplings only": {
+          "auc": 0.6580637193750307,
+          "delta": 0.0073281489697907265,
+          "gap_closed": -0.04989494528839923
+        },
+        "both": {
+          "auc": 0.5810939818697576,
+          "delta": -0.06964158853548241,
+          "gap_closed": 0.474166568406201
+        },
+        "couplings: angular_velocity_mean only": {
+          "auc": 0.6731902072242413,
+          "delta": 0.022454636819001283,
+          "gap_closed": -0.15288620362024916
+        },
+        "scrambled target (control)": {
+          "auc": 0.9998004761518274,
+          "delta": 0.34906490574658744,
+          "gap_closed": -2.376667620448713
+        }
+      }
+    }
+  },
+  "wall_sec": 7.1591596603393555
+}

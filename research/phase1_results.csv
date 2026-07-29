@@ -1,0 +1,15 @@
+mode,k,ckpt,batch_requested,batch_achieved,status,peak_vram_mb,sec_per_step,loss,grad_norm,n_params_with_grad,note
+grad_tail,8,False,16,16,ok,3154.7,1.7740,105496.148438,3.259401e+07,99,
+grad_tail,8,True,16,16,ok,479.4,2.6242,114891.539062,2.887110e+07,99,
+grad_tail,16,False,16,8,ok,3180.7,0.9716,131964.937500,2.018038e+07,99,
+grad_tail,16,True,16,16,ok,479.6,1.8620,77098.296875,2.076309e+07,99,
+grad_tail,50,False,16,4,ok,4873.9,1.2408,97771.343750,1.506211e+07,99,
+grad_tail,50,True,16,16,ok,480.4,2.7752,133143.921875,4.961209e+07,99,
+grad_tail,100,False,16,4,oom,,,,,,OOM even at batch floor
+grad_tail,100,True,16,16,ok,481.6,4.1984,160951.812500,5.864460e+07,99,
+grad_tail,200,False,16,4,oom,,,,,,OOM even at batch floor
+grad_tail,200,True,16,16,ok,483.9,6.6422,25360.669922,1.088125e+07,99,
+baseline_no_grad,200,n/a,16,16,ok,101.5,1.4774,,,,"plain no_grad 200-step generation, no backward"
+grad_tail,200,True,128,128,ok,3272.0,52.3039,28540.726562,1.368699e+07,99,
+grad_tail,100,True,128,128,ok,3253.2,33.0521,23365.310547,1.073574e+07,99,
+baseline_no_grad,200,n/a,128,128,ok,369.9,12.2642,,,,"plain no_grad 200-step generation, no backward"

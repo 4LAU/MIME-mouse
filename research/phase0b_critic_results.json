@@ -1,0 +1,141 @@
+{
+  "n_paths_per_class": 2000,
+  "n_channels": 7,
+  "channel_names": [
+    "dx",
+    "dy",
+    "speed",
+    "acc",
+    "jerk",
+    "curvature",
+    "angular_velocity"
+  ],
+  "n_nonfinite_clamped": 0,
+  "n_valid_elems": 1744204,
+  "pct_nonfinite_clamped": 0.0,
+  "rf_refit_sanity": {
+    "refit_oob_auc": 0.7569531249999999,
+    "saved_oob_auc": 0.7569531249999999,
+    "max_abs_diff_refit_vs_saved": 0.0
+  },
+  "critic_oof_auc": 0.7918315,
+  "critic_fold_aucs": [
+    0.8233999999999999,
+    0.7962875,
+    0.8290249999999999,
+    0.77718125,
+    0.7878999999999999
+  ],
+  "spearman_synth_only": {
+    "rho": 0.24247785812771158,
+    "p": 3.748108863627751e-28
+  },
+  "spearman_human_only": {
+    "rho": 0.2982001118118874,
+    "p": 2.345660094577169e-42
+  },
+  "spearman_pooled": {
+    "rho": 0.43968429526640773,
+    "p": 8.92942345223114e-189
+  },
+  "feature_alignment_table": [
+    {
+      "feature": "mean_jerk",
+      "rf_importance": 0.10440334270028587,
+      "abs_spearman_critic": 0.01497297553026283
+    },
+    {
+      "feature": "angular_velocity_std",
+      "rf_importance": 0.07002389546436644,
+      "abs_spearman_critic": 0.16914043576201826
+    },
+    {
+      "feature": "curvature_mean",
+      "rf_importance": 0.06813237195927914,
+      "abs_spearman_critic": 0.0815704788196497
+    },
+    {
+      "feature": "mean_acceleration",
+      "rf_importance": 0.06305420454228904,
+      "abs_spearman_critic": 0.15425534821068995
+    },
+    {
+      "feature": "curvature_std",
+      "rf_importance": 0.06211400260498369,
+      "abs_spearman_critic": 0.05880131949664683
+    },
+    {
+      "feature": "movement_duration",
+      "rf_importance": 0.058868078894163414,
+      "abs_spearman_critic": 0.013090082471436058
+    },
+    {
+      "feature": "path_efficiency",
+      "rf_importance": 0.05558246312368868,
+      "abs_spearman_critic": 0.04778275028788537
+    },
+    {
+      "feature": "angular_velocity_mean",
+      "rf_importance": 0.05317576743953383,
+      "abs_spearman_critic": 0.10484055648965894
+    },
+    {
+      "feature": "velocity_skewness",
+      "rf_importance": 0.050597564000335236,
+      "abs_spearman_critic": 0.004652798165799885
+    },
+    {
+      "feature": "time_to_peak_velocity",
+      "rf_importance": 0.05027857161671409,
+      "abs_spearman_critic": 0.05691068678421775
+    },
+    {
+      "feature": "max_deviation",
+      "rf_importance": 0.04999179013734977,
+      "abs_spearman_critic": 0.0350642144690376
+    },
+    {
+      "feature": "mean_velocity",
+      "rf_importance": 0.04642448714521136,
+      "abs_spearman_critic": 0.0848882625555164
+    },
+    {
+      "feature": "std_velocity",
+      "rf_importance": 0.04577564954211714,
+      "abs_spearman_critic": 0.1137717251107328
+    },
+    {
+      "feature": "std_jerk",
+      "rf_importance": 0.0451308085277431,
+      "abs_spearman_critic": 0.053045628315351756
+    },
+    {
+      "feature": "num_direction_changes",
+      "rf_importance": 0.04502929037450269,
+      "abs_spearman_critic": 0.019295599034129786
+    },
+    {
+      "feature": "max_acceleration",
+      "rf_importance": 0.045020113657245654,
+      "abs_spearman_critic": 0.08233321133332569
+    },
+    {
+      "feature": "max_velocity",
+      "rf_importance": 0.04349009312185819,
+      "abs_spearman_critic": 0.1051077412567338
+    },
+    {
+      "feature": "std_acceleration",
+      "rf_importance": 0.04290750514833262,
+      "abs_spearman_critic": 0.07546203752887734
+    }
+  ],
+  "elapsed_sec": 418.2343244999647,
+  "phase0_reference": {
+    "critic_oof_auc": 0.632,
+    "rf_oob_auc": 0.757,
+    "spearman_synth_only": 0.196,
+    "spearman_human_only": 0.248,
+    "spearman_pooled": 0.311
+  }
+}

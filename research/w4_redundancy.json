@@ -1,0 +1,132 @@
+{
+  "all18": 0.6798055000000001,
+  "all18_floor": 0.4738485,
+  "rows": [
+    {
+      "feature": "mean_velocity",
+      "alone": 0.48917475,
+      "alone_floor": 0.5146845,
+      "without": 0.681937,
+      "drop": -0.002131499999999953
+    },
+    {
+      "feature": "std_velocity",
+      "alone": 0.524375375,
+      "alone_floor": 0.49996399999999996,
+      "without": 0.6808081250000001,
+      "drop": -0.0010026250000000347
+    },
+    {
+      "feature": "max_velocity",
+      "alone": 0.5501995,
+      "alone_floor": 0.506737,
+      "without": 0.681872,
+      "drop": -0.002066499999999971
+    },
+    {
+      "feature": "velocity_skewness",
+      "alone": 0.5307851250000001,
+      "alone_floor": 0.508101,
+      "without": 0.6766781249999999,
+      "drop": 0.0031273750000001543
+    },
+    {
+      "feature": "mean_acceleration",
+      "alone": 0.507981625,
+      "alone_floor": 0.49978399999999995,
+      "without": 0.677740625,
+      "drop": 0.002064875000000077
+    },
+    {
+      "feature": "std_acceleration",
+      "alone": 0.48382937500000006,
+      "alone_floor": 0.5113665,
+      "without": 0.6831594999999999,
+      "drop": -0.003353999999999857
+    },
+    {
+      "feature": "max_acceleration",
+      "alone": 0.52721325,
+      "alone_floor": 0.497645,
+      "without": 0.68437325,
+      "drop": -0.0045677499999999815
+    },
+    {
+      "feature": "mean_jerk",
+      "alone": 0.47698062500000005,
+      "alone_floor": 0.5149915,
+      "without": 0.682320125,
+      "drop": -0.0025146249999999926
+    },
+    {
+      "feature": "std_jerk",
+      "alone": 0.499884,
+      "alone_floor": 0.4617725,
+      "without": 0.68516725,
+      "drop": -0.005361749999999943
+    },
+    {
+      "feature": "path_efficiency",
+      "alone": 0.5083435000000001,
+      "alone_floor": 0.4839895,
+      "without": 0.6780816249999999,
+      "drop": 0.0017238750000001524
+    },
+    {
+      "feature": "max_deviation",
+      "alone": 0.5252074999999999,
+      "alone_floor": 0.48676949999999997,
+      "without": 0.68001,
+      "drop": -0.00020449999999994084
+    },
+    {
+      "feature": "curvature_mean",
+      "alone": 0.525994125,
+      "alone_floor": 0.4675045,
+      "without": 0.683927625,
+      "drop": -0.0041221249999999765
+    },
+    {
+      "feature": "curvature_std",
+      "alone": 0.5295343750000001,
+      "alone_floor": 0.517615,
+      "without": 0.68030625,
+      "drop": -0.0005007499999999387
+    },
+    {
+      "feature": "num_direction_changes",
+      "alone": 0.49251775,
+      "alone_floor": 0.47779099999999997,
+      "without": 0.677389875,
+      "drop": 0.0024156250000000323
+    },
+    {
+      "feature": "movement_duration",
+      "alone": 0.561488875,
+      "alone_floor": 0.4902865,
+      "without": 0.6851316249999999,
+      "drop": -0.005326124999999848
+    },
+    {
+      "feature": "time_to_peak_velocity",
+      "alone": 0.523355875,
+      "alone_floor": 0.509236,
+      "without": 0.675496,
+      "drop": 0.004309500000000077
+    },
+    {
+      "feature": "angular_velocity_mean",
+      "alone": 0.5239948750000001,
+      "alone_floor": 0.4736495,
+      "without": 0.6768365000000001,
+      "drop": 0.0029689999999999994
+    },
+    {
+      "feature": "angular_velocity_std",
+      "alone": 0.5444282500000001,
+      "alone_floor": 0.48818300000000003,
+      "without": 0.681186875,
+      "drop": -0.001381374999999907
+    }
+  ]
+}

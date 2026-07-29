@@ -1,0 +1,43 @@
+{
+  "model": "event_polar_4m_fc_v2.pt (production event-stream model; the model behind the 0.504 headline)",
+  "pool_source": "pool_s42_k32.npz",
+  "pool_seed": 42,
+  "pool_provenance": "scripts/run_poolgen32.sh, July 6 (already on disk; reused verbatim, no fresh GPU generation)",
+  "judge": "selection_lab.py pick_sir() == experiments/event_stream_polar.py _sir_select() offline port: GradientBoostingClassifier(n_estimators=200, max_depth=3, subsample=0.8, random_state=0), fit on ref_a (human) vs ALL pool candidates (synthetic), log-odds -> per-spec tempered Gumbel-max lottery (temp=0.7)",
+  "judge_ref_file": "human_ref_features_sir.npy",
+  "judge_fit_rows": 2000,
+  "judge_never_saw": "ref half B, data/human_val_features_grpo.npy, data/human_eval_features.npy",
+  "final_auc_reference_file": "human_val_features_grpo.npy",
+  "final_rf_recipe": "RandomForestClassifier(n_estimators=100, oob_score=True, random_state=42), OOB decision function AUC, 2000 vs 2000",
+  "sir_temp": 0.7,
+  "sir_seed": 0,
+  "k_results": {
+    "8": {
+      "k_requested": 8,
+      "k_actual_min": 8,
+      "k_actual_max": 8,
+      "n_specs_selected": 2000,
+      "rf_oob_auc_vs_human_val_grpo": 0.580923875,
+      "n_per_class": 2000,
+      "wall_sec": 59.95589410001412
+    },
+    "16": {
+      "k_requested": 16,
+      "k_actual_min": 16,
+      "k_actual_max": 16,
+      "n_specs_selected": 2000,
+      "rf_oob_auc_vs_human_val_grpo": 0.564605875,
+      "n_per_class": 2000,
+      "wall_sec": 60.775389099959284
+    },
+    "32": {
+      "k_requested": 32,
+      "k_actual_min": 31,
+      "k_actual_max": 32,
+      "n_specs_selected": 2000,
+      "rf_oob_auc_vs_human_val_grpo": 0.5391421249999999,
+      "n_per_class": 2000,
+      "wall_sec": 60.49697960005142
+    }
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "n_human": 16,
+  "n_synth": 16,
+  "n_truncated_paths": 0,
+  "dxdy_scale": 12.970603942871094,
+  "rf_sanity_auc": 0.404296875,
+  "critic_oof_auc": 0.6640625,
+  "critic_fold_aucs": [
+    0.78125,
+    0.609375
+  ],
+  "spearman_synth_only": {
+    "rho": -0.03529411764705882,
+    "p": 0.8967532476935333
+  },
+  "spearman_human_only": {
+    "rho": -0.18529411764705883,
+    "p": 0.492057050205944
+  },
+  "spearman_pooled": {
+    "rho": -0.15433965787486603,
+    "p": 0.3989984230956258
+  },
+  "feature_alignment_table": [
+    {
+      "feature": "mean_velocity",
+      "rf_importance": 0.08568814538592093,
+      "abs_spearman_critic": 0.15322580645161288
+    },
+    {
+      "feature": "max_deviation",
+      "rf_importance": 0.07486546795011206,
+      "abs_spearman_critic": 0.010263929618768328
+    },
+    {
+      "feature": "time_to_peak_velocity",
+      "rf_importance": 0.06524227878787298,
+      "abs_spearman_critic": 0.2498396124506442
+    },
+    {
+      "feature": "mean_jerk",
+      "rf_importance": 0.06297802448076392,
+      "abs_spearman_critic": 0.2100439882697947
+    },
+    {
+      "feature": "std_velocity",
+      "rf_importance": 0.06173912348564696,
+      "abs_spearman_critic": 0.12573313782991202
+    },
+    {
+      "feature": "movement_duration",
+      "rf_importance": 0.05915945225030811,
+      "abs_spearman_critic": 0.2518790143147545
+    },
+    {
+      "feature": "velocity_skewness",
+      "rf_importance": 0.05779175126448594,
+      "abs_spearman_critic": 0.2778592375366568
+    },
+    {
+      "feature": "curvature_mean",
+      "rf_importance": 0.05738897303481174,
+      "abs_spearman_critic": 0.19941348973607034
+    },
+    {
+      "feature": "path_efficiency",
+      "rf_importance": 0.05611412424182314,
+      "abs_spearman_critic": 0.09017595307917887
+    },
+    {
+      "feature": "std_acceleration",
+      "rf_importance": 0.0544778899835385,
+      "abs_spearman_critic": 0.12023460410557184
+    },
+    {
+      "feature": "num_direction_changes",
+      "rf_importance": 0.05150592363385657,
+      "abs_spearman_critic": 0.22311940126758487
+    },
+    {
+      "feature": "max_acceleration",
+      "rf_importance": 0.05141260478994677,
+      "abs_spearman_critic": 0.10520527859237536
+    },
+    {
+      "feature": "mean_acceleration",
+      "rf_importance": 0.04957374271963712,
+      "abs_spearman_critic": 0.15945747800586507
+    },
+    {
+      "feature": "angular_velocity_std",
+      "rf_importance": 0.049179117429510415,
+      "abs_spearman_critic": 0.07404692082111436
+    },
+    {
+      "feature": "std_jerk",
+      "rf_importance": 0.047421389621195506,
+      "abs_spearman_critic": 0.08614369501466275
+    },
+    {
+      "feature": "max_velocity",
+      "rf_importance": 0.04680831855743604,
+      "abs_spearman_critic": 0.09970674486803517
+    },
+    {
+      "feature": "angular_velocity_mean",
+      "rf_importance": 0.04569657929116786,
+      "abs_spearman_critic": 0.20197947214076245
+    },
+    {
+      "feature": "curvature_std",
+      "rf_importance": 0.022957093091965405,
+      "abs_spearman_critic": 0.1510263929618768
+    }
+  ],
+  "elapsed_sec": 21.302339700050652,
+  "smoke": true
+}

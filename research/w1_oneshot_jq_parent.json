@@ -1,0 +1,44 @@
+[
+  {
+    "ckpt": "event_polar_4m_fc_v3.pt",
+    "n": 2000,
+    "seed": 42,
+    "choice_temp": 10.0,
+    "auc_rf_oob": 0.6458707092415643,
+    "n_per_class": 1999,
+    "valid_ratio": 0.9995,
+    "gen_seconds": 148.62191555599566,
+    "collapse_flag": true,
+    "collapse_features": [
+      "max_velocity",
+      "mean_acceleration",
+      "std_acceleration",
+      "max_acceleration",
+      "mean_jerk",
+      "std_jerk",
+      "curvature_mean",
+      "curvature_std"
+    ],
+    "dispersion_ratios": {
+      "mean_velocity": 0.8407114212204454,
+      "std_velocity": 0.23482953597186404,
+      "max_velocity": 0.18294331075650713,
+      "velocity_skewness": 1.0060920846611068,
+      "mean_acceleration": 0.10048123687479511,
+      "std_acceleration": 0.12917105844797025,
+      "max_acceleration": 0.10654053108848882,
+      "mean_jerk": 0.0620992452946398,
+      "std_jerk": 0.18012665257233393,
+      "path_efficiency": 0.8664477894759861,
+      "max_deviation": 1.036955336761921,
+      "curvature_mean": 0.01256417991304367,
+      "curvature_std": 0.021287701929133082,
+      "num_direction_changes": 1.027997493807784,
+      "movement_duration": 0.9564742248693263,
+      "time_to_peak_velocity": 0.985722566066085,
+      "angular_velocity_mean": 1.124772320463898,
+      "angular_velocity_std": 1.0548960859340077
+    },
+    "human_ref": "data/human_val_features_grpo.npy"
+  }
+]

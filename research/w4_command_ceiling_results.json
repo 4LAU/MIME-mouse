@@ -1,0 +1,13 @@
+{
+  "ckpt": "event_polar_4m_fc_v2.pt",
+  "n": 2000,
+  "seed": 42,
+  "arms": {
+    "bank rows, no noise": 0.9707972500000001,
+    "bank + BW 0.1": 0.9777715,
+    "bank + BW 0.25": 0.9831771250000001,
+    "bank + BW 0.5": 0.9922390000000001,
+    "bank + BW 0.25, columns shuffled": 0.9947729999999999
+  },
+  "wall_sec": 2.425894260406494
+}

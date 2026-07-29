@@ -154,10 +154,27 @@ def resample_positions(px, py, t_ev, t_end, n_frames, hz=125.0):
     return x, y, fmask
 
 
-def detector_features(x, y, fmask, hz=125.0):
+def detector_features(x, y, fmask, hz=125.0, fix_ttp=False):
     """Differentiable analogs of the 18 features in features.py, computed on
     the resampled frames. Gen and real batches go through this SAME function,
-    so shared approximation bias cancels in the MMD."""
+    so shared approximation bias cancels in the MMD.
+
+    fix_ttp repairs `time_to_peak_velocity`, which is computed wrong. The
+    normalizer is the PADDED batch width rather than each row's valid length,
+    and the two differ by an order of magnitude: on a 1500-path human sample
+    the padded width is 539 frames against a median real length of 52. The
+    feature therefore reads mean 0.041 and sd 0.061 where features.py, the
+    contract, reads 0.355 and 0.267, and it ranks paths against the contract at
+    Spearman 0.633. With the per-row normalizer it reads 0.345 and 0.248 at
+    Spearman 0.973.
+
+    It defaults to False because it is not a free fix. This function defines
+    the space that every checkpoint's feat_mu, feat_sd and feat_bank live in,
+    so turning it on changes the meaning of the character command and of the
+    training conditioning. It requires rebuilding the bank and retraining, and
+    any checkpoint built before the switch must keep it off or it will be
+    commanded in one space and graded in another.
+    """
     dt = 1.0 / hz
     m1 = fmask[:, 1:] * fmask[:, :-1]                  # segment validity
     dx = (x[:, 1:] - x[:, :-1]) * m1
@@ -220,10 +237,15 @@ def detector_features(x, y, fmask, hz=125.0):
     n_dir_changes = (sign_flip * m3).sum(dim=1)
 
     duration = fmask.sum(dim=1) * dt
-    t_norm = torch.arange(speed.shape[1], device=x.device).float() / speed.shape[1]
     peak_w = torch.softmax(speed / speed.amax(dim=1, keepdim=True).clamp(min=1e-3) * 25.0
                            + (m1 - 1.0) * 1e4, dim=1)
-    time_to_peak = (peak_w * t_norm.unsqueeze(0)).sum(dim=1)
+    ar = torch.arange(speed.shape[1], device=x.device).float()
+    if fix_ttp:
+        # per-row valid length. See the note on the default below.
+        t_norm = ar.unsqueeze(0) / m1.sum(dim=1, keepdim=True).clamp(min=1.0)
+    else:
+        t_norm = (ar / speed.shape[1]).unsqueeze(0)
+    time_to_peak = (peak_w * t_norm).sum(dim=1)
 
     omega = (d_ang / dt).clamp(-1e6, 1e6)
     omega_mean = masked_mean(omega.abs(), m2)
@@ -286,6 +308,75 @@ def mmd_rbf(x, y, bandwidths=(0.25, 0.5, 1.0, 2.0, 4.0)):
     return loss
 
 
+def mmd_rbf_queued(fresh, gen_pool, ref_pool, bandwidths=(0.25, 0.5, 1.0, 2.0, 4.0)):
+    """MMD gradient for `fresh` rows measured against two large detached pools.
+
+    Why this exists. mmd_rbf above is evaluated on 32 rows per side (the
+    --batch-size 64 default, halved at the generate/reference split), and at
+    that size it cannot do its job. Measured over 200 draws it ranks model
+    above human only 63% of the time, against 50% for a coin flip, and its
+    value is flat along a mixture path from the model distribution to the
+    human one: 0.3036 at pure model, 0.2984 at pure human. A term that barely
+    moves between the thing you have and the thing you want has no descent
+    direction to give. Bandwidth is not the cause; median-heuristic bandwidths
+    measure 64%. Sample count is the whole effect, and 512 rows per side
+    reaches 100%. See ledger w4_mmd_blindness and w4_mmd_alignment, the latter
+    confirming this statistic tracks the contract AUC at Pearson 0.877 under
+    graded copula corruption, so it is the right thing to sharpen.
+
+    Generating 512 trajectories per step is not affordable, but it is not
+    necessary either. A ring buffer of recently generated rows supplies the
+    partners for free, since only the fresh rows need gradients. Same 32
+    generated per step, separability 100% at Cohen's d 7.77, which beats an
+    actual 512-by-512 batch at d 4.56.
+
+    Two details make the estimator correct rather than merely bigger. Averaging
+    the ordinary pool-by-pool statistic would spread each fresh row's gradient
+    over a matrix that is ~97% constant, so this averages over fresh rows
+    instead and every one keeps full weight. And the (gen, gen) block carries
+    gradient through one argument only here, where the symmetric form carries
+    it through both, so that block takes a factor 2 to restore the coefficient.
+    The (ref, ref) block is constant in the parameters and is dropped.
+    """
+    gp, rp = gen_pool.detach(), ref_pool.detach()
+    dg = torch.cdist(fresh, gp) ** 2
+    dr = torch.cdist(fresh, rp) ** 2
+    out = fresh.new_zeros(())
+    for bw in bandwidths:
+        out = out + 2.0 * (torch.exp(-dg / (2 * bw)).mean()
+                           - torch.exp(-dr / (2 * bw)).mean())
+    return out
+
+
+class FeatQueue:
+    """Fixed-size ring buffer of past detached feature rows, for mmd_rbf_queued.
+
+    Holds rows produced under slightly older weights. That staleness is the
+    standard memory-bank tradeoff and is small here: at 32 rows per step a
+    1024-row queue spans 32 steps, over which a 2e-5 learning rate moves the
+    model very little.
+    """
+
+    def __init__(self, size, dim, device):
+        self.buf = torch.zeros(size, dim, device=device)
+        self.size = size
+        self.ptr = 0
+        self.n = 0
+
+    def push(self, x):
+        x = x.detach()
+        k = min(x.shape[0], self.size)
+        idx = (self.ptr + torch.arange(k, device=x.device)) % self.size
+        self.buf[idx] = x[:k]
+        self.ptr = int((self.ptr + k) % self.size)
+        self.n = min(self.n + k, self.size)
+
+    def get(self):
+        # clone, not a view: the caller holds this across backward, and the
+        # next push writes into the same storage in place
+        return self.buf[:self.n].clone()
+
+
 def quantile_loss(x, y):
     """Per-feature 1D Wasserstein via sorted quantile differences. This is
     the differentiable analog of the eval's per-feature Wasserstein table."""
@@ -305,13 +396,23 @@ def cov_loss(x, y):
     return (cx - cy).pow(2).mean()
 
 
-def match_loss(x, y, w_mmd, w_quant, w_cov):
+def match_loss(x, y, w_mmd, w_quant, w_cov, gen_pool=None, ref_pool=None):
+    """gen_pool and ref_pool, when given, switch the MMD term to the queued
+    estimator. Only that term changes. quant and cov stay on the fresh batch,
+    since they address marginals and pairwise covariance, and
+    w4_marginal_vs_coupling puts those at 16% of the gap with the pairwise
+    rank correlations already matching to a mean absolute 0.039. The blind
+    term is the one that was supposed to reach the other 84%."""
     # z-scored inputs; clamp so a single degenerate trajectory cannot blow
     # up the quantile/covariance terms (curvature and jerk have wild tails)
     x = x.clamp(-10.0, 10.0)
     y = y.clamp(-10.0, 10.0)
+    if gen_pool is None:
+        mmd = mmd_rbf(x, y)
+    else:
+        mmd = mmd_rbf_queued(x, torch.cat([x, gen_pool]), ref_pool)
     parts = {
-        "mmd": mmd_rbf(x, y),
+        "mmd": mmd,
         "quant": quantile_loss(x, y),
         "cov": cov_loss(x, y),
     }
@@ -512,6 +613,14 @@ def train(args):
         start_step = rck["step"]
         print(f"  Resumed at step {start_step}", flush=True)
 
+    gen_q = ref_q = None
+    if args.mmd_queue > 0:
+        n_feat = f_mu.shape[0]
+        gen_q = FeatQueue(args.mmd_queue, n_feat, device)
+        ref_q = FeatQueue(args.mmd_queue, n_feat, device)
+        print(f"  queued MMD on, {args.mmd_queue} rows per side, w_mmd="
+              f"{args.w_mmd} (see mmd_rbf_queued)", flush=True)
+
     model.train()
     step_i = start_step
     t0 = time.time()
@@ -544,8 +653,19 @@ def train(args):
             ref_vals = real_batch_values(s_cls[h:], th_cls[h:], tables)
             ref_f = features_from_values(ref_vals, dt_s[h:], real[h:], cond[h:])
 
-        mmd, parts = match_loss((gen_f - f_mu) / f_sd, (ref_f - f_mu) / f_sd,
-                                args.w_mmd, args.w_quant, args.w_cov)
+        zg = ((gen_f - f_mu) / f_sd).clamp(-10.0, 10.0)
+        zr = ((ref_f - f_mu) / f_sd).clamp(-10.0, 10.0)
+        if gen_q is not None and gen_q.n >= gen_q.size:
+            mmd, parts = match_loss(zg, zr, args.w_mmd, args.w_quant, args.w_cov,
+                                    gen_pool=gen_q.get(), ref_pool=ref_q.get())
+        else:
+            # queue still filling (16 steps at the default sizes): fall back to
+            # the fresh-batch estimator rather than run on a partial pool, whose
+            # separability would be no better than the batch it replaces
+            mmd, parts = match_loss(zg, zr, args.w_mmd, args.w_quant, args.w_cov)
+        if gen_q is not None:
+            gen_q.push(zg)
+            ref_q.push(zr)
 
         # anchor: standard pretraining losses on the reference half
         t_cont = torch.rand(B2 - h, device=device)
@@ -593,6 +713,14 @@ def train(args):
                 "config": cfg, "dt_mean": dt_mean, "dt_std": dt_std,
                 "step": step_i, "epoch": ckpt.get("epoch"),
             }
+            # serving reads the command bank and its standardization from the
+            # checkpoint. This loop computes its own f_mu/f_sd for the loss and
+            # never had a bank, so without carrying the parent's forward the
+            # result cannot be sampled from at all. Carried verbatim, which also
+            # keeps the serving distribution identical to the parent's.
+            for k in ("feat_mu", "feat_sd", "feat_bank", "feat_bank_log_dist"):
+                if k in ckpt:
+                    out[k] = ckpt[k]
             torch.save(out, latest_path)
             torch.save(out, save_path)
             torch.save(out, save_path.with_stem(save_path.stem + f"_s{step_i}"))
@@ -611,6 +739,17 @@ if __name__ == "__main__":
     parser.add_argument("--mmd-weight", type=float, default=4.0,
                         help="overall weight on the combined match loss")
     parser.add_argument("--w-mmd", type=float, default=1.0)
+    parser.add_argument("--mmd-queue", type=int, default=0,
+                        help="rows of past features to keep per side for the "
+                             "MMD term. 0 keeps the original fresh-batch "
+                             "estimator, which measures 63% separability at "
+                             "the shipped batch and is close to noise; see "
+                             "mmd_rbf_queued. 1024 is the tested setting. The "
+                             "queued estimator's gradient norm on the fresh "
+                             "rows is 0.0104 against 0.0285 for the original, "
+                             "so pass --w-mmd 2.7 alongside it to hold the "
+                             "balance against the anchor term fixed and leave "
+                             "signal quality as the only variable.")
     parser.add_argument("--w-quant", type=float, default=2.0)
     parser.add_argument("--w-cov", type=float, default=1.0)
     parser.add_argument("--anchor-weight", type=float, default=1.0)

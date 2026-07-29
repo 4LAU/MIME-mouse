@@ -1,0 +1,21 @@
+{
+ "ckpt": "event_polar_4m_resid_v4.pt",
+ "n": 2000,
+ "seed": 42,
+ "order": "l2r",
+ "resid_only": false,
+ "miss_median_px": 96.99950693652758,
+ "miss_mean_px": 245.80907752525624,
+ "miss_p90_px": 588.4937173133853,
+ "miss_pct_travel_median": 59.984359026967695,
+ "within_15px_pct": 9.40940940940941,
+ "usable": 1998,
+ "raw": {
+  "auc": 0.8808134585453542,
+  "n_per_class": 1997
+ },
+ "corrected": {
+  "auc": 0.8784995219419012,
+  "n_per_class": 1997
+ }
+}

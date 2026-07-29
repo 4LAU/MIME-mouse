@@ -1,0 +1,308 @@
+{
+  "seed": 42,
+  "reps": 3,
+  "fracs": [
+    1.0,
+    0.5,
+    0.25,
+    0.125,
+    0.0625
+  ],
+  "audit": {
+    "w3_missing_paths": "EXPOSED. Forest-split real paths, quotes 0.4821 covered vs 0.9400 uncovered as a deficit. No random control. Conclusion does not stand.",
+    "w3_p3_fork": "EXPOSED. Same split re-run across raw/additive/jog this session. The raw 0.4237 / 0.9066 is the same artefact on the uncovered side. Retracted the day it was written.",
+    "w3_uncovered_anatomy": "EXPOSED but SELF-CAUGHT. Family decomposition against the uncovered half; the random control added in the same run is what found this.",
+    "w3_critic_coverage": "EXPOSED. Reuses the w3_missing_paths split verbatim and reads critic performance per half. The halves do not mean what the row says they mean.",
+    "w3_corpus_coverage": "INTERPRETATION ONLY. Uses the same split but reads corpus survival rates per group, not an AUC, so the inflation does not enter its instrument. The group LABEL 'model cannot produce' is still unsupported.",
+    "w3_tax_bands_jog": "PARTLY EXPOSED, already flagged in-file. The arm-band column narrows the ARM by endpoint miss and was called confounded on 2026-07-27; the fixed-path injection sweep that replaced it narrows nothing and stands.",
+    "w3_landing_price": "EXPOSED, same arm-band design as above, and it is the source of the 2 to 100px additive gradient that sent six P1 fine-tunes. Superseded by the injection sweep.",
+    "w3_envelope_ceiling": "NOT EXPOSED. Narrows FEATURES, not rows; both sides keep every path.",
+    "w3_raw_column_reread": "NOT EXPOSED. Same family decomposition over whole arms, no row subsetting.",
+    "w3_oracle_route": "NOT EXPOSED. Thins the real side, but ships its own same-size null control (duration thinning) and the conclusion is stated net of it."
+  },
+  "arms": {
+    "fc_v2": {
+      "whole_arm": 0.6451275000000001,
+      "sweeps": {
+        "narrowing the REAL side": [
+          {
+            "frac": 1.0,
+            "k": 2000,
+            "random": 0.6569604583333333,
+            "random_sd": 0.003457237547783713,
+            "by_feature_mean": 0.6534442083333334,
+            "by_feature_min": 0.6411346250000001,
+            "by_feature_max": 0.665318125,
+            "by_forest": 0.649832375,
+            "excess_forest": -0.007128083333333257,
+            "excess_feature": -0.0035162499999998875
+          },
+          {
+            "frac": 0.5,
+            "k": 1000,
+            "random": 0.6241355000000001,
+            "random_sd": 0.005527597684950153,
+            "by_feature_mean": 0.8172861666666665,
+            "by_feature_min": 0.7999485,
+            "by_feature_max": 0.843525,
+            "by_forest": 0.8412274999999999,
+            "excess_forest": 0.21709199999999984,
+            "excess_feature": 0.19315066666666647
+          },
+          {
+            "frac": 0.25,
+            "k": 500,
+            "random": 0.607592,
+            "random_sd": 0.02211747761386911,
+            "by_feature_mean": 0.8943052222222223,
+            "by_feature_min": 0.8628800000000001,
+            "by_feature_max": 0.933288,
+            "by_forest": 0.90661,
+            "excess_forest": 0.299018,
+            "excess_feature": 0.2867132222222223
+          },
+          {
+            "frac": 0.125,
+            "k": 250,
+            "random": 0.5791093333333334,
+            "random_sd": 0.005326924148970871,
+            "by_feature_mean": 0.9448684444444445,
+            "by_feature_min": 0.9155040000000001,
+            "by_feature_max": 0.9874559999999999,
+            "by_forest": 0.9349519999999999,
+            "excess_forest": 0.35584266666666653,
+            "excess_feature": 0.36575911111111115
+          },
+          {
+            "frac": 0.0625,
+            "k": 125,
+            "random": 0.5305706666666666,
+            "random_sd": 0.03585730375933041,
+            "by_feature_mean": 0.9694186666666668,
+            "by_feature_min": 0.951712,
+            "by_feature_max": 1.0,
+            "by_forest": 0.9881920000000001,
+            "excess_forest": 0.45762133333333344,
+            "excess_feature": 0.4388480000000001
+          }
+        ],
+        "narrowing the ARM side": [
+          {
+            "frac": 1.0,
+            "k": 2000,
+            "random": 0.6502737916666667,
+            "random_sd": 0.006231385709265643,
+            "by_feature_mean": 0.6545980486111111,
+            "by_feature_min": 0.64691425,
+            "by_feature_max": 0.664840625,
+            "by_forest": 0.664986625,
+            "excess_forest": 0.014712833333333397,
+            "excess_feature": 0.004324256944444493
+          },
+          {
+            "frac": 0.5,
+            "k": 1000,
+            "random": 0.6419549999999999,
+            "random_sd": 0.010477808581314455,
+            "by_feature_mean": 0.8199231944444443,
+            "by_feature_min": 0.7808200000000001,
+            "by_feature_max": 0.8497305000000002,
+            "by_forest": 0.8212525,
+            "excess_forest": 0.1792975000000001,
+            "excess_feature": 0.17796819444444434
+          },
+          {
+            "frac": 0.25,
+            "k": 500,
+            "random": 0.6375493333333333,
+            "random_sd": 0.004772078885442788,
+            "by_feature_mean": 0.9097517777777777,
+            "by_feature_min": 0.8777220000000001,
+            "by_feature_max": 0.9304240000000001,
+            "by_forest": 0.8764719999999999,
+            "excess_forest": 0.23892266666666662,
+            "excess_feature": 0.2722024444444444
+          },
+          {
+            "frac": 0.125,
+            "k": 250,
+            "random": 0.6182639999999999,
+            "random_sd": 0.003399808622064847,
+            "by_feature_mean": 0.9540315555555554,
+            "by_feature_min": 0.924336,
+            "by_feature_max": 0.965368,
+            "by_forest": 0.89236,
+            "excess_forest": 0.2740960000000001,
+            "excess_feature": 0.3357675555555555
+          },
+          {
+            "frac": 0.0625,
+            "k": 125,
+            "random": 0.5823253333333334,
+            "random_sd": 0.012392702081825809,
+            "by_feature_mean": 0.9718453333333333,
+            "by_feature_min": 0.9560639999999998,
+            "by_feature_max": 0.9901439999999999,
+            "by_forest": 0.883904,
+            "excess_forest": 0.30157866666666666,
+            "excess_feature": 0.38952
+          }
+        ]
+      },
+      "corrected_split": {
+        "k": 500,
+        "uncovered": 0.90661,
+        "covered": 0.42368399999999995,
+        "random": 0.5923286666666666,
+        "random_sd": 0.0011339163206437563,
+        "excess_uncovered": 0.3142813333333334,
+        "excess_covered": -0.16864466666666666,
+        "feature_bottom_min": 0.8716219999999999,
+        "feature_bottom_mean": 0.8940353333333335,
+        "feature_bottom_argmin": "mean_acceleration"
+      }
+    },
+    "resid_v2": {
+      "whole_arm": 0.6534294554815075,
+      "sweeps": {
+        "narrowing the REAL side": [
+          {
+            "frac": 1.0,
+            "k": 1998,
+            "random": 0.6560865169473779,
+            "random_sd": 0.003610508164511737,
+            "by_feature_mean": 0.6535844736962522,
+            "by_feature_min": 0.6458724740756773,
+            "by_feature_max": 0.6620629638647657,
+            "by_forest": 0.6541372453534616,
+            "excess_forest": -0.0019492715939162242,
+            "excess_feature": -0.002502043251125685
+          },
+          {
+            "frac": 0.5,
+            "k": 999,
+            "random": 0.6338397122514574,
+            "random_sd": 0.00980244133727365,
+            "by_feature_mean": 0.8192766785248154,
+            "by_feature_min": 0.80104829554279,
+            "by_feature_max": 0.8459776092408725,
+            "by_forest": 0.85988991994998,
+            "excess_forest": 0.22605020769852258,
+            "excess_feature": 0.18543696627335804
+          },
+          {
+            "frac": 0.25,
+            "k": 499,
+            "random": 0.619395772172267,
+            "random_sd": 0.008740796640073335,
+            "by_feature_mean": 0.9055366355065956,
+            "by_feature_min": 0.8768338279765944,
+            "by_feature_max": 0.9363335890217309,
+            "by_forest": 0.9248416673025409,
+            "excess_forest": 0.30544589513027387,
+            "excess_feature": 0.28614086333432853
+          },
+          {
+            "frac": 0.125,
+            "k": 249,
+            "random": 0.6118127126981823,
+            "random_sd": 0.027894731192696434,
+            "by_feature_mean": 0.9578505902234551,
+            "by_feature_min": 0.936936501024177,
+            "by_feature_max": 0.989105014435251,
+            "by_forest": 0.9470089192109805,
+            "excess_forest": 0.33519620651279824,
+            "excess_feature": 0.3460378775252728
+          },
+          {
+            "frac": 0.0625,
+            "k": 124,
+            "random": 0.6722814776274714,
+            "random_sd": 0.028480420530678587,
+            "by_feature_mean": 0.9848772256908315,
+            "by_feature_min": 0.958734391259105,
+            "by_feature_max": 1.0,
+            "by_forest": 0.9949271592091572,
+            "excess_forest": 0.32264568158168583,
+            "excess_feature": 0.3125957480633601
+          }
+        ],
+        "narrowing the ARM side": [
+          {
+            "frac": 1.0,
+            "k": 1998,
+            "random": 0.6548032433501235,
+            "random_sd": 0.006122830301572919,
+            "by_feature_mean": 0.6538314048115516,
+            "by_feature_min": 0.6465378040703366,
+            "by_feature_max": 0.6608946283620958,
+            "by_forest": 0.6581393706018333,
+            "excess_forest": 0.0033361272517097307,
+            "excess_feature": -0.0009718385385719674
+          },
+          {
+            "frac": 0.5,
+            "k": 999,
+            "random": 0.6249739896720211,
+            "random_sd": 0.0025926482054113354,
+            "by_feature_mean": 0.8102113068468312,
+            "by_feature_min": 0.7638369099830561,
+            "by_feature_max": 0.8298603909214519,
+            "by_forest": 0.8272306340374409,
+            "excess_forest": 0.2022566443654198,
+            "excess_feature": 0.18523731717481007
+          },
+          {
+            "frac": 0.25,
+            "k": 499,
+            "random": 0.6058590126144071,
+            "random_sd": 0.024742407799458726,
+            "by_feature_mean": 0.9044370192176827,
+            "by_feature_min": 0.8580567949526308,
+            "by_feature_max": 0.9273075208533299,
+            "by_forest": 0.8803257818241694,
+            "excess_forest": 0.2744667692097623,
+            "excess_feature": 0.2985780066032756
+          },
+          {
+            "frac": 0.125,
+            "k": 249,
+            "random": 0.5867647296011355,
+            "random_sd": 0.04189402995968949,
+            "by_feature_mean": 0.9493157816450988,
+            "by_feature_min": 0.9231705940226771,
+            "by_feature_max": 0.9693392042063838,
+            "by_forest": 0.8785422815761036,
+            "excess_forest": 0.29177755197496813,
+            "excess_feature": 0.3625510520439633
+          },
+          {
+            "frac": 0.0625,
+            "k": 124,
+            "random": 0.553351543531044,
+            "random_sd": 0.022463601153662038,
+            "by_feature_mean": 0.9648622673141403,
+            "by_feature_min": 0.947385535900104,
+            "by_feature_max": 0.9843587408949012,
+            "by_forest": 0.889047866805411,
+            "excess_forest": 0.33569632327436705,
+            "excess_feature": 0.4115107237830963
+          }
+        ]
+      },
+      "corrected_split": {
+        "k": 499,
+        "uncovered": 0.9248416673025409,
+        "covered": 0.4627571776820174,
+        "random": 0.62586964175512,
+        "random_sd": 0.011049529738538516,
+        "excess_uncovered": 0.29897202554742086,
+        "excess_covered": -0.16311246407310265,
+        "feature_bottom_min": 0.8732394649017474,
+        "feature_bottom_mean": 0.8954665063817235,
+        "feature_bottom_argmin": "time_to_peak_velocity"
+      }
+    }
+  },
+  "wall_sec": 72.0707356929779
+}

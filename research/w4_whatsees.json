@@ -1,0 +1,225 @@
+{
+  "ckpt": "event_ar_v1.pt",
+  "temp": 0.9,
+  "n_gen": 2499,
+  "auc_all18": 0.6668233750000001,
+  "auc_contract": 0.6668233750000001,
+  "singles": [
+    {
+      "feature": "movement_duration",
+      "auc": 0.5699369999999999
+    },
+    {
+      "feature": "angular_velocity_mean",
+      "auc": 0.531021375
+    },
+    {
+      "feature": "mean_acceleration",
+      "auc": 0.5303597499999999
+    },
+    {
+      "feature": "path_efficiency",
+      "auc": 0.5290351249999999
+    },
+    {
+      "feature": "curvature_std",
+      "auc": 0.526549625
+    },
+    {
+      "feature": "max_velocity",
+      "auc": 0.521894375
+    },
+    {
+      "feature": "curvature_mean",
+      "auc": 0.5194675
+    },
+    {
+      "feature": "num_direction_changes",
+      "auc": 0.5180560000000001
+    },
+    {
+      "feature": "max_acceleration",
+      "auc": 0.503542
+    },
+    {
+      "feature": "std_jerk",
+      "auc": 0.5007860000000001
+    },
+    {
+      "feature": "std_velocity",
+      "auc": 0.497404375
+    },
+    {
+      "feature": "mean_jerk",
+      "auc": 0.4973140000000001
+    },
+    {
+      "feature": "velocity_skewness",
+      "auc": 0.495762625
+    },
+    {
+      "feature": "angular_velocity_std",
+      "auc": 0.495752
+    },
+    {
+      "feature": "mean_velocity",
+      "auc": 0.49334
+    },
+    {
+      "feature": "time_to_peak_velocity",
+      "auc": 0.49172862500000003
+    },
+    {
+      "feature": "max_deviation",
+      "auc": 0.4901145
+    },
+    {
+      "feature": "std_acceleration",
+      "auc": 0.47259275
+    }
+  ],
+  "greedy": [
+    {
+      "feature": "movement_duration",
+      "auc": 0.5699369999999999,
+      "gain": 0.06993699999999992
+    },
+    {
+      "feature": "angular_velocity_mean",
+      "auc": 0.5573647500000001,
+      "gain": -0.01257224999999984
+    },
+    {
+      "feature": "angular_velocity_std",
+      "auc": 0.5965978749999999,
+      "gain": 0.03923312499999987
+    },
+    {
+      "feature": "curvature_mean",
+      "auc": 0.6204938750000001,
+      "gain": 0.02389600000000014
+    },
+    {
+      "feature": "mean_acceleration",
+      "auc": 0.636996,
+      "gain": 0.016502124999999923
+    },
+    {
+      "feature": "max_deviation",
+      "auc": 0.65166675,
+      "gain": 0.014670749999999955
+    },
+    {
+      "feature": "std_acceleration",
+      "auc": 0.65465225,
+      "gain": 0.0029855000000000853
+    },
+    {
+      "feature": "velocity_skewness",
+      "auc": 0.654932125,
+      "gain": 0.0002798749999999295
+    },
+    {
+      "feature": "num_direction_changes",
+      "auc": 0.660363625,
+      "gain": 0.0054315000000000335
+    },
+    {
+      "feature": "path_efficiency",
+      "auc": 0.665246125,
+      "gain": 0.004882500000000012
+    }
+  ],
+  "drop_one": [
+    {
+      "feature": "angular_velocity_mean",
+      "auc": 0.642382,
+      "cost": 0.0244413750000001
+    },
+    {
+      "feature": "angular_velocity_std",
+      "auc": 0.6502058749999999,
+      "cost": 0.016617500000000174
+    },
+    {
+      "feature": "mean_acceleration",
+      "auc": 0.6504983750000001,
+      "cost": 0.016325000000000034
+    },
+    {
+      "feature": "num_direction_changes",
+      "auc": 0.656671,
+      "cost": 0.010152375000000102
+    },
+    {
+      "feature": "std_jerk",
+      "auc": 0.65728775,
+      "cost": 0.009535625000000159
+    },
+    {
+      "feature": "movement_duration",
+      "auc": 0.65828775,
+      "cost": 0.008535625000000158
+    },
+    {
+      "feature": "max_deviation",
+      "auc": 0.6600422499999999,
+      "cost": 0.0067811250000001655
+    },
+    {
+      "feature": "max_acceleration",
+      "auc": 0.6608555,
+      "cost": 0.005967875000000067
+    },
+    {
+      "feature": "curvature_mean",
+      "auc": 0.66164025,
+      "cost": 0.005183125000000066
+    },
+    {
+      "feature": "mean_jerk",
+      "auc": 0.6623427499999999,
+      "cost": 0.004480625000000238
+    },
+    {
+      "feature": "velocity_skewness",
+      "auc": 0.6640221249999999,
+      "cost": 0.0028012500000001994
+    },
+    {
+      "feature": "path_efficiency",
+      "auc": 0.6641605,
+      "cost": 0.0026628750000000645
+    },
+    {
+      "feature": "mean_velocity",
+      "auc": 0.664897,
+      "cost": 0.0019263750000001467
+    },
+    {
+      "feature": "max_velocity",
+      "auc": 0.6654635,
+      "cost": 0.0013598750000001214
+    },
+    {
+      "feature": "time_to_peak_velocity",
+      "auc": 0.666426875,
+      "cost": 0.00039650000000013286
+    },
+    {
+      "feature": "std_acceleration",
+      "auc": 0.6669499999999999,
+      "cost": -0.0001266249999998248
+    },
+    {
+      "feature": "curvature_std",
+      "auc": 0.669014,
+      "cost": -0.0021906249999998906
+    },
+    {
+      "feature": "std_velocity",
+      "auc": 0.66980175,
+      "cost": -0.0029783749999998665
+    }
+  ]
+}

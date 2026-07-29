@@ -1,0 +1,10 @@
+{
+  "n_sample": 5000,
+  "seed": 20260719,
+  "source": "training/zimt_dxdy.npy training split (perm seed 42, tr_idx = perm[n_val:])",
+  "recipe": "features.py extract_features native lengths, log1p(clip(x,0)*1e3) detector transform",
+  "target_mean_curvature_mean_det": 10.587972888377433,
+  "target_std_curvature_mean_det": 3.376470512875417,
+  "target_mean_curvature_std_det": 11.83430387750595,
+  "target_std_curvature_std_det": 3.9059477085960035
+}

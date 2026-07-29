@@ -1,0 +1,400 @@
+{
+  "n_human": 2000,
+  "seed": 42,
+  "features": {},
+  "arms": {
+    "human holdout (floor)": {
+      "mean_velocity": {
+        "spread_ratio": 1.7898129127317424,
+        "mean_shift": 0.024743726537107946,
+        "auc_1feat": 0.51312875
+      },
+      "std_velocity": {
+        "spread_ratio": 11.072202965087582,
+        "mean_shift": 0.34344587032341695,
+        "auc_1feat": 0.50084275
+      },
+      "max_velocity": {
+        "spread_ratio": 16.701255861193232,
+        "mean_shift": 0.5234444461796612,
+        "auc_1feat": 0.513341375
+      },
+      "velocity_skewness": {
+        "spread_ratio": 1.0053980794543127,
+        "mean_shift": -0.005681425949968419,
+        "auc_1feat": 0.502969875
+      },
+      "mean_acceleration": {
+        "spread_ratio": 8.213733951948905,
+        "mean_shift": 0.25858282821969264,
+        "auc_1feat": 0.49810299999999996
+      },
+      "std_acceleration": {
+        "spread_ratio": 19.316527222087704,
+        "mean_shift": 0.6010437562766988,
+        "auc_1feat": 0.5117045
+      },
+      "max_acceleration": {
+        "spread_ratio": 24.782276482758625,
+        "mean_shift": 0.7879783082228027,
+        "auc_1feat": 0.47397812500000003
+      },
+      "mean_jerk": {
+        "spread_ratio": 21.213648789511964,
+        "mean_shift": 0.6473969866374866,
+        "auc_1feat": 0.49239662500000003
+      },
+      "std_jerk": {
+        "spread_ratio": 13.409405612713343,
+        "mean_shift": 0.4217981061478591,
+        "auc_1feat": 0.5070574999999999
+      },
+      "path_efficiency": {
+        "spread_ratio": 0.9880804212082285,
+        "mean_shift": 0.01515700195123357,
+        "auc_1feat": 0.501134
+      },
+      "max_deviation": {
+        "spread_ratio": 0.9183106092966757,
+        "mean_shift": -0.007586692434653018,
+        "auc_1feat": 0.498347625
+      },
+      "curvature_mean": {
+        "spread_ratio": 0.7516494447441551,
+        "mean_shift": -0.04234501606254385,
+        "auc_1feat": 0.50322025
+      },
+      "curvature_std": {
+        "spread_ratio": 0.8759345059811336,
+        "mean_shift": -0.03407564264312484,
+        "auc_1feat": 0.493397875
+      },
+      "num_direction_changes": {
+        "spread_ratio": 0.9215193452737217,
+        "mean_shift": 0.020372654669214237,
+        "auc_1feat": 0.49449849999999995
+      },
+      "movement_duration": {
+        "spread_ratio": 0.8735027552542042,
+        "mean_shift": 0.006552251299279337,
+        "auc_1feat": 0.514195375
+      },
+      "time_to_peak_velocity": {
+        "spread_ratio": 0.9670705750725096,
+        "mean_shift": -0.069466682854233,
+        "auc_1feat": 0.48614512500000007
+      },
+      "angular_velocity_mean": {
+        "spread_ratio": 0.9752987821997736,
+        "mean_shift": -0.05597732431778488,
+        "auc_1feat": 0.48243650000000005
+      },
+      "angular_velocity_std": {
+        "spread_ratio": 0.9750008035465753,
+        "mean_shift": -0.03966298048165246,
+        "auc_1feat": 0.47216912499999997
+      }
+    },
+    "fc_v2": {
+      "mean_velocity": {
+        "spread_ratio": 0.9895800830149504,
+        "mean_shift": 0.033333702672857575,
+        "auc_1feat": 0.5093355
+      },
+      "std_velocity": {
+        "spread_ratio": 1.2308267959189427,
+        "mean_shift": 0.10086946427350728,
+        "auc_1feat": 0.51169
+      },
+      "max_velocity": {
+        "spread_ratio": 1.4875950351282727,
+        "mean_shift": 0.09653999281323161,
+        "auc_1feat": 0.5893142499999999
+      },
+      "velocity_skewness": {
+        "spread_ratio": 0.9790698712449363,
+        "mean_shift": 0.02918450483229328,
+        "auc_1feat": 0.49332025
+      },
+      "mean_acceleration": {
+        "spread_ratio": 0.7654386404992545,
+        "mean_shift": -0.04364899789256294,
+        "auc_1feat": 0.517554625
+      },
+      "std_acceleration": {
+        "spread_ratio": 1.4911684715244289,
+        "mean_shift": 0.03817880419200098,
+        "auc_1feat": 0.49992662499999996
+      },
+      "max_acceleration": {
+        "spread_ratio": 1.7268785735871457,
+        "mean_shift": 0.06051798318362101,
+        "auc_1feat": 0.543487375
+      },
+      "mean_jerk": {
+        "spread_ratio": 2.4206211583813966,
+        "mean_shift": 0.020250272928275772,
+        "auc_1feat": 0.528028625
+      },
+      "std_jerk": {
+        "spread_ratio": 1.3040703760260144,
+        "mean_shift": -0.0026341088435349698,
+        "auc_1feat": 0.509798125
+      },
+      "path_efficiency": {
+        "spread_ratio": 0.8036973358647642,
+        "mean_shift": 0.09502755097796946,
+        "auc_1feat": 0.534254625
+      },
+      "max_deviation": {
+        "spread_ratio": 1.0199070988124201,
+        "mean_shift": -0.001985085315537785,
+        "auc_1feat": 0.512768125
+      },
+      "curvature_mean": {
+        "spread_ratio": 0.08808449048564566,
+        "mean_shift": -0.16858505190394257,
+        "auc_1feat": 0.53535375
+      },
+      "curvature_std": {
+        "spread_ratio": 0.13227661053003584,
+        "mean_shift": -0.2300494083943365,
+        "auc_1feat": 0.524456375
+      },
+      "num_direction_changes": {
+        "spread_ratio": 0.9660761669176422,
+        "mean_shift": 0.034978540674591184,
+        "auc_1feat": 0.48578062499999997
+      },
+      "movement_duration": {
+        "spread_ratio": 0.945571118226665,
+        "mean_shift": 0.007428055830482513,
+        "auc_1feat": 0.745537375
+      },
+      "time_to_peak_velocity": {
+        "spread_ratio": 0.9241998676666584,
+        "mean_shift": -0.18424138839495094,
+        "auc_1feat": 0.575575
+      },
+      "angular_velocity_mean": {
+        "spread_ratio": 1.0262021233710896,
+        "mean_shift": 0.15159572531043639,
+        "auc_1feat": 0.5124650000000001
+      },
+      "angular_velocity_std": {
+        "spread_ratio": 0.9791128165325507,
+        "mean_shift": 0.08782490608314622,
+        "auc_1feat": 0.501493375
+      },
+      "_summary": {
+        "shape_spread": 0.7164795203591641,
+        "all_spread": 1.0711320352073785,
+        "shape_adherence": 0.35937405504004144
+      }
+    },
+    "resid_v2": {
+      "mean_velocity": {
+        "spread_ratio": 0.8258933156247924,
+        "mean_shift": -0.004721522424207085,
+        "auc_1feat": 0.5074049013260338
+      },
+      "std_velocity": {
+        "spread_ratio": 1.0216502948760662,
+        "mean_shift": 0.04491397763352709,
+        "auc_1feat": 0.5218260574259536
+      },
+      "max_velocity": {
+        "spread_ratio": 1.529744695032412,
+        "mean_shift": 0.05472688117599597,
+        "auc_1feat": 0.569431482445213
+      },
+      "velocity_skewness": {
+        "spread_ratio": 0.9866410521495725,
+        "mean_shift": -0.017323770980264247,
+        "auc_1feat": 0.4965379083413922
+      },
+      "mean_acceleration": {
+        "spread_ratio": 0.3570976082627761,
+        "mean_shift": -0.01053183413805298,
+        "auc_1feat": 0.5209477290235867
+      },
+      "std_acceleration": {
+        "spread_ratio": 1.1176057702346693,
+        "mean_shift": -0.035576604053084285,
+        "auc_1feat": 0.48757445110557457
+      },
+      "max_acceleration": {
+        "spread_ratio": 1.7728368229511766,
+        "mean_shift": 0.020471292178661546,
+        "auc_1feat": 0.5270924423035945
+      },
+      "mean_jerk": {
+        "spread_ratio": 0.5744678844742045,
+        "mean_shift": -0.04424514713884132,
+        "auc_1feat": 0.5234996066154174
+      },
+      "std_jerk": {
+        "spread_ratio": 1.0795712721948436,
+        "mean_shift": -0.06483345100790486,
+        "auc_1feat": 0.5165816979871822
+      },
+      "path_efficiency": {
+        "spread_ratio": 0.7609519861498723,
+        "mean_shift": 0.14131474298834187,
+        "auc_1feat": 0.513823523988264
+      },
+      "max_deviation": {
+        "spread_ratio": 1.1225720284902727,
+        "mean_shift": 0.04007967871504962,
+        "auc_1feat": 0.5035156185972561
+      },
+      "curvature_mean": {
+        "spread_ratio": 0.053599515531827804,
+        "mean_shift": -0.1705837957855477,
+        "auc_1feat": 0.5538217209755938
+      },
+      "curvature_std": {
+        "spread_ratio": 0.0868529496148704,
+        "mean_shift": -0.23305650855081014,
+        "auc_1feat": 0.5452987725171696
+      },
+      "num_direction_changes": {
+        "spread_ratio": 0.9697086721805465,
+        "mean_shift": 0.05462002320700858,
+        "auc_1feat": 0.4679864087675589
+      },
+      "movement_duration": {
+        "spread_ratio": 0.8951587261833301,
+        "mean_shift": -0.0011056619886545744,
+        "auc_1feat": 0.7343989462620271
+      },
+      "time_to_peak_velocity": {
+        "spread_ratio": 0.8922425947804574,
+        "mean_shift": -0.24895707762657895,
+        "auc_1feat": 0.568464668122736
+      },
+      "angular_velocity_mean": {
+        "spread_ratio": 1.0114722218686918,
+        "mean_shift": 0.06810185811682447,
+        "auc_1feat": 0.486791651641561
+      },
+      "angular_velocity_std": {
+        "spread_ratio": 0.9868344750377673,
+        "mean_shift": 0.01927933268019853,
+        "auc_1feat": 0.5079467015112524
+      },
+      "_summary": {
+        "shape_spread": 0.7131416926962642,
+        "all_spread": 0.8913834380910082,
+        "shape_adherence": 0.35937405504004144
+      }
+    }
+  },
+  "redundancy": {
+    "floor": {
+      "auc_all": 0.48514425000000005,
+      "auc_contract": 0.47783137499999995
+    },
+    "fc_v2 as-is": {
+      "auc_all": 0.660155125,
+      "auc_contract": 0.662386875
+    },
+    "fc_v2 t snapped": {
+      "auc_all": 0.648952125,
+      "auc_contract": 0.6678306249999999
+    },
+    "per_feature": {
+      "mean_velocity": {
+        "floor": 0.51312875,
+        "as_is": 0.5077623750000001,
+        "snapped": 0.5044681249999999
+      },
+      "std_velocity": {
+        "floor": 0.50084275,
+        "as_is": 0.501713375,
+        "snapped": 0.518428625
+      },
+      "max_velocity": {
+        "floor": 0.513341375,
+        "as_is": 0.5638236249999999,
+        "snapped": 0.5881601249999999
+      },
+      "velocity_skewness": {
+        "floor": 0.502969875,
+        "as_is": 0.4900145,
+        "snapped": 0.4950635
+      },
+      "mean_acceleration": {
+        "floor": 0.49810299999999996,
+        "as_is": 0.5274616249999999,
+        "snapped": 0.527989625
+      },
+      "std_acceleration": {
+        "floor": 0.5117045,
+        "as_is": 0.5035594999999999,
+        "snapped": 0.50836725
+      },
+      "max_acceleration": {
+        "floor": 0.47397812500000003,
+        "as_is": 0.5343655,
+        "snapped": 0.532923
+      },
+      "mean_jerk": {
+        "floor": 0.49239662500000003,
+        "as_is": 0.518505875,
+        "snapped": 0.525836375
+      },
+      "std_jerk": {
+        "floor": 0.5070574999999999,
+        "as_is": 0.484384,
+        "snapped": 0.5056286249999999
+      },
+      "path_efficiency": {
+        "floor": 0.501134,
+        "as_is": 0.52618875,
+        "snapped": 0.51222725
+      },
+      "max_deviation": {
+        "floor": 0.498347625,
+        "as_is": 0.517663875,
+        "snapped": 0.509425625
+      },
+      "curvature_mean": {
+        "floor": 0.50322025,
+        "as_is": 0.529612875,
+        "snapped": 0.537001375
+      },
+      "curvature_std": {
+        "floor": 0.493397875,
+        "as_is": 0.544278,
+        "snapped": 0.54629275
+      },
+      "num_direction_changes": {
+        "floor": 0.49449849999999995,
+        "as_is": 0.480251375,
+        "snapped": 0.48728612499999996
+      },
+      "movement_duration": {
+        "floor": 0.514195375,
+        "as_is": 0.731923125,
+        "snapped": 0.566771125
+      },
+      "time_to_peak_velocity": {
+        "floor": 0.48614512500000007,
+        "as_is": 0.5670038749999999,
+        "snapped": 0.52071525
+      },
+      "angular_velocity_mean": {
+        "floor": 0.48243650000000005,
+        "as_is": 0.50324725,
+        "snapped": 0.5067397499999999
+      },
+      "angular_velocity_std": {
+        "floor": 0.47216912499999997,
+        "as_is": 0.5024731250000001,
+        "snapped": 0.484208125
+      }
+    }
+  },
+  "wall_sec": 29.984241247177124
+}

@@ -1,0 +1,64 @@
+{
+  "device_tag": "cpu",
+  "torch_device": "cpu",
+  "cuda_available": true,
+  "model_load_sec": 0.0519942999817431,
+  "n_repeat": 3,
+  "seed": 42,
+  "generation_config": "steps=200 guide=0.15 perp=0.85 correct=rotate cfg=0.0 (research/phase_a_baseline.py, the published 0.752/0.757 recipe)",
+  "checkpoint": "candi_polar_flow_best.pt (untouched, MD5 91326a29750789f3167055324ef377c5)",
+  "batches": {
+    "1": {
+      "batch_size": 1,
+      "all_times_sec": [
+        1.354976800037548,
+        1.445908599998802,
+        1.5475763999857008
+      ],
+      "median_sec": 1.445908599998802,
+      "mean_sec": 1.4494872666740168,
+      "min_sec": 1.354976800037548,
+      "max_sec": 1.5475763999857008,
+      "median_ms_per_spec": 1445.908599998802
+    },
+    "8": {
+      "batch_size": 8,
+      "all_times_sec": [
+        11.563128900015727,
+        12.737276099971496,
+        13.34965850005392
+      ],
+      "median_sec": 12.737276099971496,
+      "mean_sec": 12.55002116668038,
+      "min_sec": 11.563128900015727,
+      "max_sec": 13.34965850005392,
+      "median_ms_per_spec": 1592.159512496437
+    },
+    "16": {
+      "batch_size": 16,
+      "all_times_sec": [
+        21.076861099922098,
+        21.660173499956727,
+        22.911470800056122
+      ],
+      "median_sec": 21.660173499956727,
+      "mean_sec": 21.882835133311648,
+      "min_sec": 21.076861099922098,
+      "max_sec": 22.911470800056122,
+      "median_ms_per_spec": 1353.7608437472954
+    },
+    "32": {
+      "batch_size": 32,
+      "all_times_sec": [
+        38.49696169991512,
+        39.08896820002701,
+        42.49998000008054
+      ],
+      "median_sec": 39.08896820002701,
+      "mean_sec": 40.02863663334089,
+      "min_sec": 38.49696169991512,
+      "max_sec": 42.49998000008054,
+      "median_ms_per_spec": 1221.530256250844
+    }
+  }
+}

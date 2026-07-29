@@ -81,7 +81,15 @@ def parse_args():
     p.add_argument("--lam", type=float, default=1.0)
     p.add_argument("--n", type=int, default=N_SYNTH)
     p.add_argument("--seed", type=int, default=SEED)
-    return p.parse_args()
+    # adherence is the number every conditioning change is judged on, so the
+    # probe has to be able to point at a new checkpoint. --tag keeps each
+    # checkpoint's artifacts separate instead of overwriting fc_v2's.
+    p.add_argument("--ckpt", default=CKPT_NAME)
+    p.add_argument("--tag", default="")
+    a = p.parse_args()
+    if a.ckpt != CKPT_NAME:
+        SERVING_ENV["EVENT_CKPT"] = a.ckpt
+    return a
 
 
 def build_specs(n: int, seed: int):
@@ -100,9 +108,9 @@ def build_specs(n: int, seed: int):
     return specs
 
 
-def load_feat_stats():
+def load_feat_stats(name: str = CKPT_NAME):
     import torch
-    ckpt = torch.load(REPO / "training" / CKPT_NAME, map_location="cpu",
+    ckpt = torch.load(REPO / "training" / name, map_location="cpu",
                       weights_only=False)
     return ckpt["feat_mu"].numpy(), ckpt["feat_sd"].numpy()
 
@@ -221,8 +229,9 @@ def stage_measure(args):
     from features import FEATURE_NAMES
     import numpy as np
 
-    feat_mu, feat_sd = load_feat_stats()
-    feat_log_path = ART_DIR / "measure_feat_log.npz"
+    sfx = f"_{args.tag}" if args.tag else ""
+    feat_mu, feat_sd = load_feat_stats(args.ckpt)
+    feat_log_path = ART_DIR / f"measure{sfx}_feat_log.npz"
     specs, trajs = generate({"EVENT_FEAT_LOG": str(feat_log_path)},
                             args.n, args.seed)
 
@@ -310,8 +319,9 @@ def stage_measure(args):
         "absorb_distance": bool(absorb_distance), "d_used": d_used,
         "feature_names": FEATURE_NAMES,
     }
-    (ART_DIR / "measure_summary.json").write_text(json.dumps(summary, indent=2))
-    print(f"\n  wrote {ART_DIR / 'measure_summary.json'}")
+    out_p = ART_DIR / f"measure{sfx}_summary.json"
+    out_p.write_text(json.dumps(summary, indent=2))
+    print(f"\n  wrote {out_p}")
 
 
 def stage_corrected(args):

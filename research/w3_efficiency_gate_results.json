@@ -1,0 +1,225 @@
+{
+  "seeds": [
+    42,
+    7,
+    1234,
+    99
+  ],
+  "target": "path_efficiency",
+  "nband": 3,
+  "runs": [
+    {
+      "seed": 42,
+      "arm": "fc_v2",
+      "auc": {
+        "raw": 0.660209625,
+        "banded marginals (base)": 0.593874,
+        "+ path_efficiency only": 0.585099,
+        "+ path_efficiency and max_deviation": 0.59913525,
+        "+ everything else": 0.603711875,
+        "+ all couplings": 0.559152625,
+        "random bands, target only": 0.609829375,
+        "floor": 0.503864
+      }
+    },
+    {
+      "seed": 42,
+      "arm": "resid_v2",
+      "auc": {
+        "raw": 0.65073557040524,
+        "banded marginals (base)": 0.5699165131097063,
+        "+ path_efficiency only": 0.573164130096062,
+        "+ path_efficiency and max_deviation": 0.5774565857148439,
+        "+ everything else": 0.5615030696362028,
+        "+ all couplings": 0.5490812383955527,
+        "random bands, target only": 0.6160691472253034,
+        "floor": 0.503864
+      }
+    },
+    {
+      "seed": 7,
+      "arm": "fc_v2",
+      "auc": {
+        "raw": 0.656927125,
+        "banded marginals (base)": 0.576972875,
+        "+ path_efficiency only": 0.569510875,
+        "+ path_efficiency and max_deviation": 0.5739316250000001,
+        "+ everything else": 0.569936625,
+        "+ all couplings": 0.55140925,
+        "random bands, target only": 0.6104818750000001,
+        "floor": 0.49122774999999996
+      }
+    },
+    {
+      "seed": 7,
+      "arm": "resid_v2",
+      "auc": {
+        "raw": 0.6638729570411253,
+        "banded marginals (base)": 0.5610725840956071,
+        "+ path_efficiency only": 0.574946693440187,
+        "+ path_efficiency and max_deviation": 0.5657840022204387,
+        "+ everything else": 0.5634059985911837,
+        "+ all couplings": 0.5433470257043831,
+        "random bands, target only": 0.6120483596709823,
+        "floor": 0.49122774999999996
+      }
+    },
+    {
+      "seed": 1234,
+      "arm": "fc_v2",
+      "auc": {
+        "raw": 0.6503130000000001,
+        "banded marginals (base)": 0.5542824999999999,
+        "+ path_efficiency only": 0.5862263750000001,
+        "+ path_efficiency and max_deviation": 0.58686025,
+        "+ everything else": 0.5770285,
+        "+ all couplings": 0.5473988750000001,
+        "random bands, target only": 0.611785625,
+        "floor": 0.5080331250000001
+      }
+    },
+    {
+      "seed": 1234,
+      "arm": "resid_v2",
+      "auc": {
+        "raw": 0.6511646781917052,
+        "banded marginals (base)": 0.5695210976742509,
+        "+ path_efficiency only": 0.5763841919998076,
+        "+ path_efficiency and max_deviation": 0.5732474215957699,
+        "+ everything else": 0.5639333026720414,
+        "+ all couplings": 0.5513759505250997,
+        "random bands, target only": 0.6178153879605331,
+        "floor": 0.5080331250000001
+      }
+    },
+    {
+      "seed": 99,
+      "arm": "fc_v2",
+      "auc": {
+        "raw": 0.654728875,
+        "banded marginals (base)": 0.566616375,
+        "+ path_efficiency only": 0.5756815,
+        "+ path_efficiency and max_deviation": 0.5832480000000001,
+        "+ everything else": 0.567808125,
+        "+ all couplings": 0.546365375,
+        "random bands, target only": 0.59981375,
+        "floor": 0.49381700000000006
+      }
+    },
+    {
+      "seed": 99,
+      "arm": "resid_v2",
+      "auc": {
+        "raw": 0.6491932372813254,
+        "banded marginals (base)": 0.5731042604165728,
+        "+ path_efficiency only": 0.5772407793178564,
+        "+ path_efficiency and max_deviation": 0.5803884465045627,
+        "+ everything else": 0.5595170996822648,
+        "+ all couplings": 0.547753333914495,
+        "random bands, target only": 0.6018480943405868,
+        "floor": 0.49381700000000006
+      }
+    }
+  ],
+  "summary": {
+    "raw": {
+      "mean": {
+        "fc_v2": 0.65554465625,
+        "resid_v2": 0.653741610729849
+      },
+      "sd": {
+        "fc_v2": 0.0035954443205679512,
+        "resid_v2": 0.005895098363165055
+      }
+    },
+    "banded marginals (base)": {
+      "mean": {
+        "fc_v2": 0.5729364374999999,
+        "resid_v2": 0.5684036138240343
+      },
+      "sd": {
+        "fc_v2": 0.014513673943824754,
+        "resid_v2": 0.004454708454857302
+      }
+    },
+    "+ path_efficiency only": {
+      "mean": {
+        "fc_v2": 0.5791294375,
+        "resid_v2": 0.5754339487134783
+      },
+      "sd": {
+        "fc_v2": 0.0068994060594124215,
+        "resid_v2": 0.001545727449572778
+      }
+    },
+    "+ path_efficiency and max_deviation": {
+      "mean": {
+        "fc_v2": 0.58579378125,
+        "resid_v2": 0.5742191140089038
+      },
+      "sd": {
+        "fc_v2": 0.009032218679181449,
+        "resid_v2": 0.005491747980342886
+      }
+    },
+    "+ everything else": {
+      "mean": {
+        "fc_v2": 0.57962128125,
+        "resid_v2": 0.5620898676454232
+      },
+      "sd": {
+        "fc_v2": 0.014321508729053911,
+        "resid_v2": 0.0017388157075744518
+      }
+    },
+    "+ all couplings": {
+      "mean": {
+        "fc_v2": 0.55108153125,
+        "resid_v2": 0.5478893871348826
+      },
+      "sd": {
+        "fc_v2": 0.005026281944202573,
+        "resid_v2": 0.002925243218333747
+      }
+    },
+    "random bands, target only": {
+      "mean": {
+        "fc_v2": 0.60797765625,
+        "resid_v2": 0.6119452472993514
+      },
+      "sd": {
+        "fc_v2": 0.0047657624032445885,
+        "resid_v2": 0.006193307517296336
+      }
+    },
+    "floor": {
+      "mean": {
+        "fc_v2": 0.49923546875,
+        "resid_v2": 0.49923546875
+      },
+      "sd": {
+        "fc_v2": 0.006933711491676373,
+        "resid_v2": 0.006933711491676373
+      }
+    }
+  },
+  "vs_control": {
+    "fc_v2": {
+      "raw": 0.047567,
+      "banded marginals (base)": -0.03504121875000005,
+      "+ path_efficiency only": -0.028848218750000015,
+      "+ path_efficiency and max_deviation": -0.022183874999999992,
+      "+ everything else": -0.028356375000000017,
+      "+ all couplings": -0.05689612500000002
+    },
+    "resid_v2": {
+      "raw": 0.04179636343049756,
+      "banded marginals (base)": -0.04354163347531714,
+      "+ path_efficiency only": -0.036511298585873125,
+      "+ path_efficiency and max_deviation": -0.037726133290447605,
+      "+ everything else": -0.04985537965392822,
+      "+ all couplings": -0.06405586016446879
+    }
+  },
+  "wall_sec": 21.199641942977905
+}

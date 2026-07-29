@@ -11,6 +11,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 
 from models.candi import CANDIModel
+from training.curvature_loss import curvature_moment_loss, reconstruct_x0
 
 
 def _pearson_r(x, y):
@@ -309,6 +310,17 @@ def train(args):
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"  Model params: {n_params:,}")
 
+    if args.curv_loss_weight > 0 and not args.polar:
+        raise ValueError(
+            "--curv-loss-weight > 0 requires --polar (the curvature loss "
+            "reconstructs a (speed, delta_heading) path; cartesian mode has "
+            "no per-axis data_scale to un-normalize with)."
+        )
+    curv_scale_t = None
+    if args.curv_loss_weight > 0:
+        curv_scale_t = torch.tensor(data_scale, dtype=torch.float32, device=device)
+        print(f"  [curv-loss] enabled, weight={args.curv_loss_weight}")
+
     start_epoch = 0
     if args.load_from:
         ckpt_resume = torch.load(args.load_from, map_location=device, weights_only=False)
@@ -336,6 +348,8 @@ def train(args):
         t0 = time.time()
         model.train()
         tot_cont, tot_disc, nb = 0.0, 0.0, 0
+        tot_curv, nb_curv, last_curv_stats = 0.0, 0, None
+        tot_vr_std, tot_vr_mean = 0.0, 0.0
 
         for dxdy_b, stall_b, pad_b, cond_b in train_dl:
             dxdy_b = dxdy_b.to(device)
@@ -391,6 +405,23 @@ def train(args):
                     pl = _path_loss(dxdy_pred, dxdy_noisy, pad_b, t_for_path,
                                     model, args.pred_type, data_scale)
                     loss = loss + args.path_weight * pl
+
+                if args.curv_loss_weight > 0:
+                    t_for_curv = t_cont if args.pred_type == "flow" else t_int
+                    x0_hat = reconstruct_x0(dxdy_pred, dxdy_noisy, t_for_curv, model, args.pred_type)
+                    curv_loss, curv_stats = curvature_moment_loss(
+                        x0_hat, dxdy_b, pad_b, curv_scale_t[0], curv_scale_t[1],
+                    )
+                    if torch.isfinite(curv_loss):
+                        loss = loss + args.curv_loss_weight * curv_loss
+                        tot_curv += curv_loss.item()
+                        tot_vr_std += curv_stats["variety_ratio_std"]
+                        tot_vr_mean += curv_stats["variety_ratio_mean"]
+                        nb_curv += 1
+                        last_curv_stats = curv_stats
+                    else:
+                        print(f"  [curv-loss] WARNING: non-finite curv_loss "
+                              f"at epoch {epoch+1}, skipping aux term this step", flush=True)
 
             optimizer.zero_grad()
             scaler.scale(loss).backward()
@@ -464,6 +495,17 @@ def train(args):
               f"train cont={tc:.4f} disc={td:.4f} | "
               f"val cont={vc:.4f} disc={vd:.4f} | "
               f"lr {lr:.2e} | {elapsed:.0f}s", flush=True)
+
+        if args.curv_loss_weight > 0 and nb_curv > 0:
+            avg_curv = tot_curv / nb_curv
+            s = last_curv_stats
+            print(f"    [curv-loss] curv_loss={avg_curv:.4f} "
+                  f"variety_ratio_std={tot_vr_std / nb_curv:.3f} "
+                  f"variety_ratio_mean={tot_vr_mean / nb_curv:.3f} (gate >= 0.8) | last batch: "
+                  f"mean-of-mean syn={s['mean_of_mean_syn']:.4f} hum={s['mean_of_mean_hum']:.4f} | "
+                  f"std-of-mean syn={s['std_of_mean_syn']:.4f} hum={s['std_of_mean_hum']:.4f} | "
+                  f"mean-of-std syn={s['mean_of_std_syn']:.4f} hum={s['mean_of_std_hum']:.4f} | "
+                  f"std-of-std syn={s['std_of_std_syn']:.4f} hum={s['std_of_std_hum']:.4f}", flush=True)
 
         if args.cooldown > 0:
             torch.cuda.empty_cache()
@@ -543,5 +585,10 @@ if __name__ == "__main__":
                         help="OU-process noise amplitude on delta_heading during training. E.g. 0.1 adds structured curvature perturbation")
     parser.add_argument("--reset-schedule", action="store_true",
                         help="Start LR schedule from epoch 0 when fine-tuning (ignore checkpoint epoch)")
+    parser.add_argument("--curv-loss-weight", type=float, default=0.0,
+                        help="Weight for the batch-level curvature-moment auxiliary loss "
+                             "(0=disabled, exactly current behavior). Requires --polar. "
+                             "Penalizes the gap between the synthetic and human batch's "
+                             "across-path curvature mean/std variety (see DIFFUSION_PILOT.md).")
     args = parser.parse_args()
     train(args)

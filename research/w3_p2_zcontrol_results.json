@@ -1,0 +1,32 @@
+{
+ "ckpt": "event_polar_4m_char_v3.pt",
+ "per_group": 200,
+ "max_velocity": {
+  "source_hi_mean": 9.539546012878418,
+  "source_mid_mean": 8.113122940063477,
+  "gen_hi_mean": 6899.314652583341,
+  "gen_mid_mean": 4712.760732588592,
+  "gen_separation_auc": 0.6445
+ },
+ "max_acceleration": {
+  "source_hi_mean": 13.534948348999023,
+  "source_mid_mean": 12.113076210021973,
+  "gen_hi_mean": 347835.7676611473,
+  "gen_mid_mean": 245852.00775579218,
+  "gen_separation_auc": 0.601125
+ },
+ "mean_jerk": {
+  "source_hi_mean": -0.3374479413032532,
+  "source_mid_mean": -0.060531824827194214,
+  "gen_hi_mean": -130671.59235210829,
+  "gen_mid_mean": -157563.97037119782,
+  "gen_separation_auc": 0.5014
+ },
+ "std_jerk": {
+  "source_hi_mean": 17.138145446777344,
+  "source_mid_mean": 15.544127464294434,
+  "gen_hi_mean": 14290624.547687082,
+  "gen_mid_mean": 9915981.334649403,
+  "gen_separation_auc": 0.6134
+ }
+}

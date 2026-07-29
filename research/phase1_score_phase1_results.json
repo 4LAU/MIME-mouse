@@ -1,0 +1,20 @@
+{
+  "ckpt": "candi_polar_flow_phase1.pt",
+  "tag": "phase1",
+  "n_requested": 2000,
+  "n_valid_trajectories": 2000,
+  "seed": 42,
+  "generation_elapsed_sec": 464.139877300011,
+  "rf_oob_auc": 0.7661579999999999,
+  "rf_oob_n_per_class": 2000,
+  "rf_oob_reference_baseline_best_pt_noround": 0.7573,
+  "human_reference_file": "data/human_val_features_grpo.npy",
+  "pipeline": "research/phase_a_baseline.py generate_paths/RF-OOB recipe (steps=200, guide=0.15, perp=0.85, correct=rotate, no_round=True); RandomForestClassifier(n_estimators=100, oob_score=True, random_state=42)",
+  "critic_auc": 0.8011204999999999,
+  "critic_n_per_class": 2000,
+  "critic_ckpt": "C:\\Users\\aaron\\Code\\mouse-trajectory-synthesis\\research\\phase0b_critic.pt",
+  "critic_stats_path": "C:\\Users\\aaron\\Code\\mouse-trajectory-synthesis\\research\\phase1_channel_stats.npz",
+  "critic_human_reference": "phase0_critic_data.npz (y==0 rows, same 2000 human paths used to train/evaluate the critic)",
+  "critic_phase0b_oof_reference": 0.632,
+  "critic_note": "phase0b_critic_oof_auc=0.632 is the critic's OWN 5-fold OOF AUC on its ORIGINAL 2000v2000 sample (base-model synth); this run's critic_auc is a fresh out-of-sample measurement on Phase 1's post-fine-tune output, so lower means the fool loss transferred to the critic itself."
+}

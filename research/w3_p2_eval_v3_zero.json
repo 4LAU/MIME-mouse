@@ -1,0 +1,32 @@
+{
+ "ckpt": "event_polar_4m_char_v3.pt",
+ "n": 2000,
+ "seed": 42,
+ "feat": "zero",
+ "z_temp": 1.0,
+ "z_off": false,
+ "miss_median_px": 49.01020301937138,
+ "miss_p90_px": 385.93789733462006,
+ "within_15px_pct": 23.51175587793897,
+ "usable": 1999,
+ "raw": {
+  "auc": 0.7159009719967537,
+  "n_per_class": 1999,
+  "tell_std_ratio": {
+   "max_velocity": 0.1179934128996415,
+   "max_acceleration": 0.056476292849108004,
+   "mean_jerk": 0.07874338425740803,
+   "std_jerk": 0.11519208583247927
+  }
+ },
+ "corrected": {
+  "auc": 0.7836722263082516,
+  "n_per_class": 1999,
+  "tell_std_ratio": {
+   "max_velocity": 0.12298792519601795,
+   "max_acceleration": 0.060597771594014055,
+   "mean_jerk": 0.12657534756218336,
+   "std_jerk": 0.12209561592321964
+  }
+ }
+}
