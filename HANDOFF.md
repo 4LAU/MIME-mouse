@@ -12756,3 +12756,102 @@ token level defect, fixed or priced it, and moved the contract by nothing or
 close to nothing. Per step diagnostics have no remaining yield here, because per
 step is the thing that is already correct. The objective has to see the model's
 own rollouts. That is the next arm and it is a training arm, not a sampling one.
+
+## The spike rate is the mechanism and the contract still cannot see it, 2026-08-10
+
+Registered before the run as `research/w4_spikerate.py`, hypothesis, controls,
+prediction and falsifier fixed in the docstring. The prediction was wrong in a
+way that is worth more than being right would have been.
+
+### The bridge was real
+
+The arithmetic bridge from the previous section holds. Instantaneous velocity is
+step size over wait, so a near zero wait carries a velocity several times
+anything else in its trajectory and the contract differentiates that once more
+for acceleration and twice more for jerk. Removing every sub millisecond wait
+from the generated token streams and redrawing each from the model's own upper
+band:
+
+    spread ratio against the human corpus, 1.00 is exact
+
+    feature                  base   spikes removed   wait marginal mapped
+    mean_acceleration       1.606            0.548                  0.850
+    std_velocity            2.216            0.948                  1.640
+    std_jerk                2.344            0.787                  1.973
+    max_velocity            2.085            0.918                  1.368
+    std_acceleration        2.216            0.762                  1.697
+    mean_jerk               1.275            0.393                  0.672
+    movement_duration       0.979            1.024                  0.998
+
+So the sub millisecond wait rate IS what manufactures the over dispersion, and
+it manufactures essentially all of it. The mean absolute log spread ratio over
+all eighteen features moves 0.3445 to 0.1900.
+
+### And it buys nothing
+
+Scored on the contract, generated base 0.6412 against a human corpus floor of
+0.5576, so a gap of 0.0836:
+
+    generated, sub ms rate multiplier 1.0      0.6412   rate 0.0508
+    multiplier 0.8                             0.6360   rate 0.0406
+    multiplier 0.594, lands on the human rate  0.6384   rate 0.0302
+    multiplier 0.4                             0.6380   rate 0.0203
+    multiplier 0.0, every spike gone           0.6295   rate 0.0000
+    whole wait marginal rank mapped to human   0.6313
+    CONTROL rate held, spikes reshuffled       0.6413
+    CONTROL speed channel perturbed instead    0.6745
+
+Landing the rate exactly on the human value is worth 0.0028 of 0.0836. Removing
+every spike is worth 0.0118. Repairing the entire wait marginal, which is the
+upper bound on everything this channel can carry, is worth 0.0099. The dose
+curve has no minimum at the human rate and barely has a shape.
+
+The reshuffle control is flat at 0.6413 against a base of 0.6412, so the edit
+machinery does nothing on its own and the rows above are readable. The speed
+channel control moved 0.033 and moved it the WRONG way, which is the predicted
+sign for perturbing a channel already measured clean. The verdict rule written
+into the script was two sided and fired NULL on that control; the substantive
+verdict is NULL anyway, on the size of the treatment alone, so nothing turns on
+it. Recorded because the rule as written is wrong and should be one sided if
+this arm is ever rerun.
+
+### The control that decides it
+
+The same edit run backwards on real recorded human trajectories, injecting the
+model's own excess into a hand:
+
+    human corpus, unedited                     0.5576   rate 0.0291
+    human corpus, multiplier 1.68              0.5495   rate 0.0488
+    human corpus, multiplier 2.5               0.6178   rate 0.0726
+
+Giving real humans exactly the model's spike rate does not make them detectable.
+It moves them 0.008 and in the wrong direction. The channel only becomes visible
+somewhere past 0.05, and the model sits at 0.0508, just underneath. The detector
+is insensitive to this quantity over the whole range the model is wrong by.
+
+### What this means
+
+The count is now five. Five times a genuine token level defect has been found,
+confirmed against a real human history, fixed or priced, and worth nothing on
+the contract: the tick bug, the duration prior, the lattice snap, the flailing
+endgame, and now the spike rate. This one is the most informative of the five
+because it also carried the entire feature over dispersion, which was the best
+remaining candidate for the mechanism, and repairing that over dispersion almost
+completely still bought 0.012.
+
+Put beside the earlier paired result, the asymmetry is the finding. Rank mapping
+all eighteen FEATURE marginals onto the human corpus buys 0.075 of 0.107. No
+token level edit tried so far reaches more than 0.012 of it. The displacement
+lives in feature space and nothing available in token space reaches it, which
+means it is not any one channel and there is no cheap serving time controller
+waiting to be found.
+
+That settles the question the previous section left open. The next arm is a
+training arm, the objective has to be stated over the model's own rollouts, and
+it now has a specific target rather than a general one: match the eighteen
+feature joint distribution of generated trajectories to the human one. Two
+attempts in this family have already failed and both failure modes are known and
+must be designed against. The GRPO pilot collapsed the model's variety, which a
+distribution matching objective penalises directly rather than rewarding. The
+learned critic outran the generator, reaching 0.94 by round eight, which a fixed
+non learned statistic like a feature moment or an MMD kernel cannot do.
