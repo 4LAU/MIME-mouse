@@ -1,0 +1,20 @@
+{
+  "n_per_class": 11378,
+  "seed": 53,
+  "runs": {
+    "full": 0.7499635586355463,
+    "only_speed": 0.5966566856273033,
+    "only_turn": 0.5949236344780929,
+    "only_time": 0.5884935418113193,
+    "blind_speed": 0.7439154048496501,
+    "blind_turn": 0.7411211032776086,
+    "blind_time": 0.6162201347718492,
+    "first32": 0.71214,
+    "floor": 0.5188834421567057
+  },
+  "full_ref": 0.7509,
+  "floor_ref": 0.5235,
+  "alone_sum": 0.22342353544659854,
+  "verdict": "NECESSARY, time. No stream is sufficient but blinding those costs more than 0.08, so they carry something no other stream duplicates.",
+  "gpu_c": 73
+}

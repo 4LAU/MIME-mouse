@@ -1,0 +1,43 @@
+{
+  "auc_served": 0.6944595555555555,
+  "auc_w4_cache": 0.7118862222222222,
+  "delta": -0.0174266666666667,
+  "collapse_served": [
+    "mean_acceleration",
+    "max_acceleration",
+    "mean_jerk"
+  ],
+  "collapse_w4_cache": [
+    "max_velocity",
+    "mean_acceleration",
+    "std_acceleration",
+    "max_acceleration",
+    "mean_jerk"
+  ],
+  "mean_corr_gap_served": 0.07130050419110415,
+  "mean_corr_gap_w4_cache": 0.09365145357846014,
+  "leading_eig_served": 1.1112308653912364,
+  "leading_eig_w4_cache": 1.3992199310653515,
+  "eigenvector_served": [
+    0.19120111198498058,
+    0.2698034188102083,
+    0.2640690749000666,
+    0.13918736722248917,
+    -0.08478897285544851,
+    0.21977510615921,
+    0.2310919825013592,
+    -0.0016505822059948913,
+    0.19036005091839642,
+    -0.22864463169171198,
+    0.28943821799210606,
+    0.27880317674058713,
+    0.261911355153558,
+    0.3241124205636868,
+    0.1188971389208318,
+    -0.13562495875126968,
+    0.35553876178481053,
+    0.3317231603949252
+  ],
+  "n": 1500,
+  "verdict": "MARGINAL ONLY. -0.0174, the order a duration marginal fix alone buys. The hesitancy conclusion survives."
+}

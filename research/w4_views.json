@@ -1,0 +1,83 @@
+{
+  "n": 3052,
+  "n_per_class": 1526,
+  "seed": 47,
+  "temp": 1.0,
+  "ckpt": "training/event_ar_v2_s40000.pt",
+  "views": {
+    "coarse": {
+      "floor": 0.5259722692207933,
+      "signal": 0.44070257090295084,
+      "excess": -0.08526969831784248,
+      "family": "control"
+    },
+    "speed_marg": {
+      "floor": 0.48430460055413466,
+      "signal": 0.5447687870704212,
+      "excess": 0.060464186516286544,
+      "family": "marginal"
+    },
+    "turn_marg": {
+      "floor": 0.47321310478572376,
+      "signal": 0.5459602366323182,
+      "excess": 0.07274713184659443,
+      "family": "marginal"
+    },
+    "dt_marg": {
+      "floor": 0.48074807315401547,
+      "signal": 0.5289228729114741,
+      "excess": 0.04817479975745864,
+      "family": "marginal"
+    },
+    "speed_acf": {
+      "floor": 0.48565386511476905,
+      "signal": 0.5417881233799807,
+      "excess": 0.05613425826521168,
+      "family": "temporal"
+    },
+    "turn_acf": {
+      "floor": 0.4939583694769045,
+      "signal": 0.5401348233932072,
+      "excess": 0.04617645391630265,
+      "family": "temporal"
+    },
+    "dt_acf": {
+      "floor": 0.49051972021869944,
+      "signal": 0.5233853915272025,
+      "excess": 0.0328656713085031,
+      "family": "temporal"
+    },
+    "couple_st": {
+      "floor": 0.515220022021097,
+      "signal": 0.5334887721606613,
+      "excess": 0.018268750139564305,
+      "family": "coupling"
+    },
+    "couple_sd": {
+      "floor": 0.48811749680934574,
+      "signal": 0.5559002196956554,
+      "excess": 0.06778272288630965,
+      "family": "coupling"
+    },
+    "couple_td": {
+      "floor": 0.5070333958008757,
+      "signal": 0.5497512320305615,
+      "excess": 0.042717836229685835,
+      "family": "coupling"
+    }
+  },
+  "all_views": {
+    "floor": 0.5094729794956447,
+    "signal": 0.6201470277531095,
+    "excess": 0.11067404825746474
+  },
+  "contract_paired": {
+    "floor": 0.5050099283884919,
+    "signal": 0.6139334110885327,
+    "excess": 0.10892348270004082
+  },
+  "contract_vs_validation_generated": 0.696425125,
+  "contract_vs_validation_human": 0.607695125,
+  "verdict": "MIXED. turn_marg leads at +0.0727 but does not clear every rival family by 0.03, so no single family owns the separation and an arm aimed at one of them is a guess.",
+  "gpu_c": 61
+}

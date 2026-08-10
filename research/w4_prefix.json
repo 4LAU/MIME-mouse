@@ -1,0 +1,83 @@
+{
+  "ckpt": "event_ar_v2_s40000.pt",
+  "n_rows": 1795,
+  "arms": {
+    "prefix0": {
+      "contract": 0.633667097932039,
+      "n": 1794,
+      "k": 0,
+      "placement": "prefix",
+      "frac_forced": 0.0
+    },
+    "prefix2": {
+      "contract": 0.6405085311256119,
+      "n": 1795,
+      "k": 2,
+      "placement": "prefix",
+      "frac_forced": 0.0351664283055463
+    },
+    "prefix4": {
+      "contract": 0.6233700855828245,
+      "n": 1795,
+      "k": 4,
+      "placement": "prefix",
+      "frac_forced": 0.0703328566110926
+    },
+    "prefix8": {
+      "contract": 0.6037431428992637,
+      "n": 1795,
+      "k": 8,
+      "placement": "prefix",
+      "frac_forced": 0.1406657132221852
+    },
+    "prefix16": {
+      "contract": 0.6027766699513505,
+      "n": 1795,
+      "k": 16,
+      "placement": "prefix",
+      "frac_forced": 0.277893148913661
+    },
+    "scatter16": {
+      "contract": 0.8119516453162219,
+      "n": 1795,
+      "k": 16,
+      "placement": "scattered",
+      "frac_forced": 0.277893148913661
+    },
+    "prefix32": {
+      "contract": 0.5845476059310527,
+      "n": 1795,
+      "k": 32,
+      "placement": "prefix",
+      "frac_forced": 0.49556256489626394
+    },
+    "prefix64": {
+      "contract": 0.5654481265663674,
+      "n": 1795,
+      "k": 64,
+      "placement": "prefix",
+      "frac_forced": 0.7528260486256686
+    },
+    "scatter64": {
+      "contract": 0.6176772371412389,
+      "n": 1795,
+      "k": 64,
+      "placement": "scattered",
+      "frac_forced": 0.7528260486256686
+    },
+    "prefix128": {
+      "contract": 0.5444805673450702,
+      "n": 1795,
+      "k": 128,
+      "placement": "prefix",
+      "frac_forced": 0.937170620849088
+    },
+    "full": {
+      "contract": 0.5588736896827305,
+      "n": 1795,
+      "k": 256,
+      "placement": "all",
+      "frac_forced": 1.0
+    }
+  }
+}

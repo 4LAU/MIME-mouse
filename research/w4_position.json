@@ -1,0 +1,153 @@
+{
+  "ckpt": "event_ar_v2_s40000.pt",
+  "w": 32,
+  "hop": 4,
+  "hz": 125.0,
+  "n_rows": 18081,
+  "temp": 1.0,
+  "diagnostic_only": true,
+  "pre_registered": "HANDOFF.md 2026-08-05, amended before the model side was generated, see the HANDOFF amendment",
+  "band_hz": [
+    11.0,
+    41.5
+  ],
+  "n_position_bins": 8,
+  "thresholds": {
+    "accum_dominates": 0.17,
+    "flat": 0.05
+  },
+  "arm_C_excess_log": 0.1677,
+  "length_bin_edges": [
+    46.0,
+    63.0,
+    85.0,
+    120.0
+  ],
+  "n_traces": {
+    "H_human": 13215,
+    "M_model_free": 13182
+  },
+  "n_windows": {
+    "H_human": 190786,
+    "M_model_free": 190913
+  },
+  "validity_gate": {
+    "diff": 0.033948428295986044,
+    "null_sd": 0.04781058792060427,
+    "sigma": 0.710060883425275,
+    "pass": true
+  },
+  "slope_diff": {
+    "diff": -0.1805227658866088,
+    "null_sd": 0.03494013146433427,
+    "sigma": -5.166630986230846,
+    "pooled_excess_profile": [
+      0.2418049384913683,
+      0.15244388140403928,
+      0.18481372029540882,
+      0.17964218031080686,
+      0.15660778479174411,
+      0.13915706393242683,
+      0.05419651797150021,
+      0.005688389864129562
+    ],
+    "position_centres": [
+      0.0625,
+      0.1875,
+      0.3125,
+      0.4375,
+      0.5625,
+      0.6875,
+      0.8125,
+      0.9375
+    ],
+    "bins": [
+      {
+        "bin": 0,
+        "n_a": 2567,
+        "n_b": 2575,
+        "excess_by_position": [
+          null,
+          null,
+          0.32081606808669605,
+          0.20721461712911315,
+          0.15914453409315898,
+          0.15946171948137122,
+          null,
+          null
+        ]
+      },
+      {
+        "bin": 1,
+        "n_a": 2622,
+        "n_b": 2637,
+        "excess_by_position": [
+          null,
+          null,
+          0.20851114101731016,
+          0.23486806079831068,
+          0.20177535639766964,
+          0.11579340156830886,
+          null,
+          null
+        ]
+      },
+      {
+        "bin": 2,
+        "n_a": 2629,
+        "n_b": 2657,
+        "excess_by_position": [
+          null,
+          0.14864617355155096,
+          0.15642261066060503,
+          0.20798658471828935,
+          0.14748278512023116,
+          0.09261982597322094,
+          0.02182799799410451,
+          null
+        ]
+      },
+      {
+        "bin": 3,
+        "n_a": 2707,
+        "n_b": 2694,
+        "excess_by_position": [
+          null,
+          0.15034388838625956,
+          0.09497364197355473,
+          0.11324131994801112,
+          0.13736269194927542,
+          0.15585044105785317,
+          0.0761296351561811,
+          null
+        ]
+      },
+      {
+        "bin": 4,
+        "n_a": 2657,
+        "n_b": 2652,
+        "excess_by_position": [
+          0.2418049384913683,
+          0.1583820001649594,
+          0.14890429544342165,
+          0.1370113973749112,
+          0.13792467335465952,
+          0.1723406887051866,
+          0.06434559032610432,
+          0.005688389864129562
+        ]
+      }
+    ],
+    "dropped_bins": []
+  },
+  "mean_excess_log_in_pipeline": 0.139294309632678,
+  "growth_share": {
+    "vs_registered_anchor": -0.5382312638241169,
+    "vs_in_pipeline_total": -0.6479904540345226,
+    "interval_2sd": [
+      -0.2504030288152773,
+      -0.11064250295794024
+    ]
+  },
+  "verdict": "NEGATIVE, -0.1805 at -5.2 sd. This is the registered third outcome. The excess is concentrated at the START of movements and fades, which points at how a movement is launched rather than at its texture or at drift."
+}

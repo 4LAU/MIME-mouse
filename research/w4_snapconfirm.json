@@ -1,0 +1,75 @@
+{
+  "auc": {
+    "2.5": [
+      0.6459582222222222,
+      0.6498642222222222,
+      0.6397337777777777
+    ],
+    "5.0": [
+      0.6355173333333333,
+      0.6391153333333334,
+      0.626082888888889
+    ]
+  },
+  "collapse": {
+    "2.5": [
+      4,
+      2,
+      0
+    ],
+    "5.0": [
+      4,
+      2,
+      0
+    ]
+  },
+  "mech": {
+    "2.5": [
+      {
+        "curvature_mean": 1.4957990485918442,
+        "max_deviation": 1.3044871365226431,
+        "path_efficiency": 0.9680625834001961
+      },
+      {
+        "curvature_mean": 1.60664377412093,
+        "max_deviation": 1.365852626060542,
+        "path_efficiency": 0.958410867399986
+      },
+      {
+        "curvature_mean": 1.5604486001810136,
+        "max_deviation": 1.2410813494468151,
+        "path_efficiency": 0.9711700262128021
+      }
+    ],
+    "5.0": [
+      {
+        "curvature_mean": 1.4639926434801354,
+        "max_deviation": 1.317979255755303,
+        "path_efficiency": 0.9684448762200569
+      },
+      {
+        "curvature_mean": 1.5917187997582671,
+        "max_deviation": 1.364640866797014,
+        "path_efficiency": 0.9585755014073666
+      },
+      {
+        "curvature_mean": 1.5232846380588632,
+        "max_deviation": 1.2467595628948092,
+        "path_efficiency": 0.9726499296455343
+      }
+    ]
+  },
+  "n": 1500,
+  "seeds": 3,
+  "paired_2.5": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "wins": 0
+  },
+  "paired_5.0": {
+    "mean": -0.011613555555555507,
+    "sd": 0.001771090436237826,
+    "wins": 3
+  },
+  "verdict": "NOISE. Best arm 5.0 moves the contract -0.0116 on 3/3 seeds, inside the 0.015 threshold or not consistent in sign. The threshold inherited from the flow recipe is not leaving anything on the table."
+}

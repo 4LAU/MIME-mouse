@@ -1,0 +1,44 @@
+{
+  "baseline": 0.7147864,
+  "baseline_se": 0.0024758806736189976,
+  "all_matched": 0.6753662,
+  "all_matched_se": 0.0015244166802419895,
+  "groups": {
+    "SPEED": {
+      "auc": 0.7223803,
+      "se": 0.002352439556077887,
+      "bought": -0.007593899999999931
+    },
+    "ROUGHNESS": {
+      "auc": 0.7273556000000001,
+      "se": 0.002626349455042102,
+      "bought": -0.012569200000000058
+    },
+    "GEOMETRY": {
+      "auc": 0.7674770000000001,
+      "se": 0.002569711744534792,
+      "bought": -0.05269060000000003
+    },
+    "TIMING": {
+      "auc": 0.7147856000000001,
+      "se": 0.001157527379805751,
+      "bought": 7.999999999119822e-07
+    },
+    "ANGULAR": {
+      "auc": 0.7556046,
+      "se": 0.0011782306480481737,
+      "bought": -0.040818199999999916
+    }
+  },
+  "verdict": "DEPENDENCE DOMINANT. 0.6754 survives perfect marginal correction. Marginal matching is capped and cannot reach chance. The program changes.",
+  "n_gen": 1500,
+  "n_fit": 1000,
+  "n_score": 1000,
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ]
+}

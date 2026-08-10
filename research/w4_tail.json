@@ -1,0 +1,148 @@
+{
+  "mean_abs_excess_human": 0.0636441982089953,
+  "mean_abs_excess_gen": 0.058136604385031036,
+  "mean_abs_diff": 0.03555823793566805,
+  "pairs_beyond_3sigma": 3,
+  "top_pairs": [
+    {
+      "i": "velocity_skewness",
+      "j": "curvature_std",
+      "excess_human": -0.05998299700621143,
+      "excess_gen": 0.05574734424694129,
+      "diff": -0.11573034125315272,
+      "sigma": -3.275241074228006,
+      "corr_human": 0.4304103950456651,
+      "corr_gen": 0.37153314739644716
+    },
+    {
+      "i": "velocity_skewness",
+      "j": "curvature_mean",
+      "excess_human": -0.06001827070192038,
+      "excess_gen": 0.045312397774651444,
+      "diff": -0.10533066847657183,
+      "sigma": -3.0263078614168966,
+      "corr_human": 0.37764067559278813,
+      "corr_gen": 0.32717347947353875
+    },
+    {
+      "i": "mean_acceleration",
+      "j": "mean_jerk",
+      "excess_human": 0.5159945994128659,
+      "excess_gen": 0.6171927320106976,
+      "diff": -0.10119813259783172,
+      "sigma": -3.019240071953099,
+      "corr_human": 0.09334907531402495,
+      "corr_gen": 0.15196028421214472
+    },
+    {
+      "i": "mean_acceleration",
+      "j": "time_to_peak_velocity",
+      "excess_human": 0.020280211744241022,
+      "excess_gen": 0.09791376479251646,
+      "diff": -0.07763355304827543,
+      "sigma": -2.9249650381227936,
+      "corr_human": 0.4833252448607597,
+      "corr_gen": 0.5508423531156267
+    },
+    {
+      "i": "std_acceleration",
+      "j": "movement_duration",
+      "excess_human": -0.08853751573263785,
+      "excess_gen": -0.0026432410288647758,
+      "diff": -0.08589427470377307,
+      "sigma": -2.7607861147632167,
+      "corr_human": -0.04161980404071275,
+      "corr_gen": -0.03777214930766096
+    },
+    {
+      "i": "max_acceleration",
+      "j": "curvature_mean",
+      "excess_human": 0.043424072575589646,
+      "excess_gen": -0.047247852976995915,
+      "diff": 0.09067192555258556,
+      "sigma": 2.745181187582722,
+      "corr_human": 0.037697211009832435,
+      "corr_gen": -0.06237135381937892
+    },
+    {
+      "i": "mean_jerk",
+      "j": "time_to_peak_velocity",
+      "excess_human": 0.16656287947244275,
+      "excess_gen": 0.27402701955230474,
+      "diff": -0.10746414007986199,
+      "sigma": -2.7053213299035317,
+      "corr_human": -0.07477157615668864,
+      "corr_gen": -0.011683363541825155
+    },
+    {
+      "i": "path_efficiency",
+      "j": "num_direction_changes",
+      "excess_human": -0.0018430073229691035,
+      "excess_gen": -0.07830095539339754,
+      "diff": 0.07645794807042844,
+      "sigma": 2.6702340214917117,
+      "corr_human": -0.6062599462683292,
+      "corr_gen": -0.5413422854813286
+    },
+    {
+      "i": "max_deviation",
+      "j": "angular_velocity_mean",
+      "excess_human": 0.10774474214660651,
+      "excess_gen": 0.012488196730130217,
+      "diff": 0.0952565454164763,
+      "sigma": 2.6398063380920553,
+      "corr_human": 0.14400413638242768,
+      "corr_gen": -0.018119654277863127
+    },
+    {
+      "i": "max_acceleration",
+      "j": "movement_duration",
+      "excess_human": -0.05924185190303529,
+      "excess_gen": 0.02560015435109056,
+      "diff": -0.08484200625412586,
+      "sigma": -2.5777331007448274,
+      "corr_human": 0.22017164447901563,
+      "corr_gen": 0.23085612947822898
+    },
+    {
+      "i": "max_deviation",
+      "j": "curvature_mean",
+      "excess_human": 0.10731845731575762,
+      "excess_gen": 0.013942538766653183,
+      "diff": 0.09337591854910443,
+      "sigma": 2.50274939866657,
+      "corr_human": 0.28928202814815857,
+      "corr_gen": 0.11307582879477698
+    },
+    {
+      "i": "std_velocity",
+      "j": "curvature_mean",
+      "excess_human": 0.07307368532582169,
+      "excess_gen": -0.010589502867819742,
+      "diff": 0.08366318819364144,
+      "sigma": 2.387021075063318,
+      "corr_human": -0.04234898689674052,
+      "corr_gen": -0.16217053057707131
+    }
+  ],
+  "involvement": {
+    "mean_velocity": 0,
+    "std_velocity": 0,
+    "max_velocity": 0,
+    "velocity_skewness": 2,
+    "mean_acceleration": 1,
+    "std_acceleration": 0,
+    "max_acceleration": 0,
+    "mean_jerk": 1,
+    "std_jerk": 0,
+    "path_efficiency": 0,
+    "max_deviation": 0,
+    "curvature_mean": 1,
+    "curvature_std": 1,
+    "num_direction_changes": 0,
+    "movement_duration": 0,
+    "time_to_peak_velocity": 0,
+    "angular_velocity_mean": 0,
+    "angular_velocity_std": 0
+  }
+}

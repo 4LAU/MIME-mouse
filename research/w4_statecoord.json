@@ -1,0 +1,81 @@
+{
+  "B": 3.7317314597413014,
+  "C": 4.691325738473381,
+  "gap": 0.9595942787320797,
+  "coords": [
+    {
+      "k": 0,
+      "name": "log1p remaining distance",
+      "between": 0.06814526495475613,
+      "se": 0.02571710206552558,
+      "share": 0.07101466366055982,
+      "within": 0.8914490137773232,
+      "gen_mean": 4.501542568206787,
+      "real_mean": 4.368213176727295,
+      "confounded": false
+    },
+    {
+      "k": 1,
+      "name": "unit x remaining",
+      "between": 0.005092030379576444,
+      "se": 0.011790159393659442,
+      "share": 0.005306440953675326,
+      "within": 0.9545022483524985,
+      "gen_mean": 0.5967758297920227,
+      "real_mean": 0.7037606239318848,
+      "confounded": false
+    },
+    {
+      "k": 2,
+      "name": "unit y remaining",
+      "between": 0.0005701686034806502,
+      "se": 0.009234065847228811,
+      "share": 0.0005941767433565975,
+      "within": 0.9590241101285975,
+      "gen_mean": 0.023531438782811165,
+      "real_mean": 0.005087317433208227,
+      "confounded": false
+    },
+    {
+      "k": 3,
+      "name": "elapsed / commanded",
+      "between": -0.02396150296796159,
+      "se": 0.006121960680353959,
+      "share": -0.024970452095256477,
+      "within": 0.9835557817000392,
+      "gen_mean": 0.4915517270565033,
+      "real_mean": 0.4786703586578369,
+      "confounded": true
+    },
+    {
+      "k": 4,
+      "name": "index / buffer",
+      "between": 0.05493765428109184,
+      "se": 0.02317931037912042,
+      "share": 0.05725091895470807,
+      "within": 0.9046566244509857,
+      "gen_mean": 0.1734641194343567,
+      "real_mean": 0.19072720408439636,
+      "confounded": true
+    },
+    {
+      "k": 5,
+      "name": "log1p distance travelled",
+      "between": 0.06743057814830644,
+      "se": 0.017427061885414735,
+      "share": 0.07026988347346448,
+      "within": 0.8921637005837709,
+      "gen_mean": 4.806653022766113,
+      "real_mean": 4.560016632080078,
+      "confounded": false
+    }
+  ],
+  "verdict": "DIFFUSE. No single coordinate reaches 25 percent. The marginals are close and the difference is in the joint. The nearest neighbour read is primary.",
+  "nn": {
+    "real_self": 0.38357774715159065,
+    "gen": 0.3959130991494825,
+    "ratio": 1.0321586747132567
+  },
+  "n_real_pos": 87313,
+  "n_gen_pos": 74368
+}

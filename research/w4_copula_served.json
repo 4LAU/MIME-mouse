@@ -1,0 +1,18 @@
+{
+  "baseline": 0.6947577,
+  "marginals_only": 0.6150261,
+  "recoloured_human": 0.5353054222222223,
+  "recoloured_human_se": 0.0060446624836490775,
+  "placebo": 0.5727137777777778,
+  "placebo_se": 0.004895310877024672,
+  "corr_dist_human": 0.06953634188396796,
+  "corr_dist_placebo": 0.04098739710367193,
+  "verdict": "MIXED. 0.5353 recoloured against 0.5727 placebo.",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ]
+}

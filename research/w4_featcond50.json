@@ -1,0 +1,44 @@
+{
+  "base": [
+    0.6298602222222222,
+    0.6462042222222223,
+    0.6567504865373891
+  ],
+  "fc": [
+    0.6324533333333334,
+    0.6311468888888889,
+    0.6225311111111111
+  ],
+  "fc_off": [
+    0.6558595555555555,
+    0.6527973333333332,
+    0.6487213401329149
+  ],
+  "delta_mean": -0.015561199216166685,
+  "delta_se": 0.010629835399905906,
+  "obedience": {
+    "mean_velocity": 0.9708052966542059,
+    "std_velocity": 0.9410983145622139,
+    "max_velocity": 0.9277580798924799,
+    "velocity_skewness": 0.6433347771858268,
+    "mean_acceleration": 0.6971558535507497,
+    "std_acceleration": 0.8688115956199685,
+    "max_acceleration": 0.8261303322060737,
+    "mean_jerk": 0.28858296440724346,
+    "std_jerk": 0.8147748059739879,
+    "path_efficiency": 0.8580605129157836,
+    "max_deviation": 0.8810612769161231,
+    "curvature_mean": 0.526566564103658,
+    "curvature_std": 0.5339370064905213,
+    "num_direction_changes": 0.9022901313882065,
+    "movement_duration": 0.9983680929043376,
+    "time_to_peak_velocity": 0.6174033404755587,
+    "angular_velocity_mean": 0.5956743257811818,
+    "angular_velocity_std": 0.5424936894046027
+  },
+  "obedience_mean": 0.7463503866907069,
+  "k": 32,
+  "n": 1500,
+  "fc_step": 10000,
+  "verdict": "CONFOUNDED. The flag zero control reads +0.0082 against the base model, outside the 0.0069 replicate floor, so the fine tune moved the model for reasons unrelated to conditioning and no branch may be claimed."
+}

@@ -1,81 +1,18 @@
 {
-  "baseline": 0.6668233750000001,
-  "marginals fixed": 0.620829375,
-  "human through transform": 0.5147575,
-  "gen shuffled": 0.999032375,
-  "both shuffled": 0.6640355,
-  "singles_after_fix": [
-    {
-      "feature": "num_direction_changes",
-      "auc": 0.496615
-    },
-    {
-      "feature": "angular_velocity_mean",
-      "auc": 0.47381125
-    },
-    {
-      "feature": "mean_velocity",
-      "auc": 0.469411875
-    },
-    {
-      "feature": "angular_velocity_std",
-      "auc": 0.46921525000000003
-    },
-    {
-      "feature": "path_efficiency",
-      "auc": 0.46907987500000004
-    },
-    {
-      "feature": "std_velocity",
-      "auc": 0.4628185
-    },
-    {
-      "feature": "max_deviation",
-      "auc": 0.46080412499999995
-    },
-    {
-      "feature": "velocity_skewness",
-      "auc": 0.460536625
-    },
-    {
-      "feature": "mean_acceleration",
-      "auc": 0.458685875
-    },
-    {
-      "feature": "curvature_std",
-      "auc": 0.4560715
-    },
-    {
-      "feature": "movement_duration",
-      "auc": 0.454264
-    },
-    {
-      "feature": "time_to_peak_velocity",
-      "auc": 0.45112562500000003
-    },
-    {
-      "feature": "max_acceleration",
-      "auc": 0.44680325
-    },
-    {
-      "feature": "std_acceleration",
-      "auc": 0.43838825
-    },
-    {
-      "feature": "std_jerk",
-      "auc": 0.43739725
-    },
-    {
-      "feature": "max_velocity",
-      "auc": 0.43652837499999997
-    },
-    {
-      "feature": "curvature_mean",
-      "auc": 0.434677
-    },
-    {
-      "feature": "mean_jerk",
-      "auc": 0.427686
-    }
+  "baseline": 0.7147864,
+  "marginals_only": 0.6753662,
+  "recoloured_human": 0.571485688888889,
+  "recoloured_human_se": 0.0028419288959923945,
+  "placebo": 0.6375340444444445,
+  "placebo_se": 0.00674376146144632,
+  "corr_dist_human": 0.08542730268873859,
+  "corr_dist_placebo": 0.030579327406097135,
+  "verdict": "CORRELATION CARRIES IT. 0.5715 with the human correlation matrix, placebo does not follow. The model's feature correlation matrix is a concrete target.",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
   ]
 }

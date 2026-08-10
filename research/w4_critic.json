@@ -1,0 +1,12 @@
+{
+  "n_per_class": 11378,
+  "seed": 53,
+  "ckpt": "training/event_ar_v2_s40000.pt",
+  "epochs": 8,
+  "signal": 0.7508704200715697,
+  "floor": 0.5235252652708788,
+  "excess": 0.22734515480069084,
+  "statistic_auc": 0.6201,
+  "verdict": "MIDDLE. 0.7509 sits between 0.68 and 0.85, so the critic finds real structure the statistics miss without finding a great deal of it. Neither branch is claimed.",
+  "gpu_c": 74
+}

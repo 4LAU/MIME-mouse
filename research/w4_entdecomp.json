@@ -1,0 +1,16 @@
+{
+  "A_cross_entropy_real": 1.2677271020865448,
+  "B_entropy_real": 1.283416585043061,
+  "C_entropy_gen": 1.6019602384008993,
+  "gen_ce_check": 1.5913747225144126,
+  "se": {
+    "A": 0.0159911478247283,
+    "B": 0.014761103318507189,
+    "C": 0.015754646955316882
+  },
+  "objective_part": 0.015689482956516176,
+  "state_part": 0.3185436533578383,
+  "total": 0.3342331363143545,
+  "objective_share": 0.04694173393316644,
+  "verdict": "STATES DOMINANT. The conditional is right and the model's own history is taking it somewhere hotter."
+}

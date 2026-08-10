@@ -1,0 +1,104 @@
+{
+  "full": 0.7148730222222223,
+  "full_se": 0.0016396649636698315,
+  "single": {
+    "mean_velocity": 0.5265169777777776,
+    "std_velocity": 0.5021662222222222,
+    "max_velocity": 0.4900610666666667,
+    "velocity_skewness": 0.49186382222222225,
+    "mean_acceleration": 0.5279352888888889,
+    "std_acceleration": 0.5054342222222222,
+    "max_acceleration": 0.4898737333333333,
+    "mean_jerk": 0.5108729333333333,
+    "std_jerk": 0.5176201333333333,
+    "path_efficiency": 0.5153300444444444,
+    "max_deviation": 0.5046785333333335,
+    "curvature_mean": 0.5562613777777777,
+    "curvature_std": 0.5598701333333332,
+    "num_direction_changes": 0.5556779555555555,
+    "movement_duration": 0.5631281777777778,
+    "time_to_peak_velocity": 0.49005688888888893,
+    "angular_velocity_mean": 0.5801000888888888,
+    "angular_velocity_std": 0.5431112444444445
+  },
+  "single_se": {
+    "mean_velocity": 0.0011663274291976607,
+    "std_velocity": 0.0008278054402536911,
+    "max_velocity": 0.0011506856043246533,
+    "velocity_skewness": 0.0007309414507636324,
+    "mean_acceleration": 0.0008602414429954694,
+    "std_acceleration": 0.00048202398383030584,
+    "max_acceleration": 0.001062010544692016,
+    "mean_jerk": 0.001228015561489037,
+    "std_jerk": 0.0010586962529684264,
+    "path_efficiency": 0.0007091185187119627,
+    "max_deviation": 0.0010841512732132057,
+    "curvature_mean": 0.0009155608613654185,
+    "curvature_std": 0.0006668303228754605,
+    "num_direction_changes": 0.000937704687515015,
+    "movement_duration": 0.0006644166675725075,
+    "time_to_peak_velocity": 0.00033452796299367167,
+    "angular_velocity_mean": 0.0006019234256700435,
+    "angular_velocity_std": 0.0007100688215645211
+  },
+  "loo_drop": {
+    "mean_velocity": -0.001016844444444498,
+    "std_velocity": -0.00025262222222222075,
+    "max_velocity": -0.0008648444444443459,
+    "velocity_skewness": -0.004760311111111082,
+    "mean_acceleration": 0.004142800000000002,
+    "std_acceleration": 0.0017739111111111372,
+    "max_acceleration": -7.764444444424701e-05,
+    "mean_jerk": -0.0010074222222221652,
+    "std_jerk": 0.0006545333333333181,
+    "path_efficiency": -0.010066799999999931,
+    "max_deviation": -0.0030501333333333713,
+    "curvature_mean": -0.006483288888888716,
+    "curvature_std": -0.003105999999999942,
+    "num_direction_changes": -0.00035097777777759465,
+    "movement_duration": 0.006710355555555547,
+    "time_to_peak_velocity": 0.0016244000000001924,
+    "angular_velocity_mean": 0.010121422222222343,
+    "angular_velocity_std": 0.00021960000000020852
+  },
+  "groups": {
+    "SPEED": {
+      "alone": 0.545871288888889,
+      "alone_se": 0.001528912162936558,
+      "drop": 0.005420977777777725,
+      "drop_se": 0.002058194469929737
+    },
+    "ROUGHNESS": {
+      "alone": 0.5865396888888889,
+      "alone_se": 0.0024496088572627827,
+      "drop": 0.01162866666666662,
+      "drop_se": 0.0011339460230583955
+    },
+    "GEOMETRY": {
+      "alone": 0.6265821333333333,
+      "alone_se": 0.002269251775964079,
+      "drop": -0.00029942222222223425,
+      "drop_se": 0.001579941214721378
+    },
+    "TIMING": {
+      "alone": 0.5667705333333333,
+      "alone_se": 0.0012362231302051846,
+      "drop": 0.01180671111111109,
+      "drop_se": 0.0025078773303727373
+    },
+    "ANGULAR": {
+      "alone": 0.6206229333333333,
+      "alone_se": 0.0002970014291024431,
+      "drop": 0.018645644444444498,
+      "drop_se": 0.0018904263813250678
+    }
+  },
+  "verdict": "DIFFUSE. No group carries 0.05 on its own removal. The separation is spread and no kinematic family is the handle.",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ]
+}

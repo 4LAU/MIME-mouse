@@ -83,6 +83,17 @@ def main():
     ap.add_argument("--th-temp", type=float, default=None)
     ap.add_argument("--dt-temp", type=float, default=None)
     ap.add_argument("--out", default="research/w4_ar_eval.json")
+    ap.add_argument("--th-beta-table", default=None,
+                    help="research/w4_price.json. applies the fitted confidence "
+                         "correction to the direction head at generation, "
+                         "indexed by the model's own surprise at the speed it "
+                         "just emitted. omit for the unchanged served path.")
+    ap.add_argument("--th-beta-arm", choices=("fitted", "reverse", "off"),
+                    default="fitted",
+                    help="'reverse' is the PLACEBO: the same ten temperatures "
+                         "in reversed order, so magnitude and marginal "
+                         "distribution match and only the mechanism's sign "
+                         "flips. it is what makes the fitted arm readable.")
     args = ap.parse_args()
 
     dev = esp._DEVICE
@@ -100,6 +111,37 @@ def main():
     MD = FEATURE_NAMES.index("movement_duration")
     print(f"  human path_efficiency median {np.median(H[:, PE]):.4f}  "
           f"curvature_std median {np.median(H[:, CS]):.4f}\n", flush=True)
+
+    th_beta = None
+    if args.th_beta_table and args.th_beta_arm != "off":
+        pr = json.load(open(args.th_beta_table))["families"]["s->th"]
+        cen = pr["srp_bin_centres"]
+        bet = pr["fam2_beta"]
+        keep = [i for i, c in enumerate(cen) if c is not None]
+        xs = np.array([cen[i] for i in keep], dtype=np.float64)
+        ys = np.array([bet[i] for i in keep], dtype=np.float64)
+        if args.th_beta_arm == "reverse":
+            ys = ys[::-1].copy()
+        o = np.argsort(xs)
+        xs, ys = xs[o], ys[o]
+        xs_t = torch.tensor(xs, dtype=torch.float32, device=dev)
+        ys_t = torch.tensor(ys, dtype=torch.float32, device=dev)
+
+        def th_beta(srp, _x=xs_t, _y=ys_t):
+            # Linear interpolation on srp VALUE with flat extrapolation, so the
+            # table transfers from the real token surprise distribution it was
+            # fitted on to the model's own, which is narrower.
+            i = torch.clamp(torch.searchsorted(_x, srp.contiguous()), 1,
+                            len(_x) - 1)
+            x0, x1_ = _x[i - 1], _x[i]
+            y0, y1_ = _y[i - 1], _y[i]
+            t = ((srp - x0) / (x1_ - x0)).clamp(0.0, 1.0)
+            return y0 + t * (y1_ - y0)
+
+        print(f"  th_beta arm={args.th_beta_arm}  srp knots "
+              f"{np.round(xs, 3).tolist()}")
+        print(f"                     beta  {np.round(ys, 3).tolist()}\n",
+              flush=True)
 
     specs = make_specs(args.n, args.seed)
     rows, meta = [], []
@@ -136,7 +178,7 @@ def main():
                                 device=dev)
             s_cls, th_cls, dt_cls = model.sample(
                 cond, temperature=temp, th_temperature=args.th_temp,
-                dt_temperature=args.dt_temp)
+                dt_temperature=args.dt_temp, th_beta=th_beta)
             pad = (s_cls >= S_PAD_CLASS).cpu().numpy()
             sp_np = s_cls.cpu().numpy()
             for j in range(sp_np.shape[0]):

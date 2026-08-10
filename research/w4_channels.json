@@ -1,0 +1,32 @@
+{
+  "n_kept": 2311,
+  "seed": 31,
+  "temp": 1.0,
+  "ckpt": "training/event_ar_v2_s40000.pt",
+  "arms": {
+    "hhh": 0.593480375,
+    "hhg": 0.712521375,
+    "hgh": 0.691846,
+    "hgg": 0.7691166250000001,
+    "ghh": 0.73980175,
+    "ghg": 0.702537125,
+    "ggh": 0.740813,
+    "ggg": 0.678217125
+  },
+  "ceiling": 0.593480375,
+  "served": 0.678217125,
+  "gap": 0.08473675000000003,
+  "main": {
+    "speed": 0.023601156250000005,
+    "turn": 0.03291303125000003,
+    "time": 0.02411278125000002
+  },
+  "share": {
+    "speed": 0.27852326469920075,
+    "turn": 0.3884150766934066,
+    "time": 0.28456108182105183
+  },
+  "joint": 0.004109781249999972,
+  "verdict": "VOID. The all human arm reads 0.5935 against a reference of 0.5163, so truncation to the common length has contaminated the comparison and no attribution may be read.",
+  "gpu_c": 62
+}

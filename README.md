@@ -88,7 +88,17 @@ Two things make this harder than the 0.652 row above. There is no second chance 
 
 The July 26 change is worth explaining because the mechanism was a surprise. The old correction spread the landing error thinly across every point in the path and rounded each one to the nearest pixel. Rounding a smooth ramp produces a staircase, and the steps of that staircase land in the middle of straight runs, so the correction was inserting sharp turns into paths the model had drawn straight. Measured per speed band, the model's own turning matches the human closely and the correction is what pushes it high. The replacement spends the landing error as whole-pixel nudges on the longest steps of the path, where one pixel bends the least angle, and leaves every other step exactly as the model drew it.
 
-These numbers come from a different scorer and a different human reference set than the table above, so they are not directly comparable to the 0.652 row. They are internally consistent with each other. The full account is in [EXPERIMENTS.md](EXPERIMENTS.md); the current state is in [HANDOFF.md](HANDOFF.md).
+These numbers come from a different scorer and a different human reference set than the table above, so they are not directly comparable to the 0.652 row. They are internally consistent with each other.
+
+Since August 2026 this line runs on a different model, an autoregressive event model (`models/event_ar.py`) that emits one token at a time rather than filling in a masked stream, and that needs no endpoint correction. It reads 0.6215. The number to read that against is not 0.50, and this turned out to matter more than expected. Feeding real recorded human trajectories, taken from the training corpus rather than from the evaluation set, through the identical encoding and decoding scores 0.533 against the same reference. In other words a perfect model of this training corpus would still read about 0.53, because the people in the training data and the people in the reference set are not the same people and were not recorded on the same hardware. So the quantity actually left to close is roughly 0.09, not 0.12.
+
+Two findings from that work are worth stating here because they are general rather than specific to this project.
+
+**The representation is not the bottleneck.** Round-tripping real human movement through the discrete event tokens *improves* its score, from 0.5681 to 0.5330, rather than costing anything. Whatever the model is getting wrong, it is not a limitation of what the tokens can express.
+
+**Every individual decision the model makes is correct; the error is made entirely by running it forward on its own output.** Fed real recorded human history and asked what it would do next, all three of the model's prediction heads reproduce the true answer to three or four decimal places, in every situation tested. Fed its own output, the same model produces sub-millisecond pauses 1.68 times too often, and that propagates into a small, consistent, mutually reinforcing distortion of all eighteen measurements the detector reads. This is compounding error, or exposure bias, and it is a known failure mode of models that generate a step at a time. It means no amount of further training on recorded data fixes it, because on recorded data there is nothing to fix.
+
+The full account is in [EXPERIMENTS.md](EXPERIMENTS.md); the current state and the full measurement chain are in [HANDOFF.md](HANDOFF.md).
 
 ## How it works
 
@@ -167,6 +177,7 @@ MIME-mouse/
 │   └── ...                           # 20+ additional experiment variants
 ├── models/
 │   ├── event_stream_polar.py         # Masked-token event-stream architecture
+│   ├── event_ar.py                   # Autoregressive event model, the current single-trajectory line
 │   ├── zimt.py                       # ZIMT architecture (historical)
 │   ├── temporal_unet.py              # 1D U-Net for diffusion / flow matching (historical)
 │   ├── vqvae.py                      # Vector-quantized variational autoencoder (historical)
@@ -177,6 +188,7 @@ MIME-mouse/
 ├── data/                             # Downloaded checkpoints and evaluation data (gitignored)
 ├── external_validation/              # AdSERP and M4D cross-checks, out-of-sample seed statistics
 ├── research/                         # Archived one-off scripts: autoresearch waves, diagnostics, sweeps (see research/README.md)
+│   └── autoloop/                     # The scoring contract used by the single-trajectory line, plus the run ledger and leaderboard
 ├── METHODOLOGY.md                    # Evaluation framework and research findings
 ├── EXPERIMENTS.md                    # Full log of 200+ experiments
 ├── RL_PILOT.md                       # Design doc for the parked GRPO reinforcement-learning pilot
@@ -210,10 +222,12 @@ Dataset credits, as their authors request them:
 
 ## Open directions
 
-The result lives entirely at inference time, in the selection step, not in the model's weights. Every attempt to fold the selection judgment into the model directly failed: plain imitation, anchored imitation, three adversarial fine-tunes, and a GRPO reinforcement-learning pilot (parked July 11, see How it works above and [RL_PILOT.md](RL_PILOT.md)) all left the frozen model plus a separate selection step as the only approach that actually works. Three directions remain open:
+The result lives entirely at inference time, in the selection step, not in the model's weights. Every attempt to fold the selection judgment into the model directly failed: plain imitation, anchored imitation, three adversarial fine-tunes, and a GRPO reinforcement-learning pilot (parked July 11, see How it works above and [RL_PILOT.md](RL_PILOT.md)) all left the frozen model plus a separate selection step as the only approach that actually works. Four directions remain open:
 
 - **Reinforcement learning, retried differently.** The GRPO pilot plateaued around 0.638 and lost to the base model once its pools went through the full selection pipeline, because RL narrowed the model's candidate diversity and selection depends on that diversity. A reward built from a panel of several detector families at once, or using an RL-trained model purely as a stronger starting point for selection rather than a replacement for it, are both untried.
-- **A different backbone.** The masked-token design fixed the exact-stall problem but may be exactly what resists absorbing the judge's signal. An architecture with exact zeros and a continuous movement latent might generate closer to human before any selection is applied.
+- **Training against the model's own output.** This is the direction the August 2026 measurements point at, and it is the most concrete of the three. Because every per-step decision is already correct on recorded data and only free-running composition is wrong (see the single-trajectory section above), the objective has to see trajectories the model actually generated rather than trajectories a human generated. That covers scheduled sampling, distribution matching on rollouts, and sequence-level rather than token-level losses. It is not free of prior art here: both attempts so far in this family, the GRPO pilot and a learned adversarial critic, failed, the first by collapsing the model's variety and the second by the critic running away from the generator faster than the generator could follow.
+
+- **A different backbone.** The masked-token design fixed the exact-stall problem but may be exactly what resists absorbing the judge's signal. Swapping it for a plain autoregressive event model was tried and helped, which is the current single-trajectory line, but it inherited the compounding-error problem that any step-at-a-time generator has. An architecture with exact zeros and a continuous movement latent, or one that commits to a whole trajectory at once rather than a step at a time, might generate closer to human before any selection is applied.
 - **Cleaner external data.** AdSERP and M4D gave the first outside check this project has had, but the instrumentation gap between datasets is as large as the gap between synthetic and human, so it doesn't yet resolve the question on its own. What is missing is external data collected on matching hardware and software, or a way to separate that instrumentation shift from actual generator error. See [METHODOLOGY.md](METHODOLOGY.md) section 7.11 for the full write-up.
 
 ## Related work

@@ -1,0 +1,39 @@
+{
+  "by": "movement_duration",
+  "bins": [
+    {
+      "bin": 0,
+      "lo": -Infinity,
+      "hi": 0.25,
+      "n_human": 664,
+      "n_gen": 480,
+      "auc": 0.6218815104166666,
+      "boot_sd": 0.008124667967633161,
+      "mean_dur": 0.15035625612363218,
+      "mean_ndc": 8.39375
+    },
+    {
+      "bin": 1,
+      "lo": 0.25,
+      "hi": 0.5846666892369589,
+      "n_human": 669,
+      "n_gen": 460,
+      "auc": 0.6520770321361058,
+      "boot_sd": 0.007570231170731928,
+      "mean_dur": 0.3961553939010786,
+      "mean_ndc": 22.660869565217393
+    },
+    {
+      "bin": 2,
+      "lo": 0.5846666892369589,
+      "hi": Infinity,
+      "n_human": 667,
+      "n_gen": 560,
+      "auc": 0.6623708545918368,
+      "boot_sd": 0.01113832441749461,
+      "mean_dur": 0.9979089796543121,
+      "mean_ndc": 58.823214285714286
+    }
+  ],
+  "verdict": "DRIFT. The contract reads 0.6624 on the longest trajectories against 0.6219 on the shortest, a gap of 0.0405 against a bootstrap spread of 0.0138, monotone across bins. The error compounds along the rollout."
+}

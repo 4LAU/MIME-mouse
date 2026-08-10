@@ -321,13 +321,74 @@ class EventARModel(nn.Module):
 
     @torch.no_grad()
     def sample(self, cond, seq_len=None, temperature=1.0,
-               th_temperature=None, dt_temperature=None):
+               th_temperature=None, dt_temperature=None, force=None,
+               th_beta=None, dt_tilt=None, th_tilt=None, s_tilt=None,
+               tick_th_null=True):
         """One trajectory per row of cond, generated strictly left to right.
 
         No KV cache: each step re-runs the trunk over the prefix, which is
         exact and has no cache-invalidation surface. Returns integer class
         tensors (s_cls, th_cls, dt_cls), all (B, T), PAD-terminated on the
         speed stream exactly as the serving decoder expects.
+
+        `force` is (s, th, dt, mask), four tensors, the first three (B, T)
+        class streams and mask a bool. Wherever mask is set the token is
+        taken from those streams instead of from this model's own head, and
+        every other position is generated normally on top of it. It exists so
+        `w4_prefix` can hand the model a real human opening and measure whether
+        the model's own history is what poisons it. A mask is used rather than
+        a prefix length because the control arm that makes the result readable
+        scatters the same number of forced tokens across the sequence.
+
+        mask is (B, T) to force all three channels together, or (B, T, 3) to
+        force them independently in the order (s, th, dt). The per-channel form
+        exists so `w4_timing` can hand the model a real human clock while it
+        still chooses its own speeds, which is what separates a timing defect
+        from a speed defect. A (B, T) mask is broadcast to all three channels,
+        so every earlier caller keeps its exact previous behaviour.
+
+        `th_beta` is a callable taking the model's own surprise at the speed it
+        just emitted, shape (B,), and returning an inverse temperature of the
+        same shape to scale the direction logits by. It exists so `w4_tempgen`
+        can apply the confidence correction `w4_price` fitted and measure what
+        it is worth on the contract scorer, rather than extrapolating it through
+        an exchange rate. It applies only to the `s_th_dt` emit order, which is
+        the one this model uses and the only one the correction was fitted on.
+
+        `dt_tilt` is a (B,) tensor, one number per row, adding a bias linear in
+        the dt class index to the timing head's logits. It exists so `w4_dttilt`
+        can correct the duration response `w4_evcount` measured, and it is a
+        serving time change rather than a diagnostic because it reads only
+        `cond` and still emits one trajectory per row with no selection. Like
+        `th_beta` it applies only to the `s_th_dt` emit order.
+
+        `th_tilt` is a (B,) tensor, one number per row, held fixed for the whole
+        trajectory, adding a bias linear in normalised turn magnitude to the
+        direction head's logits. Drawn once per row from a prior by the caller,
+        it is a per trajectory latent rather than a correction: it exists so
+        `w4_latent` can supply the shared factor `w4_copula` measured missing
+        between the six wobble features. Like `th_beta` and `dt_tilt` it applies
+        only to the `s_th_dt` emit order.
+
+        `s_tilt` is a (B,) tensor, one number per row, adding a bias linear in
+        the speed class index, hence in log speed, to the speed head's logits.
+        It is the third arm of the per trajectory factor: `w4_copula`'s leading
+        eigenvector loads on movement_duration and mean_velocity about as
+        heavily as on the direction features, so a latent that moves only
+        direction reproduces about half of it. Held fixed across a trajectory
+        alongside th_tilt and dt_tilt it drives all nine loaded features from
+        one z.
+
+        `tick_th_null` makes the timing head see the NULL turn marker at a no
+        motion event, which is the only thing it was ever trained on there.
+        See the comment at the call site. It defaulted to False while it was
+        being measured; `w4_ticknull` then read it PARTIAL on three paired
+        seeds of four thousand, 0.6423 to 0.6215, every seed negative, so it
+        now defaults to True and this is the served path. Pass False to
+        reproduce any measurement recorded before 2026-08-10.
+
+        With force=None and every tilt None the only line below that differs
+        from the pre 2026-08-10 sampler is the tick_th_null substitution.
         """
         B = cond.shape[0]
         T = seq_len or self.max_seq_len
@@ -363,22 +424,121 @@ class EventARModel(nn.Module):
                     .squeeze(1) / th_temp, dim=-1)
                 th_i = torch.multinomial(thp, 1).squeeze(-1)
             else:
-                sp = torch.softmax(self.s_head(x) / temperature, dim=-1)
+                s_z = self.s_head(x)
+                if s_tilt is not None:
+                    # w4_hesit. The speed arm of the same per trajectory factor
+                    # that th_tilt and dt_tilt carry. Speed classes are log
+                    # spaced, 1 + log bin, so a bias linear in the class index
+                    # is a bias linear in log speed. TICK and PAD are not speeds
+                    # and are left alone: TICK is the no-motion marker and
+                    # biasing it would change the pause rate, which is a
+                    # different intervention, and biasing PAD would change the
+                    # event count, which is a third one.
+                    k = torch.arange(s_z.shape[-1], device=s_z.device,
+                                     dtype=s_z.dtype)
+                    k = (k - 1) / (S_PAD_CLASS - 2) - 0.5
+                    k[TICK_CLASS] = 0.0
+                    k[S_PAD_CLASS:] = 0.0
+                    s_z = s_z + s_tilt.unsqueeze(-1) * k
+                sp = torch.softmax(s_z / temperature, dim=-1)
                 s_i = torch.multinomial(sp, 1).squeeze(-1)
 
-                thp = torch.softmax(
-                    self.th_logits(x1, s_i.unsqueeze(1))
-                    .squeeze(1) / th_temp, dim=-1)
+                th_z = self.th_logits(x1, s_i.unsqueeze(1)).squeeze(1)
+                if th_beta is not None:
+                    # w4_tempgen. The direction head's confidence is corrected
+                    # by how surprised this model just was by its OWN emitted
+                    # speed. srp = -log p(s) - H(p) is conditional-mean-zero
+                    # under a correct model, so a table indexed by it is a
+                    # measurement of a defect and not a free parameter.
+                    lg = torch.log(sp.clamp(min=1e-30))
+                    ent = -(sp * lg).sum(-1)
+                    srp = -lg.gather(-1, s_i.unsqueeze(-1)).squeeze(-1) - ent
+                    b = th_beta(srp).unsqueeze(-1)
+                    th_z = th_z * b
+                if th_tilt is not None:
+                    # w4_latent. A PER TRAJECTORY shared factor on the direction
+                    # head. One scalar is drawn per row before the first event
+                    # and held fixed for the whole trajectory, biasing the turn
+                    # logits linearly in normalised turn magnitude. w4_copula
+                    # measured the six wobble features coupling at 0.4985 in
+                    # humans and 0.3333 here, with the sub families internally
+                    # consistent and decoupled from each other; a single factor
+                    # held across the trajectory drives all six together, which
+                    # is exactly the missing structure. This makes generation a
+                    # latent variable model, p(traj) = integral p(traj|z) p(z),
+                    # and it still emits one trajectory per row with no
+                    # selection, so it is a serving time change and not a
+                    # diagnostic.
+                    m = torch.arange(th_z.shape[-1], device=th_z.device,
+                                     dtype=th_z.dtype)
+                    m = (m - TH_BINS // 2).abs() / (TH_BINS // 2)
+                    # class TH_NULL_CLASS is the no-turn marker for tick and
+                    # PAD positions, not a turn of any magnitude. Leaving it in
+                    # the basis would let a positive z raise the probability of
+                    # emitting NULL, which is a different intervention than the
+                    # one being measured. Centre over the real bins only and
+                    # give NULL exactly zero bias.
+                    m = m - m[:TH_BINS].mean()
+                    m[TH_NULL_CLASS:] = 0.0
+                    th_z = th_z + th_tilt.unsqueeze(-1) * m
+                thp = torch.softmax(th_z / th_temp, dim=-1)
                 th_i = torch.multinomial(thp, 1).squeeze(-1)
+                if tick_th_null:
+                    # w4_ticknull. Training sets the turn token to NULL wherever
+                    # there is no motion and masks those positions out of the
+                    # turn loss entirely, so the turn head is never trained
+                    # there and the timing head has only ever seen NULL at a
+                    # tick. Below, the same substitution is made AFTER the
+                    # timing head has run, which means the served path feeds an
+                    # untrained arbitrary turn into it at exactly those events.
+                    # Humans put a 1 ms wait on 37.2 percent of no motion
+                    # events and the served model on 5.8 percent, and teacher
+                    # forced on a real history the head predicts 0.294 against
+                    # a true 0.297, so the head is right and the call is wrong.
+                    # Doing it here instead matches training. Measured by
+                    # `w4_ticknull`: the rate moves 0.050 to 0.372 against a
+                    # human 0.372 and the contract reads 0.6423 to 0.6215 on
+                    # three paired seeds, so this is now the default.
+                    th_i = torch.where(
+                        (s_i > TICK_CLASS) & (s_i < S_PAD_CLASS), th_i,
+                        torch.full_like(th_i, TH_NULL_CLASS))
 
-                dtp = torch.softmax(
-                    self.dt_logits(x1, s_i.unsqueeze(1), th_i.unsqueeze(1))
-                    .squeeze(1) / dt_temp, dim=-1)
+                dt_z = self.dt_logits(x1, s_i.unsqueeze(1),
+                                      th_i.unsqueeze(1)).squeeze(1)
+                if dt_tilt is not None:
+                    # w4_dttilt. A duration conditional tilt on the timing head,
+                    # one parameter, using only cond. w4_evcount measured the
+                    # model's mean inter event time rising with commanded
+                    # duration at slope 0.2933 against the human 0.6023, so a
+                    # bias linear in the dt class index and scaled by the row's
+                    # centred log duration moves that slope directly. It is
+                    # applied to logits, so it changes the distribution's shape
+                    # and not just its mean, and lambda = 0 is exactly the
+                    # unchanged served path.
+                    k = torch.arange(dt_z.shape[-1], device=dt_z.device,
+                                     dtype=dt_z.dtype)
+                    k = k / max(dt_z.shape[-1] - 1, 1) - 0.5
+                    dt_z = dt_z + dt_tilt.unsqueeze(-1) * k
+                dtp = torch.softmax(dt_z / dt_temp, dim=-1)
                 dt_i = torch.multinomial(dtp, 1).squeeze(-1).clamp(max=DT_MAX_MS)
 
             motion = (s_i > TICK_CLASS) & (s_i < S_PAD_CLASS)
             th_i = torch.where(motion, th_i,
                                torch.full_like(th_i, TH_NULL_CLASS))
+
+            # Teacher forcing, applied AFTER the heads have run so the sampled
+            # token is simply discarded, and BEFORE the done mask so a forced
+            # PAD terminates its row the same way a generated one would.
+            if force is not None:
+                f_s, f_th, f_dt, f_mask = force
+                take = f_mask[:, i]
+                if take.dim() == 1:
+                    take_s = take_th = take_dt = take
+                else:
+                    take_s, take_th, take_dt = take[:, 0], take[:, 1], take[:, 2]
+                s_i = torch.where(take_s, f_s[:, i], s_i)
+                th_i = torch.where(take_th, f_th[:, i], th_i)
+                dt_i = torch.where(take_dt, f_dt[:, i], dt_i)
 
             # once a row has emitted PAD it stays padded; nothing after the
             # first PAD is read by the decoder but keeping it clean means

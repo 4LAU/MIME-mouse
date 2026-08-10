@@ -1,6 +1,6 @@
 # Autoloop Leaderboard
 
-_Regenerated 2026-07-29T03:58:53+00:00_
+_Regenerated 2026-08-10T21:27:47+00:00_
 
 **Best-of-N tier1 scores are selection-biased; only tier2 confirmations are quotable.**
 
@@ -128,6 +128,12 @@ n_trials (tier1, status=ok): 0
 
 _(no completed tier1 runs)_
 
+## w4_advtime
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
 ## w4_ar_v1
 
 n_trials (tier1, status=ok): 0
@@ -141,6 +147,12 @@ n_trials (tier1, status=ok): 0
 _(no completed tier1 runs)_
 
 ## w4_attenuation
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_channels
 
 n_trials (tier1, status=ok): 0
 
@@ -170,7 +182,49 @@ n_trials (tier1, status=ok): 0
 
 _(no completed tier1 runs)_
 
+## w4_critic
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_critic_ablate
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
 ## w4_dtstruct
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_dttilt
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_evcount
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_evprice
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_featcond
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_histfeat
 
 n_trials (tier1, status=ok): 0
 
@@ -306,6 +360,12 @@ n_trials (tier1, status=ok): 0
 
 _(no completed tier1 runs)_
 
+## w4_statecoord
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
 ## w4_statevisit
 
 n_trials (tier1, status=ok): 0
@@ -344,6 +404,12 @@ n_trials (tier1, status=ok): 1
 |---|---|---|---|---|---|---|---|
 | 1 | w4_submovement_ceiling_2026-07-27T095747+0000_e6e3bff8 | 0.8335 | 0.3335 | UNCONFIRMED | n/a | ok | NO SMOOTH PARAMETERISATION AT ANY TRACTABLE SIZE PRESERVES W |
 
+## w4_tailtest
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
 ## w4_texture_sensitivity
 
 n_trials (tier1, status=ok): 1
@@ -351,6 +417,12 @@ n_trials (tier1, status=ok): 1
 | rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
 |---|---|---|---|---|---|---|---|
 | 1 | w4_texture_sensitivity_2026-07-27T094052+0000_7613625c | 0.8287 | 0.3287 | UNCONFIRMED | n/a | ok | THE CONTRACT IS A TEXTURE INSTRUMENT, NOT A SHAPE INSTRUMENT |
+
+## w4_ticknull
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
 
 ## w4_tickstruct
 
@@ -389,4 +461,10 @@ n_trials (tier1, status=ok): 1
 | rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
 |---|---|---|---|---|---|---|---|
 | 1 | w4_variety_vs_steering_2026-07-27T185816+0000_1252df17 | 0.6624 | 0.1624 | UNCONFIRMED | n/a | ok | TWO FINDINGS, THE SECOND ONE REFRAMES THE PROGRAM. (1) The A |
+
+## w4_views
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
 

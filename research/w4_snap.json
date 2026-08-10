@@ -1,0 +1,41 @@
+{
+  "auc_served": 0.6519464444444445,
+  "auc_w4_cache": 0.6944595555555555,
+  "delta": -0.042513111111111,
+  "collapse_served": [
+    "std_acceleration",
+    "max_acceleration",
+    "mean_jerk"
+  ],
+  "collapse_w4_cache": [
+    "mean_acceleration",
+    "max_acceleration",
+    "mean_jerk"
+  ],
+  "mean_corr_gap_served": 0.05834462357540058,
+  "mean_corr_gap_w4_cache": 0.07130050419110415,
+  "leading_eig_served": 0.8022667333628364,
+  "leading_eig_w4_cache": 1.1112308653912364,
+  "eigenvector_served": [
+    0.2774687129933814,
+    0.24319486195546958,
+    0.24269149152448477,
+    0.020629079766389828,
+    0.40104752998493126,
+    0.23960320436656407,
+    0.22894131435645404,
+    0.009138425471652646,
+    0.22127682418114228,
+    -0.295937396452695,
+    0.3358596733640784,
+    -0.30604170121872365,
+    -0.2255596863702163,
+    -0.05561564469079463,
+    0.06048616966114664,
+    0.298980065172985,
+    -0.15786065423854842,
+    -0.13730501606006612
+  ],
+  "n": 1500,
+  "verdict": "MATERIAL. -0.0425. The duration prior misconfiguration was a real contributor. Every mechanism conclusion in the four w4 sections has to be re derived on this cache."
+}

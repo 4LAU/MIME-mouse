@@ -1,0 +1,149 @@
+{
+  "lo": 2.5,
+  "hi": 5.0,
+  "n": 1500,
+  "rngseed": 8,
+  "shift": {
+    "mean_velocity": 0.0002589363376216044,
+    "std_velocity": 1.335795274424474e-05,
+    "max_velocity": -1.4528025305798408e-05,
+    "velocity_skewness": -0.00024333356220589993,
+    "mean_acceleration": 3.513023760462853e-05,
+    "std_acceleration": -6.088585339515024e-05,
+    "max_acceleration": 6.254286873539967e-05,
+    "mean_jerk": -0.00019455907423526878,
+    "std_jerk": -0.00019325329735281777,
+    "path_efficiency": 0.0009137229971713474,
+    "max_deviation": 0.0005499158296011552,
+    "curvature_mean": -0.001159361643809032,
+    "curvature_std": 0.0020724968555497036,
+    "num_direction_changes": -0.007908761159997692,
+    "movement_duration": 0.0,
+    "time_to_peak_velocity": 0.003864105524227368,
+    "angular_velocity_mean": -0.029158346439327854,
+    "angular_velocity_std": -0.013943490911180561
+  },
+  "gap_lo": {
+    "mean_velocity": 0.03805954334441608,
+    "std_velocity": 0.004605249429349911,
+    "max_velocity": 0.0077790846513948525,
+    "velocity_skewness": 0.050685219702380914,
+    "mean_acceleration": 0.002568411047133006,
+    "std_acceleration": 0.009367592912021288,
+    "max_acceleration": 0.011032461095588786,
+    "mean_jerk": 0.02261346213208247,
+    "std_jerk": 0.006569947710464115,
+    "path_efficiency": 0.19180742964479044,
+    "max_deviation": 0.13503508340316886,
+    "curvature_mean": 0.3216614613265655,
+    "curvature_std": 0.29826374211519985,
+    "num_direction_changes": 0.10386883889241873,
+    "movement_duration": 0.016788688109811965,
+    "time_to_peak_velocity": 0.14745824374141894,
+    "angular_velocity_mean": 0.3244473156286189,
+    "angular_velocity_std": 0.210519680831011
+  },
+  "gap_hi": {
+    "mean_velocity": 0.038318479682037686,
+    "std_velocity": 0.004591891476605666,
+    "max_velocity": 0.007793612676700651,
+    "velocity_skewness": 0.05044188614017501,
+    "mean_acceleration": 0.002603541284737634,
+    "std_acceleration": 0.009428478765416437,
+    "max_acceleration": 0.010969918226853385,
+    "mean_jerk": 0.02280802120631774,
+    "std_jerk": 0.006763201007816933,
+    "path_efficiency": 0.1908937066476191,
+    "max_deviation": 0.13558499923277,
+    "curvature_mean": 0.32050209968275645,
+    "curvature_std": 0.30033623897074957,
+    "num_direction_changes": 0.09596007773242103,
+    "movement_duration": 0.016788688109811965,
+    "time_to_peak_velocity": 0.15132234926564633,
+    "angular_velocity_mean": 0.29528896918929104,
+    "angular_velocity_std": 0.19657618991983045
+  },
+  "top3_share": 0.8411104722915641,
+  "n_toward": 8,
+  "lattice": {
+    "human": {
+      "raw": {
+        "under_one_px": 0.3530778861508243,
+        "lattice_exact": 0.2721029785511332,
+        "mag_percentiles": [
+          0.07843137401565059,
+          0.49999997625127435,
+          2.0407178654789515,
+          6.773260659901063,
+          16.19878083341449
+        ],
+        "n_steps": 133387
+      },
+      "resampled": {
+        "under_one_px": 0.3530778861508243,
+        "lattice_exact": 0.2721029785511332,
+        "mag_percentiles": [
+          0.07843137401565059,
+          0.49999997625127435,
+          2.0407178654789515,
+          6.773260659901063,
+          16.19878083341449
+        ],
+        "n_steps": 133387
+      }
+    },
+    "snap_2.5": {
+      "raw": {
+        "under_one_px": 0.07240258103543883,
+        "lattice_exact": 1.0,
+        "mag_percentiles": [
+          1.0,
+          1.4142135623730951,
+          3.1622776601683795,
+          10.0,
+          28.178005607210743
+        ],
+        "n_steps": 79348
+      },
+      "resampled": {
+        "under_one_px": 0.31098588689207024,
+        "lattice_exact": 0.2032795207635293,
+        "mag_percentiles": [
+          0.14907104448764508,
+          0.7288741254601135,
+          2.2627405196893466,
+          7.280108695977736,
+          17.433097465002128
+        ],
+        "n_steps": 98490
+      }
+    },
+    "snap_5.0": {
+      "raw": {
+        "under_one_px": 0.07240258103543883,
+        "lattice_exact": 1.0,
+        "mag_percentiles": [
+          1.0,
+          1.4142135623730951,
+          3.1622776601683795,
+          10.0,
+          28.160255680657446
+        ],
+        "n_steps": 79348
+      },
+      "resampled": {
+        "under_one_px": 0.31110772667275866,
+        "lattice_exact": 0.20439638541983957,
+        "mag_percentiles": [
+          0.1490711925764683,
+          0.729916645425761,
+          2.285714367214439,
+          7.2801091918216585,
+          17.430500979443533
+        ],
+        "n_steps": 98490
+      }
+    }
+  },
+  "verdict": "NAMED ROUTE. The three largest standardised shifts carry 84.1% of the total absolute movement, so the knob acts on a nameable corner of the feature space and that corner can be attacked directly."
+}

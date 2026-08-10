@@ -1,0 +1,111 @@
+{
+  "auc": {
+    "2.5": [
+      0.6543737777777778,
+      0.652918
+    ],
+    "3.5": [
+      0.6491586666666668,
+      0.6498528888888888
+    ],
+    "5.0": [
+      0.6481197777777779,
+      0.6457797777777778
+    ],
+    "8.0": [
+      0.6549586666666667,
+      0.6516317777777778
+    ]
+  },
+  "collapse": {
+    "2.5": [
+      3,
+      4
+    ],
+    "3.5": [
+      3,
+      4
+    ],
+    "5.0": [
+      3,
+      4
+    ],
+    "8.0": [
+      3,
+      4
+    ]
+  },
+  "mech": {
+    "2.5": [
+      {
+        "curvature_mean": 1.6152798740339949,
+        "max_deviation": 1.4103292960002076,
+        "path_efficiency": 0.9582933098037096
+      },
+      {
+        "curvature_mean": 1.671112801174054,
+        "max_deviation": 1.3606967726867445,
+        "path_efficiency": 0.9562644827083456
+      }
+    ],
+    "3.5": [
+      {
+        "curvature_mean": 1.5869238270589567,
+        "max_deviation": 1.4267776013678755,
+        "path_efficiency": 0.9592073722318715
+      },
+      {
+        "curvature_mean": 1.668324486180655,
+        "max_deviation": 1.3754170449356113,
+        "path_efficiency": 0.956617560177729
+      }
+    ],
+    "5.0": [
+      {
+        "curvature_mean": 1.6011100407054983,
+        "max_deviation": 1.4223902366201862,
+        "path_efficiency": 0.9598885979039008
+      },
+      {
+        "curvature_mean": 1.6782113566181704,
+        "max_deviation": 1.3643617135620312,
+        "path_efficiency": 0.9564042301772652
+      }
+    ],
+    "8.0": [
+      {
+        "curvature_mean": 1.5948318725798805,
+        "max_deviation": 1.4203442268583555,
+        "path_efficiency": 0.9599204052848429
+      },
+      {
+        "curvature_mean": 1.664626841672069,
+        "max_deviation": 1.364615000309902,
+        "path_efficiency": 0.9560290983781561
+      }
+    ]
+  },
+  "n": 1500,
+  "seeds": 2,
+  "paired_2.5": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "wins": 0
+  },
+  "paired_3.5": {
+    "mean": -0.004140111111111122,
+    "sd": 0.0015202795795509882,
+    "wins": 2
+  },
+  "paired_5.0": {
+    "mean": -0.006696111111111069,
+    "sd": 0.0006252395294091385,
+    "wins": 2
+  },
+  "paired_8.0": {
+    "mean": -0.0003506666666666658,
+    "sd": 0.001323075355020116,
+    "wins": 1
+  },
+  "verdict": "NOISE. Best arm 5.0 moves the contract -0.0067 on 2/2 seeds, inside the 0.015 threshold or not consistent in sign. The threshold inherited from the flow recipe is not leaving anything on the table."
+}

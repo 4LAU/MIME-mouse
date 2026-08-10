@@ -21,3 +21,12 @@ PLAN.md
 archive/PLAN.md
 external_data/
 .DS_Store
+
+# process bookkeeping from long-running research jobs, not artifacts
+*.pid.txt
+*.err
+*.out
+.tmp
+scratchpad_pilot/
+*_start_time.txt
+*_bashpid.txt
