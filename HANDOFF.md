@@ -12855,3 +12855,98 @@ must be designed against. The GRPO pilot collapsed the model's variety, which a
 distribution matching objective penalises directly rather than rewarding. The
 learned critic outran the generator, reaching 0.94 by round eight, which a fixed
 non learned statistic like a feature moment or an MMD kernel cannot do.
+
+## Rollout level training, registered 2026-08-10 before any training
+
+Written before the script exists. Arms, controls, held out features, thresholds
+and the prediction are fixed here and are not edited after reading the output.
+
+### Why this and not another sampling arm
+
+Every per step conditional is exact, measured against real human histories on
+all three heads. Five separate token level defects have been found, confirmed
+and priced at nothing. Repairing all eighteen feature marginals directly buys
+0.075 of 0.107 while no token level edit reaches more than 0.012 of it. The
+error is made by free running composition and the objective has to see free
+running composition. There is nothing cheaper left.
+
+### The estimator
+
+The obvious route, relaxing the token sampling so the whole rollout is
+differentiable, is refused on memory. A rollout is 256 sequential trunk passes
+over a growing prefix with no KV cache, and retaining activations for all of
+them does not fit in 8 GB at any useful batch size.
+
+The route taken instead uses a property of this trunk. It is causally masked, so
+a single full sequence teacher forced pass over a sequence reproduces exactly
+the logits that were used when that sequence was sampled. So each step is one no
+grad rollout, which is the expensive part, followed by one ordinary forward and
+backward over the model's OWN emitted tokens. That is a score function estimator
+and it costs one rollout plus one training pass, not 256 of them.
+
+Features are standardised by the human mean and standard deviation. On a batch,
+with m and s the batch mean and standard deviation of standardised feature k:
+
+    L = sum_k m_k^2 + sum_k (log s_k)^2
+
+The first term moves location, the second moves spread, and spread is where the
+defect is: mean shifts are at worst a fifth of a human standard deviation while
+spread ratios run to 2.5. The per trajectory weight is the exact score function
+coefficient for that loss, with the batch mean as its control variate:
+
+    w_i = sum_k [ 2 m_k (z_ik - m_k)
+                  + (log s_k / s_k^2) ((z_ik - m_k)^2 - s_k^2) ]
+
+and the surrogate minimised is mean_i w_i.detach() * log p(tau_i).
+
+A teacher forced negative log likelihood term on real human batches is added at
+weight lambda. It is the anchor, and it is the specific answer to how the GRPO
+pilot failed: that run collapsed the model's variety, and here both the variance
+term and the likelihood anchor penalise collapse directly rather than rewarding
+it. The second known failure, the learned critic reaching 0.94 by round eight
+and outrunning the generator, cannot happen because nothing in this objective is
+learned. It is a fixed statistic of a fixed feature map.
+
+### The Goodhart guard, which decides the arm
+
+This objective is stated over the same eighteen features the scorer reads, so
+the arm is worthless without a held out set. Twelve features enter the loss. Six
+never do, chosen to span the families rather than to be easy:
+
+    max_acceleration        velocity_skewness      curvature_std
+    num_direction_changes   time_to_peak_velocity  angular_velocity_std
+
+If the trained twelve come into line and the held out six do not, the model
+learned the loss and not the movement, and the arm is a FAIL whatever the
+contract says. That is the reading, not a caveat on it. A gradient boosted tree
+detector, which took no part in the objective, is reported alongside.
+
+### Configuration
+
+    rollout cap        160 events, which covers 96.4 percent of the corpus. The
+                       identical cap is applied to the human reference features
+                       so truncation cannot separate the arms on its own
+    batch              96 rollouts per step
+    anchor             real human batches, teacher forced, weight lambda
+    optimiser          AdamW at a low learning rate off the existing checkpoint,
+                       training/event_ar_v2_s40000.pt, which is not overwritten
+    thermal            launch gate 75C, kill 79C for this workload since the
+                       machine crashed on it on 2026-08-06, supervised only
+
+### Prediction, fixed before the run
+
+Spread ratios fall toward 1.0 on the trained twelve AND on the held out six. The
+contract falls from its 0.6412 base toward 0.60. Reaching the 0.5576 corpus
+floor in a short pilot is NOT predicted and would be suspicious rather than
+welcome.
+
+### Reading
+
+    CONFIRMED  contract falls at least 0.03 below base, the held out six improve
+               by at least half as much proportionally as the trained twelve, and
+               scoring.py raises no collapse flag
+    PARTIAL    0.01 to 0.03, held out six moving the right way
+    GOODHART   trained twelve improve, held out six flat or worse. Reported as a
+               fail. This outcome is informative and must not be dressed as a
+               partial win
+    NULL       under 0.01
