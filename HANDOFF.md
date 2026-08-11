@@ -13055,3 +13055,48 @@ measurement kept improving, and at 1450 rows per evaluation that bounce is
 inside the noise and cannot currently be resolved. Then decide whether the
 remaining distance to the corpus floor is spread, location, or something the
 eighteen measurements do not name.
+
+## Rollout training continuation, registered 2026-08-10 before it runs
+
+The pilot stopped at step 90 of 250 on the thermal abort and every measurement
+except the scored detector was still improving when it did. This continues the
+same objective from the pilot checkpoint. Nothing about the loss, the twelve
+trained features or the six held out ones changes.
+
+Two run controls change and neither touches the objective. The loop now pauses
+at 74C until the card is back under 70C, so the 79C abort becomes unreachable
+rather than something that catches a run already lost, and --init continues from
+a saved checkpoint instead of the base model.
+
+One registered threshold is replaced and this is the record of it. The original
+CONFIRMED condition required scoring.py to raise no collapse flag. That flag is
+measured against the reference set, it fires on real corpus humans, and it was
+set at the pilot's baseline before any training happened, so it cannot separate
+a good run from a bad one. It is replaced by a runaway check against the corpus
+the model is actually being matched to: no feature's spread ratio outside 0.5 to
+2.0. This is not a weakening. The pilot's mean jerk overshot to 0.439 and would
+trip the new gate, and the old gate would have passed it.
+
+    CONFIRMED  contract falls at least 0.03 below the continuation's own base,
+               the held out six improve by at least half as much as the trained
+               twelve, and no feature's spread runs outside 0.5 to 2.0
+    PARTIAL    0.01 to 0.03, or a runaway feature
+    GOODHART   trained twelve improve, held out six flat or worse. A fail
+    NULL       under 0.01
+
+PREDICTION, fixed before the run
+
+The trained spread error keeps falling from 0.1856 and flattens rather than
+reaching zero, because the estimator is high variance and the anchor pulls the
+other way. The held out six keep tracking. Mean jerk, which overshot to 0.439,
+comes back toward 1.0 rather than continuing down, because the log penalty is
+symmetric. The scored detector resolves the 0.6141 to 0.6301 bounce and lands
+below 0.62.
+
+FALSIFIER
+
+The scored detector flat or rising over the next two hundred steps while the
+spread errors keep falling. That would mean the eighteen measurements are not
+where the remaining separation lives and the objective has run out of reach,
+which is a different conclusion from the pilot's and would send the next arm
+after whatever the eighteen do not name.
