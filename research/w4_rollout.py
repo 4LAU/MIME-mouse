@@ -61,6 +61,34 @@ learned critic reaching 0.94 by round eight and outrunning the generator, cannot
 occur because nothing in this objective is learned. It is a fixed statistic of a
 fixed feature map.
 
+THE SECOND OBJECTIVE, --objective energy
+
+w4_gapsplit measured what the moment objective above can ever buy. Matching all
+eighteen marginals exactly is worth 0.0298 of a 0.0905 gap, the correlation
+matrix another 0.0235, and 0.0372 survives both. Means and spreads are a subset
+of the first of those three, so the moment objective has a ceiling near 0.03 and
+the first pilot reached it in ninety steps.
+
+The energy distance has no such ceiling. Between the generated batch z and a
+human batch h it is
+
+    E = 2 mean_ij ||z_i - h_j|| - mean_ik ||z_i - z_k|| - mean_jl ||h_j - h_l||
+
+which is zero if and only if the two distributions are equal, at every order,
+not just the first two. The last term does not depend on the model and is
+dropped. The score function coefficient is the partial derivative of the
+statistic with respect to including trajectory i,
+
+    phi_i = (2/m) sum_j ||z_i - h_j|| - (2/n) sum_k ||z_i - z_k||
+
+with the factor two on the second term because z_i appears twice in the
+generated double sum. Everything else in the estimator is unchanged: same
+rollout, same teacher forced pass, same advantage normalisation, same anchor.
+It is still a fixed statistic of a fixed feature map, so the learned critic
+failure cannot recur here either.
+
+Its ceiling is the corpus floor, 0.5455, which is the whole gap.
+
 THE GOODHART GUARD
 
 This objective is stated over the same eighteen features the scorer reads, so
@@ -272,6 +300,12 @@ def main():
     ap.add_argument("--eval-n", type=int, default=800)
     ap.add_argument("--human-n", type=int, default=4000)
     ap.add_argument("--seed", type=int, default=17)
+    ap.add_argument("--objective", choices=("moments", "energy"),
+                    default="moments",
+                    help="moments matches means and spreads, energy matches the "
+                         "whole joint through an energy distance")
+    ap.add_argument("--energy-m", type=int, default=512,
+                    help="human sample per step for the energy distance")
     ap.add_argument("--init", type=str, default=None,
                     help="checkpoint to continue from, default is the base model")
     ap.add_argument("--tag", type=str, default="",
@@ -359,6 +393,9 @@ def main():
     tk = [FEATURE_NAMES.index(f) for f in TRAINED]
     mu_t = torch.tensor(mu, dtype=torch.float32)
     sd_t = torch.tensor(sd, dtype=torch.float32)
+    # the human side of the energy distance, standardised the same way and cut
+    # to the trained twelve so the held out six stay out of the objective
+    ZH_t = torch.tensor(((HX - mu) / sd)[:, tk], dtype=torch.float32)
     t0, peak = time.time(), 0
     model.train()
 
@@ -396,11 +433,25 @@ def main():
         z = (torch.tensor(X[xok], dtype=torch.float32) - mu_t) / sd_t
         zt = z[:, tk]
 
-        m = zt.mean(0)
-        sdev = zt.std(0).clamp(min=1e-4)
-        loss_feat = float((m ** 2).sum() + (torch.log(sdev) ** 2).sum())
-        c = zt - m
-        w = (2 * m * c + (torch.log(sdev) / sdev ** 2) * (c ** 2 - sdev ** 2)).sum(1)
+        if a.objective == "energy":
+            ht = ZH_t[torch.from_numpy(
+                rng.choice(len(ZH_t), min(a.energy_m, len(ZH_t)), replace=False))]
+            d_zh = torch.cdist(zt, ht)
+            d_zz = torch.cdist(zt, zt)
+            # the human to human term is constant in the model, so it is dropped
+            # from the reported loss as well to keep the two comparable in sign
+            loss_feat = float(2 * d_zh.mean() - d_zz.mean())
+            # partial derivative of the statistic with respect to including
+            # trajectory i, which is the score function coefficient for a V
+            # statistic. z_i appears twice in the generated double sum
+            w = 2 * d_zh.mean(1) - (2.0 / len(zt)) * d_zz.sum(1)
+        else:
+            m = zt.mean(0)
+            sdev = zt.std(0).clamp(min=1e-4)
+            loss_feat = float((m ** 2).sum() + (torch.log(sdev) ** 2).sum())
+            c = zt - m
+            w = (2 * m * c
+                 + (torch.log(sdev) / sdev ** 2) * (c ** 2 - sdev ** 2)).sum(1)
         w = (w - w.mean()) / w.std().clamp(min=1e-6)
         w = w.clamp(-a.clip_w, a.clip_w).to(dev)
 

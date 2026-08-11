@@ -13178,3 +13178,69 @@ the corpus, and the reference set is what the contract scores against, so
 training on it would be training on the test. The honest ceiling of this whole
 line is about 0.55, and the distance from 0.636 to 0.546 is the entire remaining
 project.
+
+## Energy distance objective, registered 2026-08-10 before any training
+
+w4_gapsplit priced the moment objective's ceiling at about 0.030 of a 0.0905 gap
+and the first pilot reached it in ninety steps. This replaces the objective and
+changes nothing else. It is a flag on research/w4_rollout.py rather than a new
+file, because the rollout, the teacher forced pass, the advantage normalisation,
+the anchor, the held out six, the thermal control and the verdict rule are all
+identical. Only the loss and its per trajectory weights differ.
+
+THE OBJECTIVE
+
+Between the generated batch z and a human batch h the energy distance is
+
+    E = 2 mean_ij ||z_i - h_j|| - mean_ik ||z_i - z_k|| - mean_jl ||h_j - h_l||
+
+zero if and only if the two distributions are equal, at every order rather than
+the first two. The last term is constant in the model and is dropped. The score
+function coefficient is the derivative of the statistic with respect to
+including trajectory i,
+
+    phi_i = (2/m) sum_j ||z_i - h_j|| - (2/n) sum_k ||z_i - z_k||
+
+the factor two on the second term because z_i appears twice in the generated
+double sum. Checked against autograd of the statistic under per trajectory
+weights, agreeing to 3e-6 in float32.
+
+Still a fixed statistic of a fixed feature map, so the learned critic failure
+cannot recur. Still twelve features in, six held out, so the Goodhart guard is
+unchanged. Ceiling is the corpus floor, 0.5455, rather than 0.030.
+
+THE ARM
+
+Starts from the same base checkpoint the first pilot started from, not from the
+moment trained one, so the two objectives are compared from the same place over
+the same number of steps. Same batch, cap, learning rate, anchor weight and
+evaluation size as the moment continuation.
+
+    CONFIRMED  contract falls at least 0.05 below its own base, the held out six
+               improve by at least half as much as the trained twelve, and no
+               feature's spread runs outside 0.5 to 2.0
+    PARTIAL    0.02 to 0.05, or a runaway feature
+    GOODHART   trained twelve improve, held out six flat or worse. A fail
+    NULL       under 0.02
+
+The bar is 0.05 rather than the 0.03 used for the moment arm because 0.03 is now
+known to be reachable by matching means and spreads alone. An energy objective
+that only matches that has bought nothing new and should not be called a win.
+
+PREDICTION, fixed before the run
+
+Energy tracks the moment objective for the first fifty steps or so, because the
+cheap shared correction is the same either way, then keeps going where the
+moment objective flattened. It passes 0.05 below its base. The held out six
+track better than they did under moments, where the ratio had fallen to 0.35 by
+step 150, because a distribution distance has no reason to privilege the twelve
+directions it is computed in the way a list of per feature moments does.
+
+FALSIFIER
+
+Energy stalls at the same place moments did, around 0.03 below base, with the
+held out ratio falling the same way. That would mean the reachable part of the
+gap is the moment part regardless of objective, and that the 0.037 the ladder
+says survives all moments is not reachable by training this model on these
+features at all. The next question would then be whether the feature map itself,
+rather than the objective, is the binding constraint.
