@@ -13360,3 +13360,196 @@ the corpus resampling is added on top.
 
 Anyone reading a single evaluation in this workstream should treat movements
 under 0.008 as unmeasured rather than small.
+
+## The energy objective works, and is worth a third of what the run printed, 2026-08-10
+
+The first arm in this workstream to move the detector by more than its own
+noise. It also produced a headline number that does not survive being measured
+properly, and the correction is the more useful half of the entry.
+
+WHAT WAS RUN
+
+`w4_rollout.py --objective energy`, 300 steps from `event_ar_v2_s40000`, score
+function gradient through the sampler against the energy distance between the
+model's own generated feature distribution and the corpus one. Twelve of the
+eighteen features are in the objective, six were held out before anything ran.
+
+```
+                          base    step75   step150  step225  step300
+  detector               0.6812   0.6193   0.6219   0.6033   0.5949
+  second detector        0.6898   0.6391   0.6428   0.6470   0.6108
+  spread error, trained  0.3358   0.1085   0.0968   0.0902   0.1172
+  spread error, held out 0.1942   0.0496   0.0558   0.0543   0.0547
+
+  VERDICT CONFIRMED   peak 75C, 9.7 min cooling in 65.8 min wall
+```
+
+The registered falsifier said energy would stall where the moment objective did,
+near 0.6281, with the held out ratio falling the same way. Neither happened.
+
+WHY THE PRINTED 0.0863 IS NOT THE NUMBER
+
+Two things inflate it, both found afterwards by repeating measurements that had
+only ever been taken once.
+
+The arm samples at `seq_len` equal to its cap of 160, which is a defective
+setting. See the clock entry below. At that setting the base checkpoint scores
+0.6746 averaged over five sampler draws, but the arm's single base draw read
+0.6812, the highest of the five. At the correct setting the same checkpoint
+scores 0.6301.
+
+The arm's final evaluation was likewise one draw. Three independent draws of the
+saved checkpoint at the same setting read 0.6208, 0.6170 and the run's own
+0.5949, mean 0.6109. The run's was the lowest of the three and the trained model
+turns out to be more than twice as variable between draws as the base was.
+
+So the printed fall is a high base minus a low endpoint, both single draws.
+
+WHAT THE ARM IS ACTUALLY WORTH
+
+Measured on repeat draws at the setting the model was trained for, which is the
+setting the ladder and the corpus floor are also on:
+
+```
+  base checkpoint            0.6301   3 draws, sd 0.0059
+  energy checkpoint          0.5990   2 draws, agreeing to 0.0002
+  the objective bought       0.0311   about 5 sd
+```
+
+For comparison on the same footing, the moment objective's continuation returned
+0.0083, which was inside its noise. Energy is roughly four times better and is
+the first thing here that clears its own error bar comfortably.
+
+WHERE THAT PUTS IT ON THE LADDER
+
+```
+  energy checkpoint                  0.5990
+  rung A, every marginal matched     0.6061
+  rung B, plus the correlations      0.5826
+  rung C, the corpus floor           0.5455
+```
+
+Training against the full distribution achieved slightly more than perfectly
+correcting all eighteen marginals one at a time would have, and did not reach
+the rung where the dependence between features is corrected too. 0.0535 remains
+to the floor. The ladder already said the surviving separation is diffuse rather
+than carried by any one feature, so the remaining room is in the dependence, and
+that is where a distribution matching objective should be able to go.
+
+THE GOODHART CHECK PASSED
+
+The six held out features improved by 72 percent of their starting error against
+65 percent for the twelve in the objective, a ratio of 0.64 against a registered
+bar of 0.50. An objective that had found a shortcut through the twelve it was
+scored on would show the reverse.
+
+THINGS THAT LOOKED WRONG DURING THE RUN AND WERE NOT
+
+The second detector drifted the wrong way for three evaluations, 0.6391 to
+0.6470, while the first fell, then resolved to 0.6108 at the end. That
+signature can be transient over a 150 step window.
+
+At step 150 the number looked plateaued at 0.6219 after 0.6193. It then fell
+0.019 by step 225. Read this arm off its endpoints, not its trajectory. Same
+lesson as the moment arm and it bit again.
+
+featloss never trended. It sat between 3.28 and 3.94 for all 300 steps while the
+detector fell and the spread error fell by a factor of three. The statistic drops
+the constant human to human term and resamples 512 human rows a step, so it is
+noisy, but no trend at all across 300 steps is unexplained. Do not read featloss
+as a convergence signal on this arm.
+
+WHAT TO DO NEXT
+
+Rerun from the base checkpoint with the clock fixed, so the arm trains on the
+trajectories it will be judged on rather than on distorted ones. The detector was
+still falling at step 300 with no plateau, so give it more than 300 steps. Every
+evaluation should be at least two sampler draws.
+
+
+## The sampling budget is part of the model's input, and every rollout arm got it wrong, 2026-08-10
+
+A defect in this workstream's arms, not in the model. Found while chasing why two
+scripts scored the same untrained checkpoint 0.045 apart.
+
+WHAT IT IS
+
+`prefix_state` returns six numbers describing where the model is in the
+movement. The fifth is `idx / float(T)`, documented as "step index as a fraction
+of the buffer", where T is the width of the buffer being generated into.
+`EventARModel.sample` sets `T = seq_len or self.max_seq_len`. So the `seq_len`
+passed to `sample` changes an input the model conditions on at every step.
+
+Training buffers are 256 wide. `training/events_s2.npy` is (4028855, 256), the
+dataset sets `T = self.max_len`, and `prefix_state` runs over the full width. The
+model only ever saw `idx / 256`.
+
+Every `w4_rollout` arm calls `model.sample(cond, seq_len=a.cap)` with cap 160, at
+both the evaluation and the training rollout. At event 50 that tells the model it
+is 31 percent through its buffer where training said 20 percent. The clock runs
+about 1.6 times fast and the model behaves as though it is running out of room.
+
+WHAT IT IS WORTH
+
+Repeat sampler draws, same cond rows, same scoring shuffle:
+
+```
+  base checkpoint     seq_len 160   0.6746   sd 0.0060 over 5 draws
+                      seq_len 256   0.6301   sd 0.0059 over 3 draws
+                      the budget is worth 0.0445, 7.4 sd
+
+  energy checkpoint   seq_len 160   0.6189   2 draws
+                      seq_len 256   0.5990   2 draws
+                      the budget is worth 0.0199
+```
+
+Not a truncation effect. Mean trajectory length was 55.1 against 56.2 on the base
+and both hit the cap about 5 percent of the time. Cutting a 256 budget sample
+down to 160 events costs only 0.008 of the 0.045; the rest is the clock.
+
+Training under the fast clock halves the penalty but does not remove it, so the
+model partly adapts to the distortion rather than being immune to it.
+
+WHICH MEASUREMENTS ARE ON WHICH SETTING
+
+`probe_runaway`, which produced `gen_tokens.npz`, calls `sample` with no
+`seq_len` and gets 256. Everything built on it is correct: the w4_gapsplit
+ladder, its rungs, and the corpus floor of 0.5455.
+
+Every `w4_rollout` number is on the broken setting. The pilot, the moment
+continuation and the energy arm all sampled at 160 for both purposes.
+
+Within arm comparisons survive, because base and endpoint were measured the same
+way. Absolute numbers do not transfer and no rollout arm number may be placed
+against the ladder without being re measured.
+
+HOW TO FIX IT
+
+Sample at the model's own `max_seq_len` and cut afterwards if a shorter
+trajectory is wanted, rather than sampling into a short buffer. Do not pass
+`seq_len` below 256 to this checkpoint except to reproduce an old measurement.
+
+
+## Three noise figures, and the one to actually use, 2026-08-10
+
+They are not interchangeable and the difference between them changed a verdict.
+
+```
+  same rows reshuffled, forest randomness only          sd 0.0041
+  disjoint halves, adds finite sample                   sd 0.0072
+  repeat sampler draws, base checkpoint                 sd 0.0060
+  repeat sampler draws, energy checkpoint at 160        sd 0.0141
+```
+
+The first was recorded here earlier and is the narrowest question you can ask:
+one fixed set of generated rows, rescored. It says nothing about drawing
+different trajectories, which is what every evaluation in a training run does.
+
+Bootstrapping rows with replacement does NOT give the third figure. It reads
+0.8360, because duplicate rows break the out of bag forest, the same failure
+mode already recorded for self copy controls. Use disjoint halves.
+
+The last line is the important one. A trained checkpoint is not as stable as the
+base it came from, so the base's figure must not be borrowed for it. Any
+comparison between two evaluations needs at least two sampler draws on each side,
+and this workstream has quoted single draw numbers throughout.
