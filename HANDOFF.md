@@ -13304,3 +13304,32 @@ So the ladder's arithmetic holds from both directions. Matching means and
 spreads buys about 0.03 and nothing more, and it does not matter how long the
 run is. The next arm has to change the objective, which is the energy distance
 registered above.
+
+## The residual is diffuse, not localised, 2026-08-10
+
+w4_gapsplit rerun with the forest's own feature importances recorded at each
+rung. Top five at each, averaged over the three seeds.
+
+    base           angular_velocity_mean 0.075  mean_acceleration 0.067
+                   angular_velocity_std 0.064   path_efficiency 0.061
+    A marginal     mean_acceleration 0.063      angular_velocity_std 0.060
+                   path_efficiency 0.059        time_to_peak_velocity 0.059
+    B plus corr    mean_acceleration 0.063      velocity_skewness 0.060
+                   angular_velocity_std 0.059   path_efficiency 0.059
+    C corpus       mean_acceleration 0.061      movement_duration 0.059
+                   angular_velocity_std 0.058   velocity_skewness 0.058
+
+Eighteen features, so uniform is 0.056. At the base there is mild concentration,
+angular velocity mean at 0.075. By rung B the profile is flat and it is the same
+flat profile the forest shows at the floor, where the two sides are real people
+against real people.
+
+So the 0.0372 that survives marginals and correlations is not sitting in one or
+two features waiting to be attacked. The forest is finding it by using all
+eighteen a little, which is the signature of a diffuse difference in the joint
+rather than a localised defect. That is the fifth or sixth time this workstream
+has gone looking for a single attackable cause and found a distributed one.
+
+It also removes an option that would otherwise have been worth trying, which is
+to weight the objective toward whichever features carry the separation. There is
+no such feature.

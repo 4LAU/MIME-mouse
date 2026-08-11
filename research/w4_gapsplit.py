@@ -156,13 +156,19 @@ def from_normal(Z, target):
     return out
 
 
-def score(X, seed):
+def score(X, seed, imp=None):
     X = np.ascontiguousarray(X, dtype=np.float64)
     X = X[np.all(np.isfinite(X), 1)]
     # the corpus is ordered by session, so an unshuffled prefix scores a narrow
     # band of people and reads 0.02 to 0.03 high
     np.random.default_rng(seed).shuffle(X)
-    return float(scoring.score_features(X)["auc_rf_oob"])
+    r = scoring.score_features(X)
+    # which features the forest reaches for at each rung. At rung B the
+    # marginals and the correlation matrix are already human, so whatever it
+    # still uses is where the dependence beyond second order lives
+    if imp is not None:
+        imp.append([float(r["importances"][f]) for f in FEATURE_NAMES])
+    return float(r["auc_rf_oob"])
 
 
 def mean_se(v):
@@ -173,6 +179,7 @@ def mean_se(v):
 gen_rows, used = load_gen()
 G = feats(gen_rows)
 runs = {"base": [], "A_marginal": [], "B_plus_corr": [], "C_corpus": []}
+imps = {k: [] for k in runs}
 corr_err = []
 
 for seed in SEEDS:
@@ -183,10 +190,10 @@ for seed in SEEDS:
     # whiten the generated copula, recolour it with the corpus one
     ZB = (ZG - ZG.mean(0)) @ np.linalg.inv(np.linalg.cholesky(cg)).T \
         @ np.linalg.cholesky(ch).T
-    runs["base"].append(score(G, seed))
-    runs["A_marginal"].append(score(from_normal(ZG, H), seed))
-    runs["B_plus_corr"].append(score(from_normal(ZB, H), seed))
-    runs["C_corpus"].append(score(H, seed))
+    runs["base"].append(score(G, seed, imps["base"]))
+    runs["A_marginal"].append(score(from_normal(ZG, H), seed, imps["A_marginal"]))
+    runs["B_plus_corr"].append(score(from_normal(ZB, H), seed, imps["B_plus_corr"]))
+    runs["C_corpus"].append(score(H, seed, imps["C_corpus"]))
     corr_err.append(np.corrcoef(ZG, rowvar=False) - np.corrcoef(ZH, rowvar=False))
     print(f"  seed {seed}  base {runs['base'][-1]:.4f}  A {runs['A_marginal'][-1]:.4f}"
           f"  B {runs['B_plus_corr'][-1]:.4f}  C {runs['C_corpus'][-1]:.4f}",
@@ -204,6 +211,9 @@ out["split"] = {"marginal": b - a, "second_order": a - bb,
 E = np.abs(np.mean(corr_err, axis=0))
 iu = np.triu_indices(len(FEATURE_NAMES), 1)
 worst = np.argsort(-E[iu])[:10]
+out["importances"] = {k: dict(zip(FEATURE_NAMES,
+                                  np.mean(v, axis=0).round(4).tolist()))
+                      for k, v in imps.items()}
 out["worst_correlation_errors"] = [
     {"a": FEATURE_NAMES[iu[0][w]], "b": FEATURE_NAMES[iu[1][w]],
      "abs_error": float(E[iu[0][w], iu[1][w]])} for w in worst]
@@ -214,6 +224,10 @@ for k in ("base", "A_marginal", "B_plus_corr", "C_corpus"):
 print()
 for k, v in out["split"].items():
     print(f"  {k:<22}{v:+.4f}")
+print("\n  what the forest reaches for at each rung, top five")
+for k in ("base", "A_marginal", "B_plus_corr", "C_corpus"):
+    top = sorted(out["importances"][k].items(), key=lambda kv: -kv[1])[:5]
+    print(f"    {k:<14}" + "  ".join(f"{n} {v:.3f}" for n, v in top))
 print("\n  largest correlation errors, generated against corpus")
 for r in out["worst_correlation_errors"][:6]:
     print(f"    {r['a']:<24}{r['b']:<24}{r['abs_error']:.3f}")
