@@ -1,6 +1,6 @@
 # Autoloop Leaderboard
 
-_Regenerated 2026-08-11T00:14:01+00:00_
+_Regenerated 2026-08-11T00:57:13+00:00_
 
 **Best-of-N tier1 scores are selection-biased; only tier2 confirmations are quotable.**
 

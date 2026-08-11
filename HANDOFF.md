@@ -13100,3 +13100,81 @@ spread errors keep falling. That would mean the eighteen measurements are not
 where the remaining separation lives and the objective has run out of reach,
 which is a different conclusion from the pilot's and would send the next arm
 after whatever the eighteen do not name.
+
+## Where the remaining gap actually lives, 2026-08-10
+
+NOT pre registered. Run exploratory while w4_rollout was training, to find out
+whether that objective had a ceiling. It returns a decomposition, not a verdict.
+The marginal rung replicates w4_joint, which was registered on 2026-08-07, so
+only the second order rung and the residual are new. research/w4_gapsplit.py,
+three seeds, cap 160, the same length w4_rollout evaluates at.
+
+The contract reads eighteen numbers and nothing else, so every objective this
+workstream can state is a statement about the distribution of those eighteen.
+Each rung below imposes more of the corpus distribution on the generated
+features and scores the result through the ordinary contract. The rungs nest, so
+the differences partition the gap.
+
+    rung                                                 auc      se
+    base, generated features untouched                0.6360  0.0027
+    A, every marginal rank mapped onto the corpus     0.6061  0.0050
+    B, A plus the corpus correlation matrix           0.5826  0.0054
+    C, the corpus itself, the floor                   0.5455  0.0032
+
+    perfect marginal correction is worth             +0.0298
+    second order dependence adds                     +0.0235
+    survives both, unreachable by moments            +0.0372
+    whole gap from base to floor                     +0.0905
+
+All three seeds give the same ordering and the same rough split. The three
+differences are each five to ten standard errors clear of zero.
+
+THE CONTROL IS INSIDE THE LADDER
+
+A and B carry the corpus marginals exactly, by construction, and C is the
+corpus. Those three rows have identical eighteen marginals and they score 0.606,
+0.583 and 0.546. Same numbers, same spreads, and the contract still separates
+them. Whatever is left is dependence, and 0.0372 of it is not second order
+either.
+
+WHAT THIS PRICES
+
+w4_rollout matches the first two moments of twelve of the eighteen. That is a
+subset of rung A, so at most 0.0298 was ever available to it, and it took
+roughly that in its first ninety steps. The flattening of its contract number
+while its spread errors kept falling is the objective reaching its own ceiling,
+not the model failing to learn. A longer run of the same objective cannot buy
+what the ladder says is not there.
+
+It also prices the next one. An objective that matches the eighteen dimensional
+joint rather than a list of moments has a ceiling of the corpus floor, 0.5455,
+which is the whole 0.0905. A fixed distribution distance over the feature batch,
+an energy distance or a kernel one, fits the same score function estimator that
+w4_rollout already uses, stays a fixed statistic so the learned critic failure
+cannot recur, and reaches all orders rather than the first two.
+
+WHAT IS STILL WRONG IN THE DEPENDENCE
+
+The largest correlation errors, generated against corpus, averaged over seeds:
+
+    num_direction_changes   angular_velocity_mean   0.170
+    num_direction_changes   angular_velocity_std    0.150
+    mean_acceleration       std_acceleration        0.132
+    mean_acceleration       max_acceleration        0.130
+    mean_acceleration       std_jerk                0.129
+    mean_velocity           mean_acceleration       0.127
+
+Two families. The model does not tie how often a path changes direction to how
+fast it turns, and it does not tie mean acceleration to the spread of
+acceleration. In a real movement those are the same physical fact seen twice.
+In the model's output they are close to independent.
+
+THE HARD CEILING, STATED PLAINLY
+
+C is 0.5455, not 0.50. That is real corpus humans through the same tokens
+against the same reference, and it is where a perfect model of this training
+data lands. Reaching 0.50 would require matching the reference set rather than
+the corpus, and the reference set is what the contract scores against, so
+training on it would be training on the test. The honest ceiling of this whole
+line is about 0.55, and the distance from 0.636 to 0.546 is the entire remaining
+project.
