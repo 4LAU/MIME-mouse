@@ -12950,3 +12950,108 @@ welcome.
                fail. This outcome is informative and must not be dressed as a
                partial win
     NULL       under 0.01
+
+## Rollout level training moves the number, 2026-08-10
+
+Registered in cb85e7d before it ran. First arm in this workstream to move the
+contract by more than 0.02, and it moved it by 0.038 in ninety training steps.
+
+The run stopped itself at step 90 of a planned 250 when the GPU touched the 79C
+kill, which is the tightened limit this workload carries after crashing the
+machine on 2026-08-06. Everything below is therefore a third of the intended
+pilot. The checkpoint and the result file were both written cleanly on the way
+out.
+
+    measurement                       base    step 50    stop (step 90)
+    contract scorer                 0.6682     0.6141            0.6301
+    second detector, GBM            0.6744     0.6388            0.6248
+    spread error, twelve in loss    0.3783     0.1881            0.1856
+    spread error, six held out      0.1958     0.1231            0.0887
+    location error, twelve          0.1398          .            0.0689
+    location error, six held out    0.1209          .            0.0887
+
+The second detector took no part in the objective and fell by 0.0496, further
+than the scored one. Both detectors and both spread errors move the same way.
+
+WHAT THE OBJECTIVE ACTUALLY DID
+
+Per feature, spread as a multiple of the training corpus spread. One is right.
+
+    feature                    base    stop    in the loss
+    std_jerk                  2.253   0.827    yes
+    std_velocity              2.211   1.047    yes
+    max_velocity              2.186   1.094    yes
+    max_acceleration          2.068   0.934    HELD OUT
+    std_acceleration          2.014   0.842    yes
+    mean_acceleration         1.422   0.745    yes
+    mean_velocity             1.403   0.970    yes
+    max_deviation             1.407   1.229    yes
+    time_to_peak_velocity     1.185   1.079    HELD OUT
+    curvature_mean            1.181   1.304    yes, went the wrong way
+    curvature_std             1.097   1.175    HELD OUT, went the wrong way
+    mean_jerk                 0.868   0.439    yes, overshot
+
+The row that decides the arm is max_acceleration. It was the worst offender at
+2.068, it was never in the loss, and it lands at 0.934. A model fitting the loss
+rather than the movement cannot do that. The other five held out measurements
+improve too, by 0.56 of what the twelve trained ones improved by, against a bar
+of 0.50 fixed before the run.
+
+Two features went the wrong way, both curvature, one trained and one held out.
+Mean jerk overshot from 0.868 to 0.439, so it is now too narrow rather than too
+wide. Ninety steps of a high variance gradient estimator will do that and the
+symmetric log penalty should pull it back given more steps.
+
+THE VERDICT RULE HAS A DEFECT AND IT IS RECORDED, NOT EDITED
+
+The script prints PARTIAL. It prints PARTIAL because the registered rule
+requires that scoring.py raise no collapse flag, and that flag is set at every
+evaluation including the baseline taken before any training.
+
+That flag fires when any of the eighteen measurements is more than five times
+wider or narrower than the same measurement on the reference set. Feeding real
+recorded human movement from the training corpus through it fires the flag, on
+max_acceleration at 0.146, std_acceleration at 0.168 and max_velocity at 0.181.
+The flag is not measuring model collapse. It is measuring the fact that the
+reference set was recorded from different people on different hardware, some of
+it very high polling rate mice, which gives that set a long tail on exactly
+those three quantities. Anything without that tail looks collapsed against it,
+real humans included.
+
+So the condition would fail a perfect model, and it cannot discriminate here.
+On the two conditions that can, a contract drop of 0.0381 against a 0.03 bar
+and a held out ratio of 0.56 against a 0.50 bar, the arm reads CONFIRMED. The
+rule stays as registered. The next arm should drop the collapse condition and
+replace it with a check against the corpus rather than the reference.
+
+TWO NUMBERS THAT ARE NOT COMPARABLE ACROSS ARMS
+
+This arm's baseline reads 0.6682 where the standing number for the same
+checkpoint is 0.6412. The difference is the conditioning commands sampled and
+the evaluation size, not a regression, and it is not currently explained beyond
+that. Base and stop share the same commands and the same pipeline, so the delta
+inside this arm is sound. Any comparison of 0.6301 to a number from another arm
+is not.
+
+There are two human sets in play and they must not be confused. The training
+corpus, which supplies the mean and spread this objective standardises by, and
+the reference set the detector scores against. Against the corpus the model was
+about 1.5 times too wide. Against the reference both the model and the corpus
+are far too narrow, the model at about a fifth of the reference spread and real
+corpus humans at about a seventh. That gap is a large part of why real humans
+score 0.55 and not 0.50, and it caps what this training data can buy.
+
+WHAT THIS RETIRES AND WHAT IT OPENS
+
+It retires the reading of the previous five nulls as evidence that the gap is
+unreachable. It is reachable, and the thing that reaches it is exactly the
+thing the five nulls pointed at: an objective that sees whole generated
+trajectories instead of individual decisions.
+
+Open, in order. Get the run past ninety steps, which is a thermal problem and
+not a research one. Find out whether the contract keeps falling or flattens,
+since it read 0.6141 at step 50 and 0.6301 at the stop while every other
+measurement kept improving, and at 1450 rows per evaluation that bounce is
+inside the noise and cannot currently be resolved. Then decide whether the
+remaining distance to the corpus floor is spread, location, or something the
+eighteen measurements do not name.

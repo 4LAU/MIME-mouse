@@ -1,6 +1,6 @@
 # Autoloop Leaderboard
 
-_Regenerated 2026-08-10T21:27:47+00:00_
+_Regenerated 2026-08-11T00:14:01+00:00_
 
 **Best-of-N tier1 scores are selection-biased; only tier2 confirmations are quotable.**
 
@@ -359,6 +359,20 @@ _(no completed tier1 runs)_
 n_trials (tier1, status=ok): 0
 
 _(no completed tier1 runs)_
+
+## w4_single_trajectory
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_spikerate
+
+n_trials (tier1, status=ok): 1
+
+| rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
+|---|---|---|---|---|---|---|---|
+| 1 | w4_spikerate_2026-08-10T234356+0000_2690d04a | 0.6412 | 0.1412 | UNCONFIRMED | n/a | ok | NULL. The sub ms wait rate is the mechanism behind the 2.5x  |
 
 ## w4_statecoord
 
