@@ -13333,3 +13333,30 @@ has gone looking for a single attackable cause and found a distributed one.
 It also removes an option that would otherwise have been worth trying, which is
 to weight the objective toward whichever features carry the separation. There is
 no such feature.
+
+## The contract's own noise, measured 2026-08-10
+
+Every delta in this session was being read against a noise floor estimated from
+a single pair of measurements. Measured properly instead. score_features
+truncates to min(n_human, n_synth), so which rows survive is decided by the
+shuffle. One fixed generated feature matrix of 2421 rows, rescored under twelve
+shuffles, same trajectories, same forest seed, same reference:
+
+    0.6408 0.6396 0.6317 0.6296 0.6328 0.6414
+    0.6342 0.6402 0.6334 0.6316 0.6336 0.6338
+
+    mean 0.6352   sd 0.0041   range 0.0118
+
+So at the sizes this workstream reports, a difference under about 0.008 is not a
+result. Use two standard deviations, 0.008, as the minimum real difference at
+n around 2400, and scale as one over the square root of n elsewhere.
+
+Consequences for numbers already recorded. The moment continuation's 0.0083 sits
+exactly on that line, which is why NULL was the right call and not a harsh one.
+The pilot's 0.038 and the energy arm's first 0.062 are nine and fifteen standard
+deviations clear. The gapsplit rungs were each measured over three seeds and
+their reported standard errors, 0.0027 to 0.0054, are consistent with this once
+the corpus resampling is added on top.
+
+Anyone reading a single evaluation in this workstream should treat movements
+under 0.008 as unmeasured rather than small.
