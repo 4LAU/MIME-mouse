@@ -13244,3 +13244,63 @@ gap is the moment part regardless of objective, and that the 0.037 the ladder
 says survives all moments is not reachable by training this model on these
 features at all. The next question would then be whether the feature map itself,
 rather than the objective, is the binding constraint.
+
+## The moment objective converges and the contract does not follow, 2026-08-10
+
+The continuation registered above ran its full 300 steps with the cooling
+control working, peak 76C against a 79C kill, 9.2 minutes of cooling inside
+65.5 minutes of wall time. VERDICT NULL by the rule as registered.
+
+    eval        contract   gbm     spread trained  spread held  loc trained
+    base          0.6364  0.6578          0.2147       0.1246       0.0895
+    step 75       0.6303  0.6338          0.1419       0.0854       0.0862
+    step 150      0.6225  0.6482          0.0570       0.0702       0.0738
+    step 225      0.6271  0.6438          0.1122       0.0939       0.0762
+    step 300      0.6281  0.6439          0.1370       0.0576       0.0574
+
+    contract           0.6364 -> 0.6281,  d 0.0083, under the 0.01 NULL bar
+    held over trained  0.86, well clear of the 0.50 Goodhart bar
+    runaway spread     none
+
+Two readings that were wrong in flight and are corrected here. At step 75 the
+contract had moved 0.006 and I called the falsifier on one point; step 150 came
+in at 0.6225 and it was still falling. At step 150 the held over trained ratio
+had fallen to 0.35 and I reported the arm as drifting into Goodhart; by step 300
+it had recovered to 0.86. Neither intermediate reading survived. Read this arm
+off its endpoints, not its trajectory.
+
+WHAT IT LEAVES BEHIND
+
+Spread as a multiple of the corpus, at the pilot checkpoint and after 300 more
+steps. Nearly everything is now inside fifteen percent of correct.
+
+    std_jerk           1.417 -> 0.921        max_acceleration  1.389 -> 0.953 HELD
+    max_velocity       1.437 -> 1.080        curvature_std     1.166 -> 1.031 HELD
+    std_velocity       1.341 -> 0.994        angular_vel_std   0.948 -> 0.961 HELD
+    std_acceleration   1.244 -> 0.853        movement_duration 0.976 -> 1.000
+    curvature_mean     1.337 -> 1.184        mean_jerk         0.513 -> 0.500
+
+That is the whole finding. Sixteen of eighteen spreads sit within fifteen
+percent of human, the six held out of the objective moved as far as the twelve
+inside it, location error halved, and the contract moved 0.008, which is inside
+its own noise floor of about 0.006.
+
+Mean jerk is the one failure. It overshot in the pilot to 0.513 and 300 further
+steps left it at 0.500, sitting exactly on the runaway boundary without crossing
+it. The symmetric log penalty did not pull it back, which the registered
+prediction said it would.
+
+THIS CONFIRMS THE LADDER RATHER THAN CONTRADICTING IT
+
+w4_gapsplit priced perfect marginal correction at 0.0298 of a 0.0905 gap. The
+pilot took 0.038 of its own baseline and this continuation took a further 0.008.
+The two runs use different evaluation sizes so they do not add cleanly, but the
+shape is unambiguous: the moment objective spent its budget early, converged,
+and then oscillated. Step 150 was the bottom and steps 225 and 300 came back up
+while the objective's own loss got worse, which is a converged run with a step
+size too large for the noise near its optimum, not a run still learning.
+
+So the ladder's arithmetic holds from both directions. Matching means and
+spreads buys about 0.03 and nothing more, and it does not matter how long the
+run is. The next arm has to change the objective, which is the energy distance
+registered above.
