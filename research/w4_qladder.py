@@ -40,7 +40,8 @@ for p in (".", "research", "research/autoloop"):
 
 import experiments.event_stream_polar as esp                      # noqa: E402
 import scoring                                                    # noqa: E402
-from features import extract_feature_matrix                       # noqa: E402
+from features import (FEATURE_NAMES, extract_feature_matrix,      # noqa: E402
+                      extract_features, resample_trajectory)
 from models.event_ar import (DT_MAX_MS, EventARModel,             # noqa: E402
                              class_to_dt_ms, dt_ms_to_class)
 from models.event_stream_polar import (S_PAD_CLASS, TH_NULL_CLASS,  # noqa: E402
@@ -65,6 +66,10 @@ def main():
     ap.add_argument("--dt-temp", type=float, default=1.00)
     ap.add_argument("--arms", default="k0,q0,q0h13,h04")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--dump-features", action="store_true",
+                    help="AMENDMENT 34: write row aligned (B, 18) feature "
+                         "matrices, NaN for dropped rows, to "
+                         "research/w4_e1feat_F_<label>_s<seed>.npy")
     a = ap.parse_args()
 
     dev = esp._DEVICE
@@ -115,14 +120,15 @@ def main():
           f"  AR temps s {a.s_temp} th {a.th_temp} dt {a.dt_temp}", flush=True)
 
     def decode_all(s_np, th_np, dtc_np):
-        paths = []
+        paths, kept = [], []
         for i in range(len(s_np)):
             d = class_to_dt_ms(torch.from_numpy(dtc_np[i])).numpy()
             dz = (np.log(np.maximum(d, 0.05)) - esp._DT_MEAN) / esp._DT_STD
             p = esp._decode(dz, s_np[i], th_np[i], 0.0, 0.0, float(angs[i]))
             if p is not None and len(p) >= 4:
                 paths.append(np.asarray(p, dtype=np.float64))
-        return paths
+                kept.append(i)
+        return paths, kept
 
     # Arms: (label, e0src, human_positions). e0src None = free at 0 unless
     # 0 in human_positions, "q" = q draw, "wrong" = donor row (i+1) mod n
@@ -246,7 +252,17 @@ def main():
            "temps": [a.s_temp, a.th_temp, a.dt_temp], "arms": {}}
     print(f"\n  {'arm':>6}{'contract':>10}{'n':>7}{'collapse':>10}", flush=True)
     for label, e0src, hpos in ARMS:
-        paths = generate(label, e0src, hpos)
+        paths, kept = generate(label, e0src, hpos)
+        if a.dump_features:
+            Ff = np.full((B, len(FEATURE_NAMES)), np.nan)
+            for p, i in zip(paths, kept):
+                fv = extract_features(resample_trajectory(p))
+                if fv is not None and np.all(np.isfinite(fv)):
+                    Ff[i] = fv
+            dump = f"research/w4_e1feat_F_{label}_s{a.seed}.npy"
+            np.save(dump, Ff)
+            print(f"    dumped {dump}, valid rows "
+                  f"{int(np.isfinite(Ff).all(1).sum())}/{B}", flush=True)
         F = extract_feature_matrix(paths)
         F = F[np.all(np.isfinite(F), 1)]
         F = F[np.random.default_rng(a.seed).permutation(len(F))]
