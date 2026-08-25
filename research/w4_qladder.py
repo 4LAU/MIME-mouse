@@ -141,7 +141,8 @@ def main():
                 ("h01", None, (0,)),
                 ("h0p1", "hpair", ()),
                 ("h0s1p", "hchan_s", ()),
-                ("h0st1p", "hchan_st", ()))
+                ("h0st1p", "hchan_st", ()),
+                ("r01", "rpair", ()))
     want = a.arms.split(",")
     assert all(w in {x[0] for x in ALL_ARMS} for w in want), want
     ARMS = tuple(x for x in ALL_ARMS if x[0] in want)
@@ -153,6 +154,13 @@ def main():
         pair = Pair1(**pk["config"]).to(dev).eval()
         pair.load_state_dict(pk["model_state_dict"])
         print(f"  q1g0 best epoch {pk['best']['epoch']}", flush=True)
+    rpair = None
+    if any(x[1] == "rpair" for x in ARMS):
+        rk = torch.load("training/w4_pairadv.pt", map_location=dev, weights_only=False)
+        rpair = Pair1(**rk["config"]).to(dev).eval()
+        rpair.load_state_dict(rk["model_state_dict"])
+        print(f"  refined pair best epoch {rk['best']['epoch']} lam {rk['lam']}",
+              flush=True)
 
     def generate(label, e0src, hpos):
         g_s = np.full((B, MAX_T), S_PAD_CLASS, dtype=np.int64)
@@ -163,7 +171,7 @@ def main():
             cb = cond_t[sl].to(dev)
             nb = cb.shape[0]
             f = None
-            if e0src in ("q", "qwarm", "wrong", "pair", "hpair",
+            if e0src in ("q", "qwarm", "wrong", "pair", "rpair", "hpair",
                          "hchan_s", "hchan_st") or hpos:
                 fs = torch.from_numpy(real_s[sl]).to(dev).clone()
                 fth = torch.from_numpy(real_th[sl]).to(dev).clone()
@@ -177,12 +185,13 @@ def main():
                     fs[:, 0], fth[:, 0] = qs, qth
                     fdt[:, 0] = qdt.clamp(max=DT_MAX_MS)
                     mask[:, 0] = True
-                elif e0src == "pair":
+                elif e0src in ("pair", "rpair"):
+                    pm = pair if e0src == "pair" else rpair
                     torch.manual_seed(a.seed * 100003 + c0 + 7)
                     qs, qth, qdt = q.sample(cb, 1.0, 1.0, 1.0)
                     qdt = qdt.clamp(max=DT_MAX_MS)
                     torch.manual_seed(a.seed * 100003 + c0 + 13)
-                    ps1, pth1, pdt1 = pair.sample(cb, qs, qth, qdt, 1.0, 1.0, 1.0)
+                    ps1, pth1, pdt1 = pm.sample(cb, qs, qth, qdt, 1.0, 1.0, 1.0)
                     fs[:, 0], fth[:, 0], fdt[:, 0] = qs, qth, qdt
                     fs[:, 1], fth[:, 1] = ps1, pth1
                     fdt[:, 1] = pdt1.clamp(max=DT_MAX_MS)
