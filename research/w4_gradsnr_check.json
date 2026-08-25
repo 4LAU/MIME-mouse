@@ -1,0 +1,80 @@
+{
+  "same_eval_noamp": 1.0063966512680054,
+  "same_train_amp": 0.6295166015625,
+  "disjoint_eval_noamp": -0.2881408631801605,
+  "disjoint_eval_noamp_f64": -0.2868155321609491,
+  "per_tensor_top": [
+    {
+      "name": "cond_embed.0.weight",
+      "cos": -0.09657255560159683,
+      "numel": 1536,
+      "norm": 587.7064208984375
+    },
+    {
+      "name": "state_proj.0.weight",
+      "cos": -0.6664642691612244,
+      "numel": 2304,
+      "norm": 463.31805419921875
+    },
+    {
+      "name": "layers.0.qkv.weight",
+      "cos": 0.10263517498970032,
+      "numel": 442368,
+      "norm": 151.83705139160156
+    },
+    {
+      "name": "cond_embed.0.bias",
+      "cos": 0.083415187895298,
+      "numel": 384,
+      "norm": 98.57167053222656
+    },
+    {
+      "name": "state_proj.0.bias",
+      "cos": -0.8088471293449402,
+      "numel": 384,
+      "norm": 86.71652221679688
+    },
+    {
+      "name": "th_head.weight",
+      "cos": -0.007796885445713997,
+      "numel": 98688,
+      "norm": 76.6917953491211
+    },
+    {
+      "name": "norm.weight",
+      "cos": -0.24568486213684082,
+      "numel": 384,
+      "norm": 75.62580108642578
+    },
+    {
+      "name": "cond_embed.2.weight",
+      "cos": -0.010772999376058578,
+      "numel": 147456,
+      "norm": 74.56407165527344
+    },
+    {
+      "name": "s_head.weight",
+      "cos": 0.05646814405918121,
+      "numel": 50304,
+      "norm": 71.39441680908203
+    },
+    {
+      "name": "dt_head.weight",
+      "cos": 0.09224215894937515,
+      "numel": 58368,
+      "norm": 68.49173736572266
+    },
+    {
+      "name": "layers.0.proj.weight",
+      "cos": 0.15904787182807922,
+      "numel": 147456,
+      "norm": 60.097843170166016
+    },
+    {
+      "name": "state_proj.2.weight",
+      "cos": -0.15209512412548065,
+      "numel": 147456,
+      "norm": 57.16538619995117
+    }
+  ]
+}

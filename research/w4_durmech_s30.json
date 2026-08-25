@@ -1,0 +1,75 @@
+{
+ "ckpt": "event_ar_hm_mlp.pt",
+ "seed": 30,
+ "n_rows": 2000,
+ "temps": [
+  0.95,
+  0.9,
+  1.0
+ ],
+ "arms": {
+  "M-k0": {
+   "contract": 0.5895385000000001,
+   "n": 2000,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "mean_jerk"
+   ],
+   "len_p50": 42.0
+  },
+  "M-q1": {
+   "contract": 0.5687613750000001,
+   "n": 2000,
+   "collapse": true,
+   "collapse_features": [
+    "mean_jerk"
+   ],
+   "len_p50": 41.0,
+   "q_tick_frac": 0.148,
+   "q_pad_frac": 0.0
+  },
+  "MJ-k0": {
+   "contract": 0.595261125,
+   "n": 2000,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration"
+   ],
+   "len_p50": 41.5
+  },
+  "MJ-q1": {
+   "contract": 0.594123,
+   "n": 2000,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "mean_jerk"
+   ],
+   "len_p50": 42.0,
+   "q_tick_frac": 0.15,
+   "q_pad_frac": 0.0
+  },
+  "P-k0": {
+   "contract": 0.612518125,
+   "n": 2000,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "mean_jerk"
+   ],
+   "len_p50": 43.0
+  },
+  "P-q1": {
+   "contract": 0.5667177010215962,
+   "n": 1999,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration"
+   ],
+   "len_p50": 42.0,
+   "q_tick_frac": 0.1515,
+   "q_pad_frac": 0.0
+  }
+ }
+}

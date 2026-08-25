@@ -1,0 +1,105 @@
+{
+  "fidelity": {
+    "mean_velocity": {
+      "corr": 0.995720895016112,
+      "scale_soft_over_hard": 1.0257322409427703,
+      "trained": true
+    },
+    "std_velocity": {
+      "corr": 0.9738300658358762,
+      "scale_soft_over_hard": 0.9715916025980077,
+      "trained": true
+    },
+    "max_velocity": {
+      "corr": 0.9995764769940094,
+      "scale_soft_over_hard": 0.9556585506521221,
+      "trained": true
+    },
+    "velocity_skewness": {
+      "corr": NaN,
+      "scale_soft_over_hard": 0.0,
+      "trained": false
+    },
+    "mean_acceleration": {
+      "corr": -0.9054183856337321,
+      "scale_soft_over_hard": 1.102868637548539,
+      "trained": true
+    },
+    "std_acceleration": {
+      "corr": 0.9563112001143073,
+      "scale_soft_over_hard": 0.914804682589305,
+      "trained": true
+    },
+    "max_acceleration": {
+      "corr": 0.9504215391330791,
+      "scale_soft_over_hard": 0.9314080602462195,
+      "trained": false
+    },
+    "mean_jerk": {
+      "corr": -0.557166933382163,
+      "scale_soft_over_hard": 0.14712793738094002,
+      "trained": true
+    },
+    "std_jerk": {
+      "corr": 0.9778625147808021,
+      "scale_soft_over_hard": 0.9289014125508549,
+      "trained": true
+    },
+    "path_efficiency": {
+      "corr": 0.9988448717740022,
+      "scale_soft_over_hard": 1.0057630386074328,
+      "trained": true
+    },
+    "max_deviation": {
+      "corr": 0.9998053789323968,
+      "scale_soft_over_hard": 0.9437325761256619,
+      "trained": true
+    },
+    "curvature_mean": {
+      "corr": 0.6277253207205828,
+      "scale_soft_over_hard": 2.750606144179358,
+      "trained": true
+    },
+    "curvature_std": {
+      "corr": 0.6263039390787946,
+      "scale_soft_over_hard": 1.9290922598158613,
+      "trained": false
+    },
+    "num_direction_changes": {
+      "corr": NaN,
+      "scale_soft_over_hard": 0.0,
+      "trained": false
+    },
+    "movement_duration": {
+      "corr": 0.9999999999999966,
+      "scale_soft_over_hard": 1.0000000253290364,
+      "trained": true
+    },
+    "time_to_peak_velocity": {
+      "corr": NaN,
+      "scale_soft_over_hard": 0.0,
+      "trained": false
+    },
+    "angular_velocity_mean": {
+      "corr": 0.9806241694925638,
+      "scale_soft_over_hard": 0.9134696400958159,
+      "trained": true
+    },
+    "angular_velocity_std": {
+      "corr": 0.9598215514734222,
+      "scale_soft_over_hard": 0.9420355469485034,
+      "trained": false
+    }
+  },
+  "part1_met": false,
+  "part1_falsified": false,
+  "pathwise_raw": -0.03310895902174634,
+  "pathwise_raw_se": 0.06366887565961192,
+  "pathwise_block": -0.00881027424868922,
+  "pathwise_block_se": 0.046620728290734034,
+  "vs_reinforce": -0.0017102742486892197,
+  "vs_reinforce_se": 0.04826740418085945,
+  "part2_met": false,
+  "part2_falsified": true,
+  "n_batches": 8
+}

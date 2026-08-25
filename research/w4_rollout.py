@@ -5,6 +5,22 @@ Design registered in HANDOFF.md under "Rollout level training, registered
 2026-08-10 before any training". Arms, held out features, thresholds and the
 prediction are fixed there. This file implements that design and nothing else.
 
+THE SAMPLING BUDGET IS NOT A FREE PARAMETER, corrected 2026-08-10
+
+prefix_state feeds the model its step index divided by the width of the buffer
+being generated into, so the seq_len handed to sample is an input the model
+conditions on at every step and not merely a stopping rule. Training buffers are
+256 wide. Every arm run from this file before this correction sampled at 160,
+which tells the model it is 31 percent through its buffer where training said 20
+percent, a clock running about 1.6 times fast. That is worth 0.0444 on the base
+checkpoint at 7.4 sampler draw standard deviations, measured in w4_budget.
+
+So the width is now read off the checkpoint rather than taken from the command
+line, and the human reference is truncated to the same width so the two sides of
+every comparison are cut alike. There is no --cap flag any more, because a flag
+is exactly how this went wrong. Every number this file printed before 2026-08-10
+is on the fast clock and its absolute level does not transfer.
+
 WHY
 
 Every per step conditional in this model is exact, measured by teacher forcing
@@ -89,6 +105,23 @@ failure cannot recur here either.
 
 Its ceiling is the corpus floor, 0.5455, which is the whole gap.
 
+PER TOKEN CREDIT, --credit token, added 2026-08-11
+
+Both arms run so far gave every token of a rollout the same weight, because the
+weight is one number for the trajectory and the surrogate multiplies it by the
+average log probability over roughly 250 tokens. That is REINFORCE with no
+return decomposition. It can move what the model does on average and it cannot
+move which token in which context, which is the dependence the gap ladder says
+survives. The energy arm's behaviour is what that predicts: it falls 0.030 in a
+hundred steps, lands just past the rung where the marginals are matched, and
+then sits still.
+
+--credit token splits the same weight over the tokens and uses reward to go.
+The split, the nine features it covers, the three it cannot and the measured
+attribution error are all in research/w4_credit.py. Nothing about the objective,
+the rollout, the anchor or the held out six changes. Where the split is empty
+the two modes are the same computation, which is how the change is checked.
+
 THE GOODHART GUARD
 
 This objective is stated over the same eighteen features the scorer reads, so
@@ -124,6 +157,7 @@ feature's spread ratio outside [0.5, 2.0]. The pilot's mean jerk overshot to
 from __future__ import annotations
 
 import argparse
+import collections
 import json
 import os
 import subprocess
@@ -140,12 +174,18 @@ for p in (".", "research", "research/autoloop"):
 
 import experiments.event_stream_polar as esp  # noqa: E402
 import scoring  # noqa: E402
-from features import FEATURE_NAMES, extract_feature_matrix  # noqa: E402
+from features import (  # noqa: E402
+    FEATURE_NAMES, extract_features, resample_trajectory,
+)
 from models.event_ar import (  # noqa: E402
     DT_MAX_MS, EventARModel, class_to_dt_ms, prefix_state,
 )
 from models.event_stream_polar import (  # noqa: E402
     S_PAD_CLASS, TH_NULL_CLASS, TICK_CLASS, dth_lattice_to_class, s2_to_class,
+)
+from w4_credit import (  # noqa: E402
+    DECOMP, HZ, credit_terms, decode_indexed, energy_grad, moment_grad,
+    token_advantage,
 )
 
 D = "training"
@@ -207,40 +247,89 @@ def load_human(rows, cap, s2a, dtha, dta, lens, cond_all):
     return out, np.asarray(kept, dtype=np.int64)
 
 
-def to_paths(s_cls, th_cls, dt_cls, angles):
-    """Token streams to continuous paths through the SERVED decoder. A hand
-    rolled walk reads about 0.13 high because esp._decode snaps short steps to
-    whole pixels and merges ticks, so it must not be reimplemented here."""
-    paths, keep = [], []
+def dt_to_z(dt_cls):
+    ms = class_to_dt_ms(torch.from_numpy(dt_cls)).numpy().astype(np.float64)
+    return (np.log(np.maximum(ms, 0.05)) - esp._DT_MEAN) / esp._DT_STD
+
+
+def decode_batch(s_cls, th_cls, dt_cls, angles, want_credit=False):
+    """Token streams to contract features through the SERVED decoder, with each
+    surviving row's per token credit terms carried alongside it.
+
+    decode_indexed is a line for line mirror of esp._decode that also reports
+    which token produced each path point. It must never become a
+    reimplementation: a hand rolled walk reads about 0.13 high because
+    esp._decode snaps short steps to whole pixels and merges ticks.
+    w4_credit_check confirms the two agree exactly, and verify_mirror repeats
+    that on the model's own output at launch.
+
+    Rows are dropped for a short stream, a failed decode or a feature that does
+    not come out finite. Returning the surviving features, their positions in
+    the batch and their credit terms from one loop is what keeps the three
+    aligned; building them in separate passes and intersecting afterwards is
+    how they could ever disagree.
+    """
+    X, keep, cred = [], [], []
     for i in range(len(angles)):
         s = s_cls[i]
         pad = np.flatnonzero(s >= S_PAD_CLASS)
         L = int(pad[0]) if len(pad) else len(s)
         if L < 8 or ((s[:L] > TICK_CLASS) & (s[:L] < S_PAD_CLASS)).sum() < 8:
             continue
-        ms = class_to_dt_ms(torch.from_numpy(dt_cls[i][:L])).numpy().astype(np.float64)
-        dz = (np.log(np.maximum(ms, 0.05)) - esp._DT_MEAN) / esp._DT_STD
-        p = esp._decode(dz, s[:L], th_cls[i][:L], 0.0, 0.0, angles[i])
-        if p is not None and len(p) >= 4:
-            paths.append(np.asarray(p, dtype=np.float64))
-            keep.append(i)
-    return paths, np.asarray(keep, dtype=np.int64)
+        p, tok = decode_indexed(dt_to_z(dt_cls[i][:L]), s[:L],
+                                th_cls[i][:L], 0.0, 0.0, angles[i])
+        if p is None or len(p) < 4:
+            continue
+        grid = resample_trajectory(p, HZ)
+        f = extract_features(grid)
+        if f is None or not np.all(np.isfinite(f)):
+            continue
+        X.append(f)
+        keep.append(i)
+        cred.append(credit_terms(p, grid, tok, L) if want_credit else None)
+    return (np.asarray(X, dtype=np.float64).reshape(len(X), len(FEATURE_NAMES)),
+            np.asarray(keep, dtype=np.int64), cred)
 
 
-def feature_matrix(paths):
-    X = extract_feature_matrix(paths)
-    ok = np.all(np.isfinite(X), 1)
-    return X, ok
+def verify_mirror(s_cls, th_cls, dt_cls, angles):
+    """decode_indexed against esp._decode on the model's OWN output.
+
+    The mirror was verified on corpus streams in w4_credit_check. This repeats
+    it on generated ones, because those are the distribution the estimator will
+    actually be built from and the model can reach token combinations the
+    corpus never does.
+    """
+    n = bad = 0
+    for i in range(len(angles)):
+        s = s_cls[i]
+        pad = np.flatnonzero(s >= S_PAD_CLASS)
+        L = int(pad[0]) if len(pad) else len(s)
+        if L < 8:
+            continue
+        dz = dt_to_z(dt_cls[i][:L])
+        ref = esp._decode(dz, s[:L], th_cls[i][:L], 0.0, 0.0, angles[i])
+        got, _ = decode_indexed(dz, s[:L], th_cls[i][:L], 0.0, 0.0, angles[i])
+        if ref is None and got is None:
+            continue
+        n += 1
+        if (ref is None) != (got is None) or len(ref) != len(got) or not (
+                np.asarray(ref, dtype=np.float64)
+                == np.asarray(got, dtype=np.float64)).all():
+            bad += 1
+    return n, bad
 
 
 # ----------------------------------------------------------------- logprob
 
-def token_logprob(model, s, th, dt, cond, amp):
-    """Mean log probability per DECIDED token, per row. Because the trunk is
-    causally masked this reproduces exactly the logits used at sampling time.
-    Positions that were not decisions are excluded: the turn token at a no
-    motion event is a NULL substitution, and everything after a row's first PAD
-    is forced."""
+def token_logprob_pos(model, s, th, dt, cond, amp):
+    """Log probability at each position, and the per row normaliser.
+
+    Because the trunk is causally masked this reproduces exactly the logits
+    used at sampling time. Positions that were not decisions are excluded: the
+    turn token at a no motion event is a NULL substitution, and everything
+    after a row's first PAD is forced. Those positions come back at exactly
+    zero, so a per token weight applied to them cannot leak into the update.
+    """
     with torch.amp.autocast("cuda", enabled=amp):
         s_lg, th_lg, dt_lg = model(*model.shift_inputs(s, th, dt),
                                    prefix_state(s, th, dt, cond), cond,
@@ -260,6 +349,12 @@ def token_logprob(model, s, th, dt, cond, amp):
     lp = lp + torch.log_softmax(th_lg, -1).gather(
         -1, th.unsqueeze(-1)).squeeze(-1) * motion
     n = (live.sum(1) * 2 + motion.sum(1)).clamp(min=1)
+    return lp, n
+
+
+def token_logprob(model, s, th, dt, cond, amp):
+    """Mean log probability per DECIDED token, per row."""
+    lp, n = token_logprob_pos(model, s, th, dt, cond, amp)
     return lp.sum(1) / n
 
 
@@ -292,26 +387,98 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--steps", type=int, default=250)
     ap.add_argument("--batch", type=int, default=96)
-    ap.add_argument("--cap", type=int, default=160)
     ap.add_argument("--lr", type=float, default=1e-5)
     ap.add_argument("--lam", type=float, default=1.0)
     ap.add_argument("--clip-w", type=float, default=5.0)
     ap.add_argument("--eval-every", type=int, default=50)
     ap.add_argument("--eval-n", type=int, default=800)
+    ap.add_argument("--eval-draws", type=int, default=2,
+                    help="sampler draws averaged per evaluation. one draw "
+                         "carries sd 0.0141 on a trained checkpoint, which is "
+                         "half of what the first energy arm appeared to move")
     ap.add_argument("--human-n", type=int, default=4000)
+    ap.add_argument("--human-ref", choices=("corpus", "sir"), default="corpus",
+                    help="which human sample the objective steers toward. "
+                         "corpus decodes rows of the training event corpus, "
+                         "which is what every arm before 2026-08-11 used and "
+                         "is a different population from the one the contract "
+                         "scores against, by 0.0149 of AUC at 3.5 se. sir uses "
+                         "data/human_ref_features_sir.npy, 4000 rows from the "
+                         "same pool as validation, disjoint from eval by index "
+                         "and from validation by feature match. sir also "
+                         "matches the contract's structure, raw human against "
+                         "decoded generated, where corpus cancels a decoder "
+                         "artifact the contract does not cancel. Default is "
+                         "left on corpus so reruns of earlier arms reproduce")
     ap.add_argument("--seed", type=int, default=17)
-    ap.add_argument("--objective", choices=("moments", "energy"),
+    ap.add_argument("--objective", choices=("moments", "energy", "critic"),
                     default="moments",
                     help="moments matches means and spreads, energy matches the "
-                         "whole joint through an energy distance")
+                         "whole joint through an energy distance, critic scores "
+                         "each row by a capacity limited logistic classifier "
+                         "refitted every step")
+    ap.add_argument("--critic-c", type=float, default=0.05,
+                    help="inverse L2 strength of the critic. 0.05 on the "
+                         "ninety column lift is the capacity that reads the "
+                         "raw gap at only 10.3 null sd, against 40.3 for the "
+                         "energy distance, which is the measured reason it "
+                         "cannot outrun the generator the way the 2026-07 "
+                         "critic did when it reached 0.94 by round eight")
+    ap.add_argument("--critic-kind", choices=("logistic", "forest"),
+                    default="forest",
+                    help="the score function estimator never differentiates the "
+                         "weight, so the critic does not have to be smooth and a "
+                         "forest is as usable as a logistic. Measured on the "
+                         "transported sample, a forest at leaf 20 depth 8 reads "
+                         "3.38 null sd against the logistic's 1.42 while "
+                         "replaying the same sprint profile, 0.691 against "
+                         "0.697 at step forty. An unconstrained forest reads "
+                         "5.42 but sprints to 0.860 and is still climbing, "
+                         "which is the 2026-07 failure")
+    ap.add_argument("--critic-buf", type=int, default=16,
+                    help="steps of generated rows the critic is fitted on. The "
+                         "current batch is scored before it is added, so every "
+                         "weight is out of sample")
     ap.add_argument("--energy-m", type=int, default=512,
                     help="human sample per step for the energy distance")
+    ap.add_argument("--zbuf-steps", type=int, default=1,
+                    help="how many recent steps of generated rows estimate the "
+                         "generated side of the energy distance. 1 is the "
+                         "batch itself, which is what every arm so far did")
+    ap.add_argument("--credit", choices=("trajectory", "token"),
+                    default="trajectory",
+                    help="trajectory gives every token of a rollout the same "
+                         "weight, which is what the first two arms did. token "
+                         "splits that weight over the tokens and uses reward "
+                         "to go. See w4_credit")
+    ap.add_argument("--resmap", type=str, default=None,
+                    help="a frozen conditional residual map from w4_resmap. Its "
+                         "twelve columns are appended to the twelve standardised "
+                         "trained features, so the energy distance is computed "
+                         "in twenty four dimensions instead of twelve. Exists "
+                         "because the distance in the plain feature space is "
+                         "blind to the part of the gap that is left: see the "
+                         "scrambling experiment in HANDOFF")
+    ap.add_argument("--resmap-weight", type=float, default=4.0,
+                    help="how hard the residual columns count. Swept on a fixed "
+                         "sample: 0 is the plain arm, and past 4 the new "
+                         "component stops improving while the old one keeps "
+                         "degrading")
     ap.add_argument("--init", type=str, default=None,
                     help="checkpoint to continue from, default is the base model")
     ap.add_argument("--tag", type=str, default="",
                     help="suffix for the result and checkpoint filenames")
     ap.add_argument("--amp", action="store_true", default=True)
     a = ap.parse_args()
+    if a.objective == "critic" and a.credit == "token":
+        # the critic returns one logit per row and there is no per token
+        # decomposition of it. energy_grad has no counterpart here
+        raise SystemExit("--objective critic needs --credit trajectory")
+    if a.resmap and a.credit == "token":
+        # the per token decomposition indexes zt by DECOMP's column positions and
+        # energy_grad returns a gradient the width of zt. Both assume zt is the
+        # trained twelve and nothing else.
+        raise SystemExit("--resmap needs --credit trajectory")
 
     t = gpu_temp()
     if t > GATE_C:
@@ -324,6 +491,13 @@ def main():
     rng = np.random.default_rng(a.seed)
     torch.manual_seed(a.seed)
 
+    ck = torch.load(a.init or CKPT, map_location=dev, weights_only=False)
+    # the buffer width the model was trained at. prefix_state divides the step
+    # index by it, so sampling into any other width feeds the model a clock it
+    # has never seen. See the docstring.
+    cap = int(ck["config"]["max_seq_len"])
+    a.cap = cap                      # recorded in the run config for the ledger
+
     s2a = np.load(f"{D}/events_s2.npy", mmap_mode="r")
     dtha = np.load(f"{D}/events_dth.npy", mmap_mode="r")
     dta = np.load(f"{D}/events_dt.npy", mmap_mode="r")
@@ -334,17 +508,22 @@ def main():
 
     ref_rows = perm[:a.human_n]                       # the human reference
     pool_rows = perm[a.human_n:a.human_n + 400000]    # commands and anchors
-    hum, _ = load_human(ref_rows, a.cap, s2a, dtha, dta, lens, cond_all)
-    hp, _ = to_paths([r[0] for r in hum], [r[1] for r in hum],
-                     [r[2] for r in hum], [r[3] for r in hum])
-    HX, hok = feature_matrix(hp)
-    HX = HX[hok]
+    if a.human_ref == "sir":
+        # Features only, so nothing is decoded. The commands and anchors still
+        # come from the corpus via pool_rows; only what the objective is aimed
+        # at changes.
+        HX = np.load("data/human_ref_features_sir.npy").astype(np.float64)
+        HX = HX[np.isfinite(HX).all(1)]
+    else:
+        hum, _ = load_human(ref_rows, cap, s2a, dtha, dta, lens, cond_all)
+        HX, _, _ = decode_batch([r[0] for r in hum], [r[1] for r in hum],
+                                [r[2] for r in hum], [r[3] for r in hum])
     rng.shuffle(HX)
     mu, sd = HX.mean(0), HX.std(0)
     sd[sd == 0] = 1.0
-    print(f"\n  human reference {len(HX)} rows, cap {a.cap}", flush=True)
+    print(f"\n  human reference {a.human_ref}, {len(HX)} rows, "
+          f"buffer width {cap}", flush=True)
 
-    ck = torch.load(a.init or CKPT, map_location=dev, weights_only=False)
     model = EventARModel(**ck["config"]).to(dev)
     model.load_state_dict(ck["model_state_dict"])
     opt = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=0.01)
@@ -357,59 +536,176 @@ def main():
                           eval_cond[:, 2].numpy().astype(np.float64))
     train_rows = pool_rows[a.eval_n:]
 
+    # a single draw of 2500 rows carries sd 0.0141 on a trained checkpoint,
+    # measured in w4_seedvar and w4_budget. The first energy arm read its base
+    # off the highest of five draws and its endpoint off the lowest of three,
+    # which inflated the fall threefold. Averaging draws is the fix, and the
+    # spread across them is reported so the error bar is never guessed again.
+    therm = {"peak": 0, "cooled_s": 0.0}
+
+    def thermal():
+        """Temperature after any cooling pause, and the running peak. Both loops
+        call this. Two evaluation draws of 2500 rows at buffer width 256 is
+        twenty minutes of continuous sampling, which is now the hottest part of
+        the run, and the training loop's gate never covered it."""
+        t = gpu_temp()
+        therm["peak"] = max(therm["peak"], t)
+        if t >= COOL_C:
+            c0 = time.time()
+            while gpu_temp() > RESUME_C and time.time() - c0 < COOL_MAX_S:
+                time.sleep(10)
+            therm["cooled_s"] += time.time() - c0
+            t = gpu_temp()
+            therm["peak"] = max(therm["peak"], t)
+        return t
+
     def evaluate(tag):
         model.eval()
-        S, TH, DT = [], [], []
-        for c0 in range(0, len(eval_cond), a.batch):
-            c = eval_cond[c0:c0 + a.batch].to(dev)
-            s, th, dt = model.sample(c, seq_len=a.cap)
-            S.append(s.cpu().numpy()); TH.append(th.cpu().numpy())
-            DT.append(dt.cpu().numpy())
-        S = np.concatenate(S); TH = np.concatenate(TH); DT = np.concatenate(DT)
-        paths, keep = to_paths(list(S), list(TH), list(DT), eval_ang)
-        X, xok = feature_matrix(paths)
-        X = X[xok]
-        np.random.default_rng(a.seed).shuffle(X)
-        r = scoring.score_features(X)
-        g = scoring.gbm_cv_auc(X)
-        sm = summarise(X, mu, sd)
-        row = {"tag": tag, "auc_rf": float(r["auc_rf_oob"]),
-               "auc_gbm": float(g["auc_gbm_cv"]),
-               "collapse": bool(r["collapse_flag"]), "n": int(len(X)),
-               **{k: v for k, v in sm.items() if not isinstance(v, dict)}}
-        print(f"  EVAL {tag:<10} rf {row['auc_rf']:.4f}  gbm {row['auc_gbm']:.4f}"
+        draws = []
+        for _ in range(a.eval_draws):
+            S, TH, DT = [], [], []
+            for c0 in range(0, len(eval_cond), a.batch):
+                if thermal() >= KILL_C:
+                    raise SystemExit(
+                        f"  GPU at or above the {KILL_C}C kill during the {tag} "
+                        f"evaluation. Stopping. The checkpoint and the JSON on "
+                        f"disk are the state of the previous evaluation.")
+                c = eval_cond[c0:c0 + a.batch].to(dev)
+                s, th, dt = model.sample(c, seq_len=cap)
+                S.append(s.cpu().numpy()); TH.append(th.cpu().numpy())
+                DT.append(dt.cpu().numpy())
+            S = np.concatenate(S); TH = np.concatenate(TH); DT = np.concatenate(DT)
+            X, _, _ = decode_batch(list(S), list(TH), list(DT), eval_ang)
+            np.random.default_rng(a.seed).shuffle(X)
+            r = scoring.score_features(X)
+            g = scoring.gbm_cv_auc(X)
+            sm = summarise(X, mu, sd)
+            draws.append({"auc_rf": float(r["auc_rf_oob"]),
+                          "auc_gbm": float(g["auc_gbm_cv"]),
+                          "collapse": bool(r["collapse_flag"]),
+                          "n": float(len(X)), **sm})
+
+        mean = lambda k: float(np.mean([d[k] for d in draws]))
+        aucs = [d["auc_rf"] for d in draws]
+        row = {"tag": tag, "auc_rf": mean("auc_rf"), "auc_gbm": mean("auc_gbm"),
+               "auc_rf_draws": aucs,
+               "auc_rf_range": float(max(aucs) - min(aucs)),
+               "collapse": any(d["collapse"] for d in draws),
+               "n": int(mean("n")),
+               **{k: mean(k) for k in ("spread_err_trained", "spread_err_held",
+                                       "loc_err_trained", "loc_err_held")}}
+        print(f"  EVAL {tag:<10} rf {row['auc_rf']:.4f}"
+              f" (range {row['auc_rf_range']:.4f} over {len(aucs)})"
+              f"  gbm {row['auc_gbm']:.4f}"
               f"  spread err trained {row['spread_err_trained']:.4f}"
               f"  held {row['spread_err_held']:.4f}"
               f"  collapse {row['collapse']}", flush=True)
-        row["detail"] = sm
+        row["detail"] = {
+            "spread": {f: float(np.mean([d["spread"][f] for d in draws]))
+                       for f in FEATURE_NAMES},
+            "loc": {f: float(np.mean([d["loc"][f] for d in draws]))
+                    for f in FEATURE_NAMES}}
         model.train()
         return row
 
-    hist = {"config": vars(a), "held_out": HELD_OUT, "evals": [], "steps": []}
+    mirror = None
+    if a.credit == "token":
+        model.eval()
+        with torch.no_grad():
+            ms, mth, mdt = model.sample(eval_cond[:a.batch].to(dev), seq_len=cap)
+        model.train()
+        n_m, bad_m = verify_mirror(list(ms.cpu().numpy()), list(mth.cpu().numpy()),
+                                   list(mdt.cpu().numpy()), eval_ang[:a.batch])
+        del ms, mth, mdt
+        print(f"  token index mirror: {bad_m} disagreements with esp._decode "
+              f"over {n_m} generated rows", flush=True)
+        if bad_m:
+            raise SystemExit(
+                "  decode_indexed does not reproduce the served decoder on "
+                "generated output. Per token credit would be attributed to the "
+                "wrong tokens, so this run is refused.")
+        mirror = {"rows": n_m, "disagreements": bad_m}
+
+    hist = {"config": vars(a), "held_out": HELD_OUT, "mirror": mirror,
+            "evals": [], "steps": []}
     hist["evals"].append(evaluate("base"))
     with open(out_json, "w") as f:
         json.dump(hist, f, indent=2)
 
     tk = [FEATURE_NAMES.index(f) for f in TRAINED]
+    # the nine trained features that split over the resampled path, as columns
+    # of zt and as raw standardisation scales. The other three trained features
+    # stay in the remainder that every token sees: max_velocity is a max, and
+    # path_efficiency and max_deviation read absolute geometry, which a rigid
+    # downstream shift moves and per token credit would get wrong.
+    dcols = [TRAINED.index(n) for n, *_ in DECOMP]
+    sd_dec = np.asarray([sd[FEATURE_NAMES.index(n)] for n, *_ in DECOMP])
     mu_t = torch.tensor(mu, dtype=torch.float32)
     sd_t = torch.tensor(sd, dtype=torch.float32)
     # the human side of the energy distance, standardised the same way and cut
     # to the trained twelve so the held out six stay out of the objective
     ZH_t = torch.tensor(((HX - mu) / sd)[:, tk], dtype=torch.float32)
-    t0, peak = time.time(), 0
+    # the residual map is fitted on corpus rows only and frozen. Appending its
+    # columns leaves the held out six out of the objective, because every
+    # conditional in it is a trained feature given the other eleven trained ones.
+    resmap = None
+    if a.resmap:
+        import w4_resmap
+        resmap = w4_resmap.load(a.resmap)
+        if resmap.apply(HX[:4]).shape[1] != len(tk):
+            raise SystemExit("the residual map does not have one column per "
+                             "trained feature")
+        ZH_t = torch.cat([ZH_t, torch.tensor(a.resmap_weight * resmap.apply(HX),
+                                             dtype=torch.float32)], 1)
+        print(f"  residual map on, {ZH_t.shape[1]} columns, "
+              f"weight {a.resmap_weight}")
+    # The critic objective. Measured 2026-08-11: on a generated sample already
+    # transported to corpus marginals and corpus rank correlations, which is
+    # where all five arms so far have stopped, no distance statistic can see the
+    # remaining gap at a 1536 row batch. Energy reads -0.46 null sd, a gaussian
+    # mmd reads between -0.52 and 0.45 across five bandwidths, energy on the
+    # quadratic lift reads -0.48, and the largest of 256 random projections
+    # reads 0.15. The contract's forest reads the same sample at 3.47 and a
+    # logistic regression on the lift at 1.42. A distance test spreads its power
+    # over every direction at once and a classifier concentrates it where the
+    # difference is, so the plateau is the objective running out of finite
+    # sample power rather than the optimiser failing.
+    cbuf = collections.deque(maxlen=max(2, a.critic_buf))
+    critic = LH = lmu = lsd = None
+    if a.objective == "critic":
+        iu = np.triu_indices(len(tk))
+
+        def lift(Z):
+            """The trained twelve, then every product including squares. The
+            clip is load bearing for the logistic: mean_acceleration reaches 158
+            sd on corpus rows and its square would own the statistic outright. A
+            forest is invariant to all of it and takes the twelve raw."""
+            if a.critic_kind == "forest":
+                return np.clip(Z, -40.0, 40.0)
+            C = np.clip(Z, -4.0, 4.0)
+            return np.hstack([C, (C[:, :, None] * C[:, None, :])[:, iu[0],
+                                                                 iu[1]]])
+
+        LH = lift(((HX - mu) / sd)[:, tk])
+        lmu, lsd = LH.mean(0), LH.std(0)
+        lsd[lsd == 0] = 1.0
+        LH = (LH - lmu) / lsd
+        if a.critic_kind == "forest":
+            from sklearn.ensemble import RandomForestClassifier
+            critic = RandomForestClassifier(n_estimators=100, max_depth=8,
+                                            min_samples_leaf=20, n_jobs=8,
+                                            random_state=42)
+        else:
+            from sklearn.linear_model import LogisticRegression
+            critic = LogisticRegression(max_iter=2000, C=a.critic_c)
+        print(f"  critic on, kind {a.critic_kind}, {LH.shape[1]} columns, "
+              f"fitted on {a.critic_buf} steps of generated rows")
+    zbuf = collections.deque(maxlen=max(1, a.zbuf_steps))
+    t0 = time.time()
     model.train()
 
-    cooled_s = 0.0
     for step in range(1, a.steps + 1):
-        tnow = gpu_temp()
-        peak = max(peak, tnow)
-        if tnow >= COOL_C:
-            c0 = time.time()
-            while gpu_temp() > RESUME_C and time.time() - c0 < COOL_MAX_S:
-                time.sleep(10)
-            cooled_s += time.time() - c0
-            tnow = gpu_temp()
-            peak = max(peak, tnow)
+        tnow = thermal()
         if tnow >= KILL_C:
             print(f"  GPU hit {tnow}C, at or above the {KILL_C}C kill after "
                   f"{COOL_MAX_S}s of cooling. Stopping.")
@@ -422,29 +718,72 @@ def main():
                          cond[:, 2].cpu().numpy().astype(np.float64))
 
         model.eval()
-        s, th, dt = model.sample(cond, seq_len=a.cap)
+        s, th, dt = model.sample(cond, seq_len=cap)
         model.train()
-        paths, keep = to_paths(list(s.cpu().numpy()), list(th.cpu().numpy()),
-                               list(dt.cpu().numpy()), ang)
+        X, keep, cred = decode_batch(list(s.cpu().numpy()), list(th.cpu().numpy()),
+                                     list(dt.cpu().numpy()), ang,
+                                     want_credit=a.credit == "token")
         if len(keep) < 16:
             continue
-        X, xok = feature_matrix(paths)
-        keep = keep[xok]
-        z = (torch.tensor(X[xok], dtype=torch.float32) - mu_t) / sd_t
+        z = (torch.tensor(X, dtype=torch.float32) - mu_t) / sd_t
         zt = z[:, tk]
+        if resmap is not None:
+            zt = torch.cat([zt, torch.tensor(a.resmap_weight * resmap.apply(X),
+                                             dtype=torch.float32)], 1)
 
-        if a.objective == "energy":
+        if a.objective == "critic":
+            lz = (lift(zt[:, :len(tk)].numpy().astype(np.float64)) - lmu) / lsd
+            nbuf = sum(len(b) for b in cbuf)
+            if nbuf < 2 * len(lz):
+                # cold start. Two steps of rows before the first fit, and a zero
+                # weight is a skipped update rather than a random one
+                w = torch.zeros(len(lz), dtype=torch.float32)
+                loss_feat = 0.0
+            else:
+                # the fit never sees the batch it scores, so every weight is out
+                # of sample and none of it is the classifier memorising the rows
+                # it is about to grade
+                XG = np.vstack(list(cbuf))
+                XH = LH[rng.choice(len(LH), min(len(XG), len(LH)),
+                                   replace=False)]
+                critic.fit(np.vstack([XG, XH]),
+                           np.concatenate([np.ones(len(XG)),
+                                           np.zeros(len(XH))]))
+                if a.critic_kind == "forest":
+                    # a forest has no decision_function. The log odds is the
+                    # same quantity the logistic returns, and the clip only
+                    # bites where every tree agrees, which is where the weight
+                    # was going to be clamped by --clip-w anyway
+                    p = np.clip(critic.predict_proba(lz)[:, 1], 1e-4, 1 - 1e-4)
+                    d = np.log(p / (1 - p))
+                else:
+                    d = critic.decision_function(lz)
+                w = torch.tensor(d, dtype=torch.float32)
+                loss_feat = float(w.mean())
+            cbuf.append(lz)
+            grad_z = None
+        elif a.objective == "energy":
             ht = ZH_t[torch.from_numpy(
                 rng.choice(len(ZH_t), min(a.energy_m, len(ZH_t)), replace=False))]
+            # the generated side of the statistic, which is the batch itself plus
+            # the rows the last zbuf_steps - 1 steps produced. Those rows carry no
+            # gradient and never did: they only estimate the expectation over a
+            # second independent draw. With zbuf_steps 1 zpool is zt and every
+            # line below is the arithmetic the first three arms ran.
+            zbuf.append(zt)
+            zpool = torch.cat(list(zbuf), 0) if len(zbuf) > 1 else zt
             d_zh = torch.cdist(zt, ht)
-            d_zz = torch.cdist(zt, zt)
+            d_zz = torch.cdist(zt, zpool)
             # the human to human term is constant in the model, so it is dropped
             # from the reported loss as well to keep the two comparable in sign
             loss_feat = float(2 * d_zh.mean() - d_zz.mean())
-            # partial derivative of the statistic with respect to including
-            # trajectory i, which is the score function coefficient for a V
-            # statistic. z_i appears twice in the generated double sum
-            w = 2 * d_zh.mean(1) - (2.0 / len(zt)) * d_zz.sum(1)
+            # partial derivative of the population statistic with respect to the
+            # law of trajectory i. The 2 on the second term is the symmetry of
+            # E||Z - Z'||, not double counting inside one batch, so it survives
+            # when the second draw is estimated from a larger pool
+            w = 2 * d_zh.mean(1) - (2.0 / zpool.shape[0]) * d_zz.sum(1)
+            grad_z = (energy_grad(zt, ht, zpool) if a.credit == "token"
+                      else None)
         else:
             m = zt.mean(0)
             sdev = zt.std(0).clamp(min=1e-4)
@@ -452,16 +791,42 @@ def main():
             c = zt - m
             w = (2 * m * c
                  + (torch.log(sdev) / sdev ** 2) * (c ** 2 - sdev ** 2)).sum(1)
-        w = (w - w.mean()) / w.std().clamp(min=1e-6)
-        w = w.clamp(-a.clip_w, a.clip_w).to(dev)
+            grad_z = moment_grad(zt) if a.credit == "token" else None
 
+        if a.credit == "token":
+            # A is a weight per position rather than per row. Normalising it
+            # over the live positions rather than over the rows is the one place
+            # the two credit modes are not the same computation: a per token
+            # weight has to be scaled by the spread of per token weights.
+            A, livem = token_advantage(w.numpy(), grad_z[:, dcols].numpy(),
+                                       sd_dec, cred, s.shape[1])
+            fin = A[livem]
+            A = (A - fin.mean()) / max(fin.std(), 1e-6)
+            wt = torch.tensor(np.clip(A, -a.clip_w, a.clip_w),
+                              dtype=torch.float32, device=dev)
+        else:
+            w = (w - w.mean()) / w.std().clamp(min=1e-6)
+            wt = w.clamp(-a.clip_w, a.clip_w).to(dev)
+
+        opt.zero_grad(set_to_none=True)
         ki = torch.tensor(keep, device=dev)
-        logp = token_logprob(model, s[ki], th[ki], dt[ki], cond[ki], a.amp)
-        surrogate = (w * logp).mean()
+        lp_pos, lp_n = token_logprob_pos(model, s[ki], th[ki], dt[ki],
+                                         cond[ki], a.amp)
+        # with a per row weight these are the same expression, because the row
+        # weight factors straight out of the sum over positions
+        surrogate = (((wt * lp_pos).sum(1) if a.credit == "token"
+                      else wt * lp_pos.sum(1)) / lp_n).mean()
+        # The surrogate is backed off before the anchor graph is built. Both are
+        # a full width teacher forced forward at this batch size, and holding
+        # two of them alive at once does not fit in 8 GB now that the buffer is
+        # 256 wide rather than 160. Gradients accumulate, so the update is the
+        # same one the single combined backward produced.
+        scaler.scale(surrogate).backward()
+        del lp_pos, lp_n, surrogate, s, th, dt, ki
 
         arows = np.sort(train_rows[rng.choice(len(train_rows), a.batch,
                                               replace=False)])
-        ah, akept = load_human(arows, a.cap, s2a, dtha, dta, lens, cond_all)
+        ah, akept = load_human(arows, cap, s2a, dtha, dta, lens, cond_all)
         if len(ah) >= 8:
             L = max(len(r[0]) for r in ah)
             AS = torch.full((len(ah), L), S_PAD_CLASS, dtype=torch.long)
@@ -475,12 +840,12 @@ def main():
                                             dtype=np.float32)).to(dev)
             nll = anchor_nll(model, (AS.to(dev), ATH.to(dev), ADT.to(dev)),
                              acond, a.amp)
+            scaler.scale(a.lam * nll).backward()
+            nll_v = float(nll.detach())
+            del nll
         else:
-            nll = torch.zeros((), device=dev)
+            nll_v = 0.0
 
-        loss = surrogate + a.lam * nll
-        opt.zero_grad(set_to_none=True)
-        scaler.scale(loss).backward()
         scaler.unscale_(opt)
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         scaler.step(opt)
@@ -488,17 +853,27 @@ def main():
 
         if step % 10 == 0 or step == 1:
             print(f"  step {step:>4}  featloss {loss_feat:8.3f}  "
-                  f"nll {float(nll.detach()):6.3f}  n {len(keep):>3}  "
+                  f"nll {nll_v:6.3f}  n {len(keep):>3}  "
                   f"{tnow}C  {(time.time() - t0) / step:5.1f} s/step",
                   flush=True)
         hist["steps"].append({"step": step, "feat_loss": loss_feat,
-                              "nll": float(nll.detach()), "n": int(len(keep)),
+                              "nll": nll_v, "n": int(len(keep)),
                               "temp_c": tnow})
 
         if step % a.eval_every == 0:
             hist["evals"].append(evaluate(f"step{step}"))
             with open(out_json, "w") as f:
                 json.dump(hist, f, indent=2)
+            # the pilot lost 160 of its 250 steps to a thermal kill and left no
+            # checkpoint behind. Saving at each eval means the file on disk is
+            # always the state the last eval row describes. Both earlier arms
+            # scored best at step 100 and then got worse, and neither left that
+            # state recoverable, so each eval now also keeps its own copy.
+            torch.save({"config": ck["config"],
+                        "model_state_dict": model.state_dict()}, out_ckpt)
+            torch.save({"config": ck["config"],
+                        "model_state_dict": model.state_dict()},
+                       out_ckpt.replace(".pt", f"_step{step}.pt"))
 
     if not hist["evals"] or hist["evals"][-1]["tag"] == "base":
         hist["evals"].append(evaluate("final"))
@@ -521,8 +896,8 @@ def main():
                        "improve_held": imp_h, "held_over_trained": ratio,
                        "runaway_spread": runaway,
                        "collapse_flag_vs_reference": bool(e["collapse"]),
-                       "peak_temp_c": peak,
-                       "cooldown_min": round(cooled_s / 60, 1),
+                       "peak_temp_c": therm["peak"],
+                       "cooldown_min": round(therm["cooled_s"] / 60, 1),
                        "wall_min": round((time.time() - t0) / 60, 1)}
     hist["summary"]["verdict"] = (
         "GOODHART" if imp_t > 0.02 and ratio < 0.5 else
@@ -538,7 +913,7 @@ def main():
           f"{e['spread_err_trained']:.4f}, held {b['spread_err_held']:.4f} -> "
           f"{e['spread_err_held']:.4f}, held over trained {ratio:.2f}")
     print(f"  runaway spread vs corpus {runaway or 'none'}")
-    print(f"  VERDICT {hist['summary']['verdict']}   peak {peak}C   "
+    print(f"  VERDICT {hist['summary']['verdict']}   peak {therm['peak']}C   "
           f"{hist['summary']['cooldown_min']} min cooling of "
           f"{hist['summary']['wall_min']} min\n")
 

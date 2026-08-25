@@ -1,0 +1,117 @@
+{
+  "mean_velocity": {
+    "between_over_total": 0.09764598290531998,
+    "between_vs_blockmean_noise": 0.9558352650348524,
+    "iqr_model_over_corpus": 1.0659185162815177,
+    "iqr_model_over_grpo": 1.0307569441844118
+  },
+  "std_velocity": {
+    "between_over_total": 0.0855535997531337,
+    "between_vs_blockmean_noise": 0.9492683516786214,
+    "iqr_model_over_corpus": 1.0421708248977846,
+    "iqr_model_over_grpo": 0.972383819761279
+  },
+  "max_velocity": {
+    "between_over_total": 0.07698403189957656,
+    "between_vs_blockmean_noise": 0.943442033349545,
+    "iqr_model_over_corpus": 1.1195109544346613,
+    "iqr_model_over_grpo": 1.0216166805263076
+  },
+  "velocity_skewness": {
+    "between_over_total": 0.10427549626777356,
+    "between_vs_blockmean_noise": 0.9588188238878934,
+    "iqr_model_over_corpus": 1.0383397659879139,
+    "iqr_model_over_grpo": 1.0044931596217466
+  },
+  "mean_acceleration": {
+    "between_over_total": 0.04066493584314191,
+    "between_vs_blockmean_noise": 0.8944895440795453,
+    "iqr_model_over_corpus": 0.8913995971430514,
+    "iqr_model_over_grpo": 0.895371591999235
+  },
+  "std_acceleration": {
+    "between_over_total": 0.07493250840120651,
+    "between_vs_blockmean_noise": 0.941861957069831,
+    "iqr_model_over_corpus": 1.1751973871476868,
+    "iqr_model_over_grpo": 1.0578126919072515
+  },
+  "max_acceleration": {
+    "between_over_total": 0.05952931972769143,
+    "between_vs_blockmean_noise": 0.9267907377733463,
+    "iqr_model_over_corpus": 1.2224518057342353,
+    "iqr_model_over_grpo": 1.0552344838147902
+  },
+  "mean_jerk": {
+    "between_over_total": 0.018989154756453578,
+    "between_vs_blockmean_noise": 0.7947178653298378,
+    "iqr_model_over_corpus": 1.0844280331723473,
+    "iqr_model_over_grpo": 1.015412210100518
+  },
+  "std_jerk": {
+    "between_over_total": 0.0805309098595211,
+    "between_vs_blockmean_noise": 0.9459950702155379,
+    "iqr_model_over_corpus": 1.205027883292872,
+    "iqr_model_over_grpo": 1.031271858743016
+  },
+  "path_efficiency": {
+    "between_over_total": 0.04683105652517106,
+    "between_vs_blockmean_noise": 0.9076331213192241,
+    "iqr_model_over_corpus": 1.3675138112023322,
+    "iqr_model_over_grpo": 1.3454647850830717
+  },
+  "max_deviation": {
+    "between_over_total": 0.04476031263168059,
+    "between_vs_blockmean_noise": 0.9035822601588788,
+    "iqr_model_over_corpus": 1.2921817201979915,
+    "iqr_model_over_grpo": 1.2506744049309102
+  },
+  "curvature_mean": {
+    "between_over_total": 0.04947426888001228,
+    "between_vs_blockmean_noise": 0.9123566187337425,
+    "iqr_model_over_corpus": 1.0785319980202426,
+    "iqr_model_over_grpo": 0.9626809034531807
+  },
+  "curvature_std": {
+    "between_over_total": 0.06134077876351337,
+    "between_vs_blockmean_noise": 0.9289261473649225,
+    "iqr_model_over_corpus": 1.176428972740831,
+    "iqr_model_over_grpo": 0.9803495700486753
+  },
+  "num_direction_changes": {
+    "between_over_total": 0.13400142543801566,
+    "between_vs_blockmean_noise": 0.9686984133779314,
+    "iqr_model_over_corpus": 1.0357142857142858,
+    "iqr_model_over_grpo": 1.0
+  },
+  "movement_duration": {
+    "between_over_total": 0.12449026506401914,
+    "between_vs_blockmean_noise": 0.9660307058242169,
+    "iqr_model_over_corpus": 1.0301204100968384,
+    "iqr_model_over_grpo": 1.0178566222880185
+  },
+  "time_to_peak_velocity": {
+    "between_over_total": 0.04620481646829695,
+    "between_vs_blockmean_noise": 0.9064425914880039,
+    "iqr_model_over_corpus": 1.1188348209920314,
+    "iqr_model_over_grpo": 1.1319475238377603
+  },
+  "angular_velocity_mean": {
+    "between_over_total": 0.15136142369924688,
+    "between_vs_blockmean_noise": 0.972730931930276,
+    "iqr_model_over_corpus": 1.009629236852605,
+    "iqr_model_over_grpo": 0.983148282868925
+  },
+  "angular_velocity_std": {
+    "between_over_total": 0.12241401362120723,
+    "between_vs_blockmean_noise": 0.9653954047632053,
+    "iqr_model_over_corpus": 0.9380399446838951,
+    "iqr_model_over_grpo": 0.9289312804447267
+  },
+  "_summary": {
+    "median_between_share": 0.07595827015039153,
+    "median_iqr_model_over_corpus": 1.081480015596295,
+    "median_iqr_model_over_grpo": 1.0166344161942682,
+    "block_rows": 200,
+    "n_blocks": 400
+  }
+}

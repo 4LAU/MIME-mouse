@@ -1,0 +1,42 @@
+{
+  "checkpoint": "research/w4_rollout_pilot_zbuf_step100.pt",
+  "half": 96,
+  "reps": 6,
+  "rows": [
+    {
+      "rep": 0,
+      "surrogate_cos": -0.5892863273620605,
+      "anchor_cos": -0.3594612777233124
+    },
+    {
+      "rep": 1,
+      "surrogate_cos": -0.11555381119251251,
+      "anchor_cos": -0.43960824608802795
+    },
+    {
+      "rep": 2,
+      "surrogate_cos": -0.5372989177703857,
+      "anchor_cos": -0.561546266078949
+    },
+    {
+      "rep": 3,
+      "surrogate_cos": -0.5382444262504578,
+      "anchor_cos": 0.8323279023170471
+    },
+    {
+      "rep": 4,
+      "surrogate_cos": 0.5326422452926636,
+      "anchor_cos": 0.2987801134586334
+    },
+    {
+      "rep": 5,
+      "surrogate_cos": -0.1093190461397171,
+      "anchor_cos": -0.7134166359901428
+    }
+  ],
+  "surrogate_mean": -0.22617671390374502,
+  "surrogate_sd": 0.4307507929579285,
+  "anchor_mean": -0.15715406835079193,
+  "anchor_sd": 0.5967612942616818,
+  "complete": true
+}

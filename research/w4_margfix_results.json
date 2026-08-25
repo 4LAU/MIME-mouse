@@ -1,0 +1,138 @@
+{
+ "config": {
+  "ckpt": "event_ar_hm_mlp.pt",
+  "n": 2000,
+  "seeds": [
+   0,
+   1
+  ],
+  "rounds": 4,
+  "lam": 1.0,
+  "temps": [
+   0.95,
+   0.9,
+   1.0
+  ]
+ },
+ "rounds": [
+  {
+   "round": 0,
+   "tv": [
+    0.03224271090319717,
+    0.02366687296797444,
+    0.029855421449979085
+   ],
+   "aucs": [
+    0.5954673750000001,
+    0.5971248750000001
+   ],
+   "mean": 0.5962961250000001,
+   "se": 0.0008287499999999891,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "mean_acceleration",
+    "mean_jerk",
+    "std_acceleration"
+   ]
+  },
+  {
+   "round": 1,
+   "tv": [
+    0.014390821061664926,
+    0.0130786002699305,
+    0.03030892872883633
+   ],
+   "aucs": [
+    0.59958025,
+    0.5928432499999999
+   ],
+   "mean": 0.5962117499999999,
+   "se": 0.0033685000000000516,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "max_velocity",
+    "mean_acceleration",
+    "mean_jerk",
+    "std_acceleration"
+   ]
+  },
+  {
+   "round": 2,
+   "tv": [
+    0.012826194484559784,
+    0.01184854289598233,
+    0.032885087595436666
+   ],
+   "aucs": [
+    0.60480225,
+    0.58631025
+   ],
+   "mean": 0.59555625,
+   "se": 0.009245999999999976,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "max_velocity",
+    "mean_acceleration",
+    "mean_jerk",
+    "std_acceleration"
+   ]
+  },
+  {
+   "round": 3,
+   "tv": [
+    0.013241025937577101,
+    0.010078742977261267,
+    0.01704173848281788
+   ],
+   "aucs": [
+    0.593249625,
+    0.58852575
+   ],
+   "mean": 0.5908876875,
+   "se": 0.002361937500000022,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "max_velocity",
+    "mean_acceleration",
+    "mean_jerk",
+    "std_acceleration",
+    "std_jerk"
+   ]
+  },
+  {
+   "round": 4,
+   "tv": [
+    0.012524944698404403,
+    0.009247704563511691,
+    0.01947906620297737
+   ],
+   "aucs": [
+    0.59743675,
+    0.5951595000000001
+   ],
+   "mean": 0.596298125,
+   "se": 0.0011386249999999487,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "max_velocity",
+    "mean_acceleration",
+    "mean_jerk",
+    "std_acceleration",
+    "std_jerk"
+   ]
+  }
+ ],
+ "primary": {
+  "baseline": 0.5962961250000001,
+  "best_round": 3,
+  "best": 0.5908876875,
+  "verdict": "DEAD",
+  "g1": true,
+  "g2": false
+ }
+}

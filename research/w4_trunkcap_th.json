@@ -1,0 +1,126 @@
+{
+  "ckpt": "event_ar_v2_s40000.pt",
+  "config": {
+    "ckpt": "event_ar_v2_s40000.pt",
+    "n": 60000,
+    "batch": 64,
+    "hidden": 512,
+    "epochs": 10,
+    "lr": 0.001,
+    "fit_batch": 4096,
+    "seed": 0,
+    "out": "research/w4_trunkcap_th.json",
+    "channels": "th",
+    "families": "A,B"
+  },
+  "n_bins": 8,
+  "families": {
+    "A": [
+      "s_prev",
+      "th_prev",
+      "dt_prev"
+    ],
+    "B": [
+      "s_prev",
+      "s_prev2"
+    ]
+  },
+  "n_tokens": 3195861,
+  "n_trajectories": 60000,
+  "channels": {
+    "th": {
+      "frozen": 1.1326194097570936,
+      "eval_loss": {
+        "R_depth": 1.1291731255014952,
+        "P_full": 0.8977291782431179,
+        "P_ctl": 1.0862790167557028,
+        "A_fullres": 1.1316828342867542,
+        "A_add": 1.1314549086256291,
+        "A_joint": 1.1316303554322258,
+        "A_shuf": 1.1316710750554364,
+        "B_add": 1.131444309985671,
+        "B_joint": 1.1315180578496933,
+        "B_shuf": 1.1315226709793798
+      },
+      "gain": {
+        "R_depth": 0.003446284255598453,
+        "P_full": 0.2348902315139757,
+        "P_ctl": 0.04634039300139081,
+        "A_fullres": 0.0009365754703394291,
+        "A_add": 0.0011645011314644904,
+        "A_joint": 0.000989054324867844,
+        "A_shuf": 0.0009483347016572274,
+        "B_add": 0.0011750997714226052,
+        "B_joint": 0.0011013519074003497,
+        "B_shuf": 0.0010967387777138793
+      },
+      "contrasts": {
+        "A_joint_residue": {
+          "mean": -0.00017544732862679935,
+          "se": 3.6593217840894466e-05,
+          "clusters": 15101
+        },
+        "A_joint_vs_shuf": {
+          "mean": 4.072796976292685e-05,
+          "se": 4.482149765446964e-05,
+          "clusters": 15101
+        },
+        "A_marginal_residue": {
+          "mean": -0.0022817794795530187,
+          "se": 0.00013365757311282645,
+          "clusters": 15101
+        },
+        "B_joint_residue": {
+          "mean": -7.37571993534264e-05,
+          "se": 3.641610763099146e-05,
+          "clusters": 15101
+        },
+        "B_joint_vs_shuf": {
+          "mean": 4.605898872242102e-06,
+          "se": 3.600830807285473e-05,
+          "clusters": 15101
+        },
+        "B_marginal_residue": {
+          "mean": -0.002271175270180152,
+          "se": 0.00013393584924766274,
+          "clusters": 15101
+        }
+      },
+      "n_eval_tokens": 718165
+    }
+  },
+  "summary": {
+    "A": {
+      "joint_residue": -0.00017544732862679935,
+      "joint_residue_se": 3.6593217840894466e-05,
+      "joint_vs_shuf": 4.072796976292685e-05,
+      "joint_vs_shuf_se": 4.482149765446964e-05,
+      "marginal_residue": -0.0022817794795530187,
+      "marginal_residue_se": 0.00013365757311282645,
+      "taken": -0.00017544732862679935,
+      "taken_se": 3.6593217840894466e-05,
+      "shuf_gain": 0.0009483347016572274
+    },
+    "B": {
+      "joint_residue": -7.37571993534264e-05,
+      "joint_residue_se": 3.641610763099146e-05,
+      "joint_vs_shuf": 4.605898872242102e-06,
+      "joint_vs_shuf_se": 3.600830807285473e-05,
+      "marginal_residue": -0.002271175270180152,
+      "marginal_residue_se": 0.00013393584924766274,
+      "taken": -7.37571993534264e-05,
+      "taken_se": 3.641610763099146e-05,
+      "shuf_gain": 0.0010967387777138793
+    }
+  },
+  "best_family": "B",
+  "positive_control": 0.2348902315139757,
+  "positive_control_binned": 0.04634039300139081,
+  "coarsening_keep_fraction": 0.1972853136663268,
+  "taken_nats_full_res_equivalent": -0.00037386056763542803,
+  "taken_nats": -7.37571993534264e-05,
+  "predicted_auc": -4.963859516485597e-06,
+  "verdict": "NOT THE BOTTLENECK at -0.0001 nats. The frozen trunk already carries the cross step joint structure these corrections could add. Read the registered limitation: x comes from a trunk trained WITH this input structure, so it had every incentive to precompute what it needed, which biases this against finding a residue. The residue is small GIVEN a trunk fitted to this input; that does not exclude a jointly trained model with a different input structure doing better. This is a null about the trunk, not a null about cross step dependence.",
+  "peak_c": 78,
+  "elapsed_s": 287.4
+}

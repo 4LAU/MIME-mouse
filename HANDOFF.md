@@ -13553,3 +13553,5817 @@ The last line is the important one. A trained checkpoint is not as stable as the
 base it came from, so the base's figure must not be borrowed for it. Any
 comparison between two evaluations needs at least two sampler draws on each side,
 and this workstream has quoted single draw numbers throughout.
+
+## The energy objective on the clock it was trained for, registered 2026-08-10 before it ran
+
+The first energy arm trained and evaluated at a buffer width of 160 while the
+model was trained at 256, so every trajectory in it was generated under a clock
+running about 1.6 times fast. That is worth 0.0444 on the base checkpoint at 7.4
+sampler draw standard deviations. This arm repeats it with the width read off
+the checkpoint, twice as many steps, and two sampler draws per evaluation.
+
+### What changed in research/w4_rollout.py
+
+The `--cap` flag is gone. The buffer width is now `ck["config"]["max_seq_len"]`,
+and the human reference is truncated to the same width, so a command line can no
+longer put the two sides of the comparison on different clocks. A flag is how
+this went wrong and removing it is the fix.
+
+`--eval-draws` defaults to 2. A single draw of 2500 rows carries sd 0.0141 on a
+trained checkpoint. The first arm read its base off the highest of five draws and
+its endpoint off the lowest of three, which inflated its headline threefold.
+
+Two incidental repairs that the width change forced. The surrogate is now backed
+off before the anchor graph is built, because two full width teacher forced
+passes at batch 96 no longer fit in 8 GB side by side at 256; gradients
+accumulate so the update is unchanged. And the thermal gate, which only ever
+covered the training loop, now covers the evaluation loop too. Two draws of 2500
+rows at width 256 is twenty minutes of continuous sampling and is the hottest
+part of the run, which the first launch of this arm demonstrated by reaching 74C
+inside its base evaluation with nothing watching.
+
+### Configuration
+
+    600 steps, batch 96, lr 1e-5, lambda 1.0, energy_m 512, seed 17
+    evaluation every 100 steps, 2500 commands, 2 sampler draws averaged
+    buffer width 256, from training/event_ar_v2_s40000.pt
+
+One trajectory per command. No selection and no best of, at any point.
+
+### Prediction, fixed before the run
+
+The clock corrected arm passes rung B of the gap ladder, 0.5826, measured at the
+same width. The first arm reached 0.5990 from a base of 0.6301 while training on
+distorted trajectories, and 0.5990 sits between rung A at 0.6061 and rung B. The
+reasoning is that the objective is a statement about the joint distribution of
+the eighteen features, so its ceiling is the corpus floor at 0.5455, and the
+first arm was still falling at step 300 with no plateau.
+
+### Falsifier
+
+Ends at or above 0.5990. That would say the fast clock was incidental, the arm
+found its ceiling near rung A, and an objective that reaches all orders is not
+in practice reaching past the second one.
+
+### Also gated, unchanged from the first arm
+
+    GOODHART   trained spread error improves by more than 0.02 while the six
+               held out features take less than half of that improvement
+    runaway    any feature's spread ratio against the corpus outside [0.5, 2.0]
+
+The held out six never enter the loss. In the first arm they improved slightly
+faster than the trained twelve, 72 percent against 65 percent of their starting
+error, which is the opposite of what an objective finding a shortcut would show.
+
+### Result, 2026-08-11. The prediction failed, the falsifier is met, and the clock defect did not confound the arm.
+
+Stopped at step 300 of the registered 600, at an evaluation boundary, by L, under
+the standing rule against unsupervised overnight GPU work. The stop was time
+based and the rule that produced it was fixed at step 100, before any post base
+number existed. Step 300 is also exactly where the first energy arm ended, so the
+truncation happens to give the cleanest comparison available rather than a
+degraded one.
+
+```
+                          base    step100   step200   step300
+  detector               0.6290    0.5986    0.6088    0.5997
+  second detector        0.6418    0.6186    0.6147    0.6262
+  spread error, trained  0.3487    0.1174    0.1643    0.1397
+  spread error, held out 0.1622    0.0652    0.1074    0.0887
+
+  two draws per evaluation, both shown
+    base     0.6236  0.6344        step200  0.6177  0.5999
+    step100  0.5971  0.6000        step300  0.6073  0.5921
+```
+
+THE COMPARISON THIS ARM EXISTED TO MAKE
+
+```
+                        base      step300     fall
+  fast clock, 160     0.6301      0.5990    0.0311     re-measured at width 256
+  correct clock, 256  0.6290      0.5997    0.0294     this arm
+```
+
+The two are the same run to within 0.0007, which is a ninth of one standard
+deviation on a two draw evaluation. The sampling clock defect is real, it is
+worth 0.0444 at 7.4 standard deviations on an untrained checkpoint, and it made
+no difference at all to what this objective converges to. Training absorbed it.
+That is worth saying plainly because the opposite was predicted here in writing,
+and because it retires the worry that every rollout arm's endpoint needs
+re-measuring. Their bases do. Their endpoints do not.
+
+THE OBJECTIVE HAS A CEILING AND REACHES IT BY STEP 100
+
+The three post base evaluations are 0.5986, 0.6088 and 0.5997. A two draw mean
+carries a standard deviation of about 0.0075 at this size, from the draw spreads
+above, so those three numbers are one to one and a half standard deviations
+apart and are consistent with a flat level near 0.602 with no trend. The
+argument used to justify running 600 steps, that the first arm was still falling
+at step 300, does not survive: this one falls 0.030 in its first hundred steps
+and then sits still. More steps are not the lever, and the 600 step run would
+almost certainly have returned the same number three hours later.
+
+Against the gap ladder that means the energy objective lands at 0.599, just past
+rung A at 0.6061 where every marginal is perfectly matched, and nowhere near
+rung B at 0.5826 where the correlations are matched too. The registered
+prediction was rung B. It failed.
+
+VERDICT GOODHART ON THE REGISTERED GATE
+
+The trained twelve improved their spread error by 0.209 and the held out six by
+0.0735, a ratio of 0.352 against a 0.5 bar. The gate fires and the verdict stands.
+
+The argument against the gate, which is post hoc and therefore does not change
+the verdict: as a fraction of where each group started, the held out six took 45
+percent of their error and the trained twelve 60 percent, which is not the
+signature of an objective that has found a shortcut. A shortcut shows the held
+out six flat or worsening. The first arm passed the same gate at 0.638 from a
+base whose held out error was 0.1942 against 0.1622 here, so the six started
+closer to correct and had less to give. The gate is a ratio of absolute
+improvements and is therefore sensitive to the starting level. If a better formed
+gate is wanted it has to be registered in advance and passed, not argued for
+after a failure. Until then this arm is GOODHART.
+
+No feature ran away. Every spread ratio against the corpus stayed inside
+[0.5, 2.0].
+
+WHAT THIS LEAVES
+
+The objective reaches all orders in principle and in practice reaches barely past
+the first. The reason is in the estimator rather than the statistic. One scalar
+per trajectory multiplies the average log probability over roughly 250 tokens, so
+every token gets identical credit, which can move average behaviour and cannot
+move which token in which context. That is registered as the next arm, along with
+the finding from `research/w4_credit_check.py` that per token attribution tracks
+the real per token effect at a correlation of 0.9806 for the differential
+features and fails outright for the two that read absolute geometry.
+
+One thing from that check belongs here rather than only there. A one class speed
+edit changes the eighteen features not at all in most trajectories, because the
+decoder rounds positions to whole pixels and snaps slow steps. It took a six
+class edit to move them in two thirds of rows. Whatever steers this model has to
+move it further than one lattice cell before the contract can see it, which is
+the same wall the feature conditioning arm hit from the other side when it could
+not be steered on fine texture.
+
+Artifacts: `research/w4_rollout_clock.json`, `research/w4_rollout_pilot_clock.pt`,
+`research/w4_credit_check.py`. Ledger row
+`w4_rollout_clock_2026-08-11T074952+0000_8136b9a6`, status killed.
+
+## Per token credit for the rollout objective, registered 2026-08-11 before it ran
+
+The energy arm falls 0.030 in its first hundred steps, lands at 0.5997 just past
+the rung where the eighteen marginals are matched, and then sits flat for two
+hundred more. The estimator explains that. Its surrogate is
+
+    (w_i * mean_t logp_it).mean()
+
+one scalar for a trajectory of roughly 250 tokens, so every token gets identical
+credit. That is REINFORCE with no return decomposition. It can move what the
+model does on average and it cannot move which token in which context, which is
+the dependence the gap ladder says survives matching all eighteen marginals.
+
+### What is added
+
+research/w4_credit.py splits the same weight over the tokens and applies the
+standard reward to go reduction. The split is
+
+    w_i = sum_t v_it + r_i,     v_it = sum_k g_ik c_ikt / sd_k
+
+with g_ik the derivative of w_i with respect to standardised feature k, held
+constant, and c_ikt the contribution of resampled interval t to feature k. Each
+interval maps to the token whose decoded segment covers it, by a searchsorted on
+the decoded path's timestamps.
+
+r_i is measured, not assumed. It is w_i minus the attributed total, so it
+absorbs the three trained features that do not split, the standardisation
+offset, and the first order error, and it is applied to every token exactly as
+the old weight was. Where the split is empty the whole thing collapses to the
+old estimator, which is the check that keeps the two arms comparable.
+
+Nine of the twelve trained features split. Three do not and stay in the
+remainder: max_velocity is a max, and path_efficiency and max_deviation read
+absolute geometry, which a rigid downstream shift moves and per token credit
+would get wrong. That caveat was found while registering task 12, not after a
+result.
+
+The objective, the rollout, the anchor, the held out six and the sampling width
+are all unchanged.
+
+### Checked before running, all four
+
+    the mirror reproduces esp._decode                   0 of 244 corpus rows
+                                                        disagree, and 0 of 31
+                                                        generated rows
+    the split sums back to the feature                  max abs error 3e-8,
+                                                        over 204 trajectories
+                                                        and nine features
+    an empty split reproduces the old surrogate         identical to 3e-17
+    the hand derived gradients match autograd           3e-16 energy, exact
+                                                        for moments
+
+A fifth check, not required but worth recording. The decode path was rewritten so
+features and credit terms come out of one loop. The old pair could silently
+misalign, because extract_feature_matrix drops rows whose features are not finite
+without saying which and the caller intersected afterwards. On 3849 corpus rows
+it dropped none, so the arms already run are not affected, and the new path
+returns a bit identical feature matrix.
+
+### Configuration
+
+    300 steps, batch 96, lr 1e-5, lambda 1.0, energy_m 512, seed 17
+    evaluation every 100 steps, 2500 commands, 2 sampler draws averaged
+    buffer width 256, from training/event_ar_v2_s40000.pt
+    --objective energy --credit token
+
+One trajectory per command. No selection and no best of, at any point.
+
+### Two deviations from task 12 as registered, both fixed here before the run
+
+Task 12 said 600 steps. This runs 300. The scalar arm converged by step 100 and
+its three post base evaluations sit within one and a half standard deviations of
+each other, so the second three hundred steps bought nothing and 300 is where the
+comparison against it is exact.
+
+Task 12 said to raise energy_m from 512 to the full 3865 as a free variance
+reduction. It stays at 512. Raising it would reduce noise in the weight as well
+as in the split, so a null result could not be told apart from the sample size
+question, and the sample size question is what the falsifier already names as
+the next move. One variable at a time.
+
+### Prediction, fixed before the run
+
+Passes rung B of the gap ladder, 0.5826, at step 300. The reasoning is that the
+ladder's residual is dependence, dependence is what per token credit can address,
+and the scalar estimator's plateau at 0.5997 is what an estimator blind to
+ordering would produce.
+
+### Falsifier
+
+Ends no better than 0.5997 at step 300, which is the scalar estimator's number at
+the same step count on the same clock. That would say the binding constraint is
+the 96 sample estimate of a twelve dimensional distribution distance rather than
+credit assignment, and the next move is to decouple the statistic's sample size
+from the backward pass batch by accumulating several rollouts before computing
+the weights.
+
+### Also gated, unchanged from both earlier arms
+
+    GOODHART   trained spread error improves by more than 0.02 while the six
+               held out features take less than half of that improvement
+    runaway    any feature's spread ratio against the corpus outside [0.5, 2.0]
+
+### Locality of the split, measured 2026-08-11 while the arm was running, before its first result
+
+This should have been run before the launch and was not. It is recorded here
+while the arm is between its base and its step 100 evaluation, so it cannot have
+been shaped by the outcome.
+
+w4_credit_check tested one feature against one kind of edit. The estimator credits
+nine features and both speed and timing tokens. Perturbing one token by six speed
+classes on 421 corpus trajectories, and asking whether the change in each feature
+lands on the intervals credited to that token:
+
+    feature                     corr     slope    rows
+    mean_velocity             0.9612    1.0691     288
+    std_velocity              0.9654    1.2552     289
+    std_acceleration          0.7258    2.0501     289
+    std_jerk                  0.6411    3.2724     289
+    angular_velocity_mean     0.2003    1.2394     259
+    curvature_mean           -0.0035    1.0500     278
+    mean_acceleration        -0.0261    0.0015     125
+    mean_jerk                -0.2938   -0.0206     263
+    movement_duration            none moved, which is correct: a speed
+                                 edit changes no timestamp
+
+Timing tokens could not be measured this way at all. Of 483 attempts, 481 changed
+the number of resampled points, because a dt edit moves every later timestamp and
+the 125 Hz grid is laid down between the first and last of them. The registration
+said timing holds "only approximately". It is worse than that: a timing edit
+reshapes the grid rather than perturbing it, and finite differences cannot reach
+the question.
+
+WHAT THIS DOES AND DOES NOT MEAN
+
+It does not touch unbiasedness. The split sums to the weight exactly, each piece
+is a function of tokens up to its own position, and reward to go is unbiased for
+any such split. A poor split fails to reduce variance; it does not bias anything.
+
+For four of the nine the table is also the wrong test, and noticing that is the
+main thing to carry forward. mean_acceleration and mean_jerk are telescoping
+sums: the mean of a difference collapses to the endpoints. So no single interval
+carries their value, and the correlation above is near zero exactly as it must
+be. But the estimator never uses a single interval. It uses the suffix sum, and
+the suffix sum of a telescoping series is (speed at the end minus speed here),
+which is a perfectly sensible thing to credit a token with. The same argument
+covers curvature_mean and angular_velocity_mean, whose suffix sums are total
+curvature and total turning from here on.
+
+So the honest reading is narrower than the table looks. Two features are
+confirmed to localise. Two more localise with a scale error of two to three,
+which reweights their share of the credit and is a real defect. Four are
+untested rather than failed, because the test built for a mean does not apply to
+a telescoping mean. Timing is untestable by this route entirely.
+
+The arm was left running. Changing the design on a diagnostic that does not
+challenge correctness, after the base evaluation is already on disk, would cost
+the comparison and buy nothing that a second arm cannot buy properly. The
+follow up, if per token credit shows any signal at all, is a suffix sum test
+built for telescoping features rather than a single interval one, and a split
+restricted to whatever passes it.
+
+### Result, 2026-08-11. Falsified. Credit assignment was not the constraint.
+
+Ran to its registered 300 steps. 142.8 minutes, 22.5 of them cooling, peak 76C
+against a 79C abort. Protected checkpoint md5 unchanged.
+
+```
+                          base    step100   step200   step300
+  detector               0.6311    0.5954    0.6150    0.6093
+  second detector        0.6502    0.6112    0.6252    0.6226
+  spread error, trained  0.3637    0.1633    0.1129    0.2213
+  spread error, held out 0.1424    0.0753    0.0656    0.0973
+
+  the scalar arm, same clock, same step counts
+  detector               0.6290    0.5986    0.6088    0.5997
+```
+
+The registered prediction was rung B, 0.5826. It reached 0.6093. FAILED.
+
+The registered falsifier was "ends no better than 0.5997 at step 300". It ended
+at 0.6093, which is worse. MET, and not marginally: the two draws behind it were
+0.6139 and 0.6048, so the whole interval sits above the scalar arm's number.
+
+Verdict GOODHART on the registered gate. The trained twelve improved their spread
+error by 0.142 and the held out six by 0.045, a ratio of 0.317 against a 0.5 bar.
+No feature ran away.
+
+The estimator itself is not in doubt. It reproduces the old one exactly when its
+split is emptied, its decomposition sums to the feature to machine precision, its
+two gradients match autograd, and its token index mirror agreed with the served
+decoder on every one of 96 generated rows. What was tested was whether per token
+credit buys anything on this objective, and the answer is no.
+
+BOTH ARMS PEAK AT STEP 100 AND GET WORSE AFTER
+
+This is the finding worth more than either headline.
+
+```
+                base    step100   step200   step300
+  scalar       0.6290    0.5986    0.6088    0.5997
+  per token    0.6311    0.5954    0.6150    0.6093
+```
+
+Two arms, two estimators, same shape. All the movement happens in the first
+hundred steps, the best reading is at step 100 in both, and everything after is
+sideways or backwards. The moments objective did the same thing in ninety steps.
+Three objectives out of three stop at 0.595 to 0.60 and then stop improving.
+
+Between step 100 and step 200 the per token arm improved its spread error on the
+trained twelve from 0.1633 to 0.1129 AND on the held out six from 0.0753 to
+0.0656, and the detector went from 0.5954 to 0.6150. Better on every feature
+group, worse on the thing the features are supposed to be a proxy for. The scalar
+arm's rise at the same point does NOT have this character: its spread error got
+worse over the same interval, so the two rises are separate events. Comparing
+which features moved, the correlation between the arms is +0.07, which is
+nothing.
+
+So the objective and the score can move in opposite directions while feature
+matching is genuinely improving. Either the eighteen features stop being the
+thing the detector reads once the obvious gaps are closed, or an energy distance
+estimated on 96 generated rows in twelve dimensions is not measuring what its
+population version measures.
+
+THE SECOND READING FAVOURS THE SAMPLE SIZE, AND IT IS TESTABLE
+
+The gap ladder says matching all eighteen marginals is worth 0.0298 and the
+correlation matrix another 0.0235. Every arm so far lands right where marginals
+alone would put it and no further. An energy distance sees all orders in its
+population form. With 96 samples in twelve dimensions it does not: the first two
+moments are estimable from 96 rows and the higher order structure is not, so the
+statistic in practice is a moment matcher wearing a more ambitious name. That
+predicts exactly what three arms have shown.
+
+That is the registered falsifier's own stated implication and it is the next arm.
+
+A SIDE OBSERVATION, SUGGESTIVE NOT ESTABLISHED
+
+Repeat sampler draws from the per token arm agree far more closely than from the
+scalar arm: mean gap between paired draws 0.0047 against 0.0117, over four
+evaluations each, which is a two and a half fold difference in the standard
+deviation. An F test on those eight numbers gives about 0.06, so this is worth
+noticing and not worth believing yet. If it holds, per token credit makes the
+model's output more self consistent even though it does not make it more human,
+which would be a real effect and a strange one.
+
+## A larger sample for the statistic, registered 2026-08-11 before it ran
+
+Three arms have now stopped between 0.595 and 0.60, which is past the rung where
+the eighteen marginals are matched and well short of the rung where the
+correlations are. The per token arm was built to test whether credit assignment
+was the constraint. It was not. Its own falsifier named the next suspect, and
+this is it.
+
+The energy distance sees dependence of every order in its population form. The
+arm computes it from 96 generated rows against 512 human rows, in twelve
+dimensions. Ninety six rows are enough to pin down means and spreads and not much
+else, so the statistic in practice has been a moment matcher with a more
+ambitious name. That is exactly the behaviour three arms have shown.
+
+### What changes
+
+One thing, the number of samples the statistic is computed from. Nothing about
+the model, the rollout, the surrogate, the anchor, the learning rate or the batch
+that carries the gradient.
+
+    generated side   the batch plus the rows the last seven steps produced,
+                     768 rows instead of 96. Those rows carry no gradient and
+                     never did. They only estimate the expectation over a
+                     second independent draw, which is the term the statistic
+                     needs and the batch was estimating badly.
+    human side       all 3865 reference rows instead of a fresh 512 row
+                     subsample every step.
+
+The human side counts as the same change, not a second one. The reference set is
+fixed and sits in memory. Drawing 512 of it per step added noise and bought
+nothing, and leaving it at 512 while the generated side went to 768 would just
+move which side is the smaller one. The resolution of a two sample statistic is
+governed by the smaller sample, so testing the sample size hypothesis means
+raising the side that binds, which is both of them in turn.
+
+The generated pool is off policy by up to seven steps. At 1e-5 and a hundred step
+convergence that is about seven percent of the timescale, and it is the price of
+the test. It is also why the buffer is seven steps deep and not fifty.
+
+### Checked before running, all four
+
+    zbuf_steps 1 reproduces the old expression       bit identical, difference
+                                                     exactly zero
+    duplicating the pool changes nothing             2e-6, float32 noise
+    energy_grad with no pool equals energy_grad      difference exactly zero,
+    with the batch as its pool                       and the pooled form matches
+                                                     autograd to 7e-6
+    the pooled weight is closer to the truth         mean abs error against a
+                                                     40000 row answer falls from
+                                                     0.121 to 0.050, a factor of
+                                                     2.4 where sampling noise
+                                                     alone predicts 2.8
+
+The shortfall in that last ratio is expected and is not a defect. The current
+batch is always in its own pool, so an eighth of the pool does not average down.
+
+The reported feat_loss is not comparable in level to the three earlier arms,
+because the generated term is now averaged over the pool. Its trend within this
+run is comparable. The detector score, which is what decides anything, is
+unaffected.
+
+### Configuration
+
+    300 steps, batch 96, lr 1e-5, lambda 1.0, seed 17
+    energy_m 4000 which clamps to all 3865, zbuf_steps 8
+    evaluation every 100 steps, 2500 commands, 2 sampler draws averaged
+    buffer width 256, from training/event_ar_v2_s40000.pt
+    --objective energy --credit trajectory
+
+Seed 17 and 300 steps as both earlier arms, so the commands and the first
+rollout are shared and the comparison is paired. Credit goes back to one scalar
+per trajectory, because per token credit was falsified and one variable moves
+at a time.
+
+Each evaluation now also writes its own checkpoint. Both earlier arms scored best
+at step 100 and got worse after, and neither left that state recoverable.
+
+### Prediction, fixed before the run
+
+Two, from the same theory.
+
+Reaches 0.5826 or better, rung B of the gap ladder, at its best evaluation. The
+reasoning is that rung B is what matching the correlation structure is worth, a
+sample of 768 against 3865 can resolve a twelve dimensional covariance where 96
+against 512 cannot, and every arm so far has landed where marginals alone would
+put it.
+
+The rise after step 100 goes away. If that rise is overfitting to a noisy
+statistic, a statistic estimated eight times better should not produce it, and
+step 300 should be at or below step 100 rather than 0.010 to 0.020 above it.
+
+### Falsifier
+
+No evaluation beats 0.5954, which is the best reading any arm has produced. That
+would say the sample size is not the constraint either, and that the plateau just
+below 0.60 belongs to the model class or to the twelve features rather than to
+the estimator. The next move would then be to stop improving the estimator and
+ask what the detector reads that the eighteen features do not carry, which is a
+different kind of experiment.
+
+### Also gated, unchanged from all three earlier arms
+
+    GOODHART   trained spread error improves by more than 0.02 while the six
+               held out features take less than half of that improvement
+    runaway    any feature's spread ratio against the corpus outside [0.5, 2.0]
+
+### What order is the residual dependence? Measured 2026-08-11, during the buffered arm and before its first result
+
+Three arms stopped between 0.595 and 0.60. The gap ladder said what marginals
+and correlations are worth in general. This asks what they are worth on a
+generated sample, and then asks the question that actually chooses the next
+objective: how many features at a time does the leak need?
+
+A generated sample was transported onto the corpus. Every marginal was replaced
+by the corpus value at the same quantile, then the rank correlation matrix was
+matched through a Gaussian copula. The transport was fitted on 200000 corpus
+rows and never on the scorer's reference, so it is not fitted to the test.
+
+    rung 0   the sample as generated                        0.6677
+    rung A   marginals exact                                0.6147
+    rung B   plus the rank correlation matrix exact         0.5933
+    floor    corpus rows, which is what real humans read     0.5116
+
+The control that makes this readable: corpus rows put through the identical
+transport come out at 0.4988 to 0.5086 against 0.5116 raw. The machinery does no
+damage and reaches the floor on real data. Whatever separates rung B from the
+floor is the generated sample's own dependence.
+
+THE ORDER OF THE RESIDUAL, WHICH IS THE PART THAT DECIDES ANYTHING
+
+The detector was refitted on random subsets of k features. Corpus rows are the
+control in every column.
+
+      k      rung 0    rung B    corpus    rung B over corpus
+      1      0.5082    0.5035    0.5049       -0.0014
+      2      0.5332    0.4995    0.4987       +0.0009
+      3      0.5583    0.5195    0.5025       +0.0169
+      4      0.5762    0.5449    0.4952       +0.0497
+      6      0.6077    0.5537    0.5096       +0.0442
+      9      0.6301    0.5643    0.5174       +0.0469
+     12      0.6429    0.5765    0.5070       +0.0695
+     18      0.6677    0.5933    0.5116       +0.0817
+
+At one feature there is nothing, which is the transport working. At TWO features
+there is still nothing, 0.4995 against a corpus control of 0.4987. All 153 pairs
+scored individually average 0.5040 against the corpus 0.4984, and the worst
+single pair reaches 0.5380.
+
+The excess appears at three features and grows all the way to eighteen without
+flattening.
+
+So the entire remaining gap, about 0.08 of AUC, lives in dependence among three
+or more features at once and is invisible to any two of them. The generated
+trajectories are correct on every axis taken alone and correct on every pair, and
+wrong as a combination.
+
+WHAT THIS RULES OUT
+
+Every objective this workstream has run reads means, spreads and pairwise
+distances. On this evidence none of them can see the residual, no matter how long
+they train or how well their credit is assigned. That is a better explanation of
+three arms stopping in the same place than anything specific to any of the three,
+and it was arrived at without using any of their results.
+
+It also rules out the shape of task 9. Attacking a named feature cannot work when
+no feature and no pair carries the signal. The feature importances at rung B are
+flat, 0.047 to 0.072 across all eighteen, the same shape the corpus control has.
+
+It bears against the buffered arm's own registered prediction, and this is
+written down while that arm is still running. A larger sample does let an energy
+distance see higher orders in principle, since the statistic is characteristic,
+but three way structure in twelve dimensions is a great deal to ask of 768
+samples. If the arm lands short, this measurement is why, and it was on record
+first.
+
+TWO THINGS THAT DID NOT SURVIVE CHECKING
+
+The 256 token cap is not a truncation. The corpus itself tops out at 256 tokens
+and its 99th percentile is 214, so nothing is being cut off and the cap is not
+costing anything.
+
+An attempt to build rung B with exact PEARSON correlations rather than exact rank
+correlations failed and its number is discarded. Iterating the latent correlation
+against the Pearson residual did not converge, left residuals up to 0.23, and
+damaged the corpus control as badly as the generated sample. Pearson on these
+marginals is tail dominated and the iteration is unstable. The rank version
+stands on its own control and is what is reported above.
+
+CAVEAT ON THE SAMPLE
+
+The generated rows are research/w4_ar_features.npy, which reads 0.6677 where the
+current base reads 0.6311, so it is an older and worse checkpoint. The rung
+levels therefore belong to that sample and should not be compared to any arm's
+absolute number. The k curve is a shape rather than a level and the corpus
+control runs alongside it in every column, so the ordering conclusion does not
+depend on which checkpoint produced the rows. Repeating it on the current base
+and on a trained checkpoint is the first thing to do when the GPU is free.
+
+### How much data the residual needs, measured the same afternoon
+
+The order result says what the residual is. This says how much of a sample it
+takes to see it, and it turns out to explain the plateau on its own.
+
+Rows per class given to the detector, against the same corpus control:
+
+    rows      rung 0    rung B    corpus    rung B over corpus
+      48      0.5381    0.4341    0.4974       -0.0633
+      96      0.5643    0.5061    0.5185       -0.0124
+     192      0.5879    0.5143    0.4928       +0.0215
+     384      0.6294    0.5375    0.5217       +0.0158
+     768      0.6387    0.5542    0.5035       +0.0506
+    1536      0.6638    0.5872    0.5131       +0.0740
+    2000      0.6686    0.6055    0.5140       +0.0915
+
+Read the 96 row line, because 96 is the batch every arm has used. At 96 rows the
+rung 0 gap is plainly visible, 0.5643 against a control of 0.5185. At the same 96
+rows the rung B residual is not visible at all, 0.5061 against 0.5185, which is
+if anything the wrong side of the control.
+
+That is the plateau, quantified. A statistic estimated from 96 rows can see the
+marginal and correlation gap and closes it, and is blind to what is left. Three
+arms fell about 0.035 and stopped, which is roughly what rung 0 to rung B is
+worth, and none of them could have gone further no matter how they assigned
+credit. It also explains why per token credit changed nothing: the credit was
+being split more finely over a signal that had already run out.
+
+The residual is still growing at 2000 rows and has not flattened.
+
+WHAT THIS PREDICTS FOR THE ARM THAT IS RUNNING
+
+The buffered arm estimates its statistic from 768 generated rows. At 768 rows a
+detector recovers about 0.051 of the 0.092 it recovers at 2000, so a bit over
+half. On that reading the arm should move, and should not arrive. This is written
+before its first evaluation.
+
+WHAT IT MEANS FOR A LEARNED CRITIC
+
+A critic is the natural instrument for structure of this order, and this says
+what it would need. Trained on one step's 96 rollouts it would see nothing, which
+is a plausible part of why the GRPO pilot's critic ran away: a critic that cannot
+see the real residual will happily find something else and win against it. A
+critic here has to train on a pooled buffer of at least one to two thousand
+generated rows, and its learning rate has to be slow enough that it is reading
+the buffer rather than the last step.
+
+### A hypothesis for the three way residual, tested and rejected the same afternoon
+
+There is an obvious mechanism for a residual that is invisible on any axis and
+any pair and appears only when many features are read together. Real trajectories
+come from people, and a person is consistent, so the eighteen features of one
+human trajectory are close to a function of a command and a few style
+quantities, and the human cloud is a thin sheet inside eighteen dimensions. A
+model that samples one token at a time with no per trajectory style variable can
+drift within a trajectory, and would fill the volume the sheet sits in.
+
+If that were the mechanism the generated cloud would be fatter and would occupy
+more dimensions. Measured in the space where marginals and rank correlations are
+already matched, whitened by the corpus so no sample is measured in its own
+coordinates:
+
+    sample               median 5th neighbour   intrinsic dimension
+    generated rung B                   2.9573                 12.29
+    generated raw                      2.9459                 12.27
+    corpus                             2.9822                 12.76
+    corpus again                       3.0061                 11.58
+    scorer reference                   3.0159                 11.81
+
+Rejected. The generated cloud is not fatter, it is marginally TIGHTER, and its
+intrinsic dimension sits inside the range two corpus samples give each other,
+11.58 to 12.76. Adding a per trajectory style latent would not fix this, at
+least not by the route the argument proposed.
+
+The residual is real and it is not a resolution artefact. The nearest neighbour
+two sample statistic, which is nonparametric and reads structure of any order,
+gives the share of each point's neighbours that come from its own sample:
+
+    generated rung B    0.5455
+    generated raw       0.5635
+    corpus              0.5182
+    corpus again        0.5234
+
+Two human samples sit at 0.518 and 0.523. The transported generated sample sits
+at 0.5455, which is about 0.025 of genuine excess after marginals and
+correlations are exact.
+
+So the cloud has the right width, the right tilt and the right thickness, and it
+is still in the wrong place in a way that takes three or more features at once to
+see. Nothing measured so far names what that is.
+
+### The objective every arm has minimised cannot represent the remaining gap. Proven 2026-08-11
+
+Four arms have now stopped in the same place, between 0.595 and 0.60. Scalar
+credit, per token credit, a fixed sampling clock, and a larger statistic. The
+usual reading of a plateau is that the signal is too weak or the credit too
+coarse. It is neither. The objective is blind.
+
+The residual left after marginals and rank correlations are matched needs three
+or more features at once to see. The energy distance sums distances between rows,
+and a distance is dominated by the directions in which rows differ most, which
+are exactly the low order directions already matched. So the question is whether
+the remaining component is drowned or absent from the statistic altogether.
+
+Two attempts to expose it failed. Whitening by the corpus correlation matrix,
+which equalises all eighteen directions and multiplies the narrowest by four
+hundred, moved the transported sample's separation from 0.10 to 0.20 standard
+deviations at a 96 row batch. Enlarging the generated sample did nothing either:
+
+    generated rows      as generated     marginals and correlations matched
+        96                     1.98                          -0.34
+       192                     3.71                           0.43
+       384                     4.26                          -0.70
+       768                     6.41                          -0.16
+      1536                    10.94                          -1.19
+
+The number is how far a generated batch's energy distance to a human pool sits
+above a corpus batch's, in units of its own batch to batch noise. The part every
+arm already closes grows with rows exactly as it should. The part no arm has
+moved is flat at zero and never emerges.
+
+That could still have been an artefact of the transport, which was fitted to
+match the corpus marginals and might have handed the transported sample an
+advantage on precisely the structure the energy distance measures. So the
+alternative was built rather than found. Take corpus rows, learn each feature's
+value given the other seventeen, and permute those residuals across rows. The
+feature keeps its distribution and its correlations and loses its agreement with
+the rest of its own trajectory:
+
+    curvature_mean mean 1212.8995 before and after, sd 6493.33 to 6496.60
+    largest change in any of the 153 pairwise correlations   0.0010
+
+Both instruments then face a difference of known kind, on rows neither was fitted
+to, at 768 generated rows against a 2000 row human pool:
+
+    sample                        forest auc   over null   energy separation
+    untouched corpus                  0.5051      +0.0000               -0.15
+    curvature scrambled               0.6122      +0.1071               -0.16
+    mean_acceleration scrambled       0.6300      +0.1249               -0.12
+    angular_velocity_mean scrambled   0.5183      +0.0131               -0.15
+    all three scrambled               0.7152      +0.2101                0.15
+
+A difference that moves the forest by 0.21 of AUC leaves the energy distance
+indistinguishable from an untouched control. For scale, the generated sample's
+low order gap is worth about 0.155 of forest AUC and reads 6.41 on the same
+instrument at the same batch size. Comparable size, forty times the response.
+
+So the plateau is not a tuning problem and it is not a credit problem. Roughly
+half the gap is invisible to the loss, and every arm has been minimising a
+quantity that is already near its floor on the half it can see. This also closes
+the per token credit result properly: splitting credit more finely over a signal
+that has run out cannot help, and did not.
+
+Two things follow. The buffered arm running while this was measured has its
+premise voided, recorded here before its first evaluation past base: at 768 rows
+it reads -0.61 on the component that matters. Expect it to work the low order
+part and stop where the others did. And the next arm cannot be another way of
+minimising the same statistic.
+
+### A space where the defect is first order, measured 2026-08-11
+
+If the statistic cannot see the defect in the space it is computed in, change the
+space rather than the statistic. Two measurements say which space.
+
+First, what the defect actually is. Learn every feature's value given the other
+seventeen on corpus rows, then look at the residual for each sample. Fitted on
+corpus and applied to the transported generated sample, three features stand out
+after marginals and rank correlations are already exact:
+
+    feature                  auc of the residual   corpus   corpus again
+    curvature_mean                        0.5284   0.4900         0.4799
+    mean_acceleration                     0.5272   0.4998         0.4939
+    angular_velocity_mean                 0.5076   0.4843         0.4717
+
+Their medians sit at zero and their residuals are two and a half to three times
+as wide as the corpus's. The model is not shifted, it is scattered: given
+everything else about a movement, its curvature and its mean acceleration are all
+over the place where a person's are pinned.
+
+That is not the model failing to keep a trajectory together. Fitted and tested
+inside each sample at matched size, the other seventeen features explain just as
+much of each feature for generated rows as for human ones, and for several
+features slightly more:
+
+    feature                  generated   corpus   corpus again   reference
+    curvature_mean               0.984    0.979          0.987       0.986
+    mean_acceleration            0.538    0.494          0.529       0.456
+    max_deviation                0.901    0.862          0.862       0.866
+
+So a generated trajectory is internally consistent. It obeys a tight rule. The
+rule is the wrong one, and that is why a corpus fitted predictor mispredicts it so
+widely while its own predictor does fine.
+
+A wrong rule with a tight scatter is a width difference in residual space, and a
+width difference is first order, which is the one thing the energy distance is
+good at. It is invisible in the raw space only because the residual directions
+carry under two percent of the variance there. Mapping each row through the
+frozen corpus rules and putting the eighteen residuals alongside the eighteen
+features:
+
+    sample                     features only   residuals only   both
+    generated as generated              7.19             7.31   9.81
+    generated, low order matched       -0.61             3.55   2.18
+    curvature scrambled                -0.28             5.48   4.31
+    mean_acceleration scrambled        -0.09             2.29   1.13
+    untouched corpus                   -0.28            -0.21  -0.27
+
+The control is clean in all three spaces. Everything else the raw space cannot
+see becomes visible. Concatenating both is better than features alone on the low
+order part as well, 9.81 against 7.19, so it is not a trade.
+
+One prediction here was wrong and the reason is worth keeping. The scrambled
+samples were included expecting the residual space would NOT flag them, since
+permuting a residual preserves its own distribution exactly. It flags them
+strongly. The map is joint, not per feature: changing one feature changes what
+the other seventeen predict, so a broken relationship shows up in every residual
+coordinate at once. That makes the map a better instrument than the argument for
+it assumed.
+
+The batch size still matters, and it decides the arm:
+
+    generated rows      features only      both
+        48                      -0.31      0.21
+        96                      -0.42      0.24
+       192                       0.08      1.24
+       384                      -0.51      1.18
+       768                      -0.61      2.18
+      1536                      -0.08      5.56
+
+Nothing usable below about 768, and the signal only becomes comfortable at 1536.
+Note also that a linear version of this map is just whitening, which was measured
+above and does not work. The nonlinearity is the whole of it.
+
+## The residual space arm, registered 2026-08-11 before it ran
+
+The first arm in this file that is not another way of minimising the same
+statistic. Four arms have stopped between 0.595 and 0.60, and the scrambling
+experiment above shows why: the energy distance cannot represent the part of the
+gap that is left, so more rows, finer credit and a fixed clock were all working
+on a component already near its floor.
+
+What changes. The energy distance is computed in twenty four columns instead of
+twelve: the twelve standardised trained features as before, and beside them the
+twelve conditional residuals from `research/w4_resmap.joblib`, weighted by four.
+The map learns each trained feature given the other eleven trained features on
+corpus rows and is then frozen. Nothing else moves. Scalar credit, because per
+token credit indexes the trained twelve by position and was separately shown not
+to be the constraint.
+
+    --resmap research/w4_resmap.joblib --resmap-weight 4 --zbuf-steps 16
+
+Both numbers come from measurement rather than taste. The weight was swept on a
+fixed sample and four is the knee, keeping 93 percent of the new signal for 91
+percent of the old. Sixteen steps of buffer is 1536 generated rows, because the
+new component reads 0.23 of separation at 768 rows and 1.73 at 1536.
+
+Checks run before launch.
+
+    the map is fitted on corpus rows only, never on the scorer's reference
+    every conditional is a trained feature given the other eleven trained ones,
+      so the held out six stay out of the objective
+    149 ms per 96 row batch against a 22000 ms step
+    both sides finite, twenty four columns each
+    the residual block is wider on generated rows than human, 3.772 to 2.991,
+      which is the defect the arm exists to move
+    the per sample weight orders rows differently from the plain arm, rank
+      correlation 0.442, so the map is not a relabelling of what was there
+    the weight is standardised to zero mean and unit sd before clipping, so the
+      2.8 times larger spread does not change what lam and clip-w mean
+
+Two predictions, because the interesting one is about the mechanism rather than
+the deliverable.
+
+  mechanism   at its best evaluation the generated sample's reading with
+              marginals and rank correlations already matched falls below 0.585,
+              from about 0.593. That is the component no arm has moved, and it is
+              the only thing this arm is built to move.
+
+  deliverable the best evaluation beats 0.5954, which is the best reading any arm
+              has produced.
+
+Falsifier: no evaluation beats 0.5954 AND the transported reading does not fall
+below 0.590. If the transported reading moves and the contract does not, the
+mechanism is right and the arm is underpowered, which is a different and more
+useful failure than the four before it.
+
+### An attempt to price the residual objective, discarded 2026-08-11
+
+Before spending a GPU run on the residual space arm it would be worth knowing
+what perfect success is worth on the contract. An objective can be sensitive to a
+real difference and still be aimed somewhere that does not move the deliverable.
+
+The attempt: the residual map is not invertible, but for one feature at a time
+the definition rearranges. The residual is the value minus what the other eleven
+predict, over a scale, so the value implying a chosen residual is the prediction
+plus the scale times that residual. Replace each of the three worst features with
+the value a corpus residual would have produced at the same quantile, and score.
+
+It does not work and the numbers are not evidence about anything.
+
+    transported generated, before any repair            0.5958
+    repair curvature_mean, corpus residuals             0.9792
+    repair curvature_mean, own residuals permuted       0.9959
+    corpus rows, the floor                              0.5005
+
+The repair makes the sample four times easier to detect, and the control that
+should have been inert does the same. Both are the construction failing rather
+than a result. Holding the prediction fixed and shrinking the residual to corpus
+width shrinks the feature itself: curvature_mean's sd falls from 10310 to 6060.
+The edit satisfies the residual block by destroying the marginal. A second defect
+in the same construction, found by an identity check that should have been in it
+from the start: the map clips residuals at eight scales, so the reconstruction
+does not reproduce the original value even when the residual is left alone, with
+a worst error of 1.15e5 on curvature_mean.
+
+The question is still open and the honest position is that it is unanswered. A
+valid repair has to fix the conditional structure while holding the marginal,
+which is the inverse problem the map does not have a solution to.
+
+What the failure does say, and it is worth carrying into the arm, is that the
+feature block and the residual block pull against each other, and there exist
+samples that satisfy the residual block enormously while wrecking the contract.
+That is a Goodhart channel. Two things stand against it. The feature block is in
+the same objective, and at the chosen weight it is still the larger term by far,
+9.19 of separation against 1.73. And the evaluation already prints the trained
+and held out spread error and a collapse flag every hundred steps, so a marginal
+collapse is visible as it happens rather than at the end. Watch them.
+
+### The held out six are not independent axes. Measured 2026-08-11
+
+Checking whether the residual map smuggles the held out features into the loss
+turned up something larger, and it applies to every arm in this file rather than
+to that map.
+
+The residual columns are clean. Asked how much of each held out feature is
+recoverable on corpus rows, from the trained twelve alone and then from the
+trained twelve plus the twelve residuals:
+
+    held out feature          from the twelve   plus the residuals    added
+    max_acceleration                    0.924                0.924   +0.000
+    velocity_skewness                   0.870                0.861   -0.008
+    curvature_std                       0.999                0.999   +0.000
+    num_direction_changes               0.905                0.908   +0.003
+    time_to_peak_velocity               0.381                0.383   +0.002
+    angular_velocity_std                0.904                0.913   +0.009
+
+Nothing over 0.009. The map adds no leak.
+
+The first column is the finding. Five of the six held out features are already
+near determined by the twelve the loss optimises, curvature_std to 0.999. Only
+time_to_peak_velocity, at 0.381, is genuinely its own axis.
+
+So the held out read is not the independent generalisation check the design
+language around it implies, and it never was. An arm that moves the trained
+twelve toward the corpus moves five of the six held out features with it more or
+less mechanically, and a good held out number is close to guaranteed rather than
+earned. Every arm in this file that pointed at its held out spread error as
+evidence of generalisation was leaning on this.
+
+The read is not worthless, and the distinction matters for what to do with it.
+The recoverability above is measured on corpus rows, where the features are
+mutually consistent because they come from one real movement. A generated row
+only inherits it if the model has learned the same relationships, which is
+exactly what the rest of this afternoon says it has not. So the held out spread
+error does test something real: whether generated rows honour the human
+relationships between features. It just does not test what it was being read as,
+which was whether an arm generalises to feature axes it never optimised.
+
+Two consequences. Keep reading it, as a check on relationships rather than on
+generalisation. And when a genuinely independent axis is wanted,
+time_to_peak_velocity is the only one of the six that qualifies, which is thin
+enough that any claim resting on it should say so.
+
+### Is the defect in the model's own output space? Looked, 2026-08-11, not settled
+
+Everything else measured this afternoon lives in the eighteen summary features.
+That is where the contract scores, so it is the right place to read a result and
+the wrong place to look for a cause. The model emits events, each a speed, a turn
+and a time step, and every feature is a function of those.
+
+The hypothesis worth testing: curvature is turn per unit of path length, so a
+turn distribution that is wrong given the speed being emitted alongside would be
+a plain low order error one level down showing up as a high order error one level
+up. That is the pattern on record, and if true the fix is a property of the model
+rather than a new loss.
+
+Read on the 1500 generated and 1500 real streams cached on 2026-08-06. A forest
+on single events, against a real to real control computed the same way:
+
+    columns                      generated   real against real
+    speed only                      0.5531              0.4991
+    turn only                       0.5477              0.4924
+    time step only                  0.6812              0.4904
+    speed and time step             0.6974              0.4987
+    speed and turn                  0.5526              0.4909
+    all three                       0.6931              0.4930
+
+And the turn given the speed and the time step, learned on real events:
+
+    sample            residual sd    median   auc against real
+    generated               1.046    -0.433             0.6361
+    real                    1.000    -0.433
+    real again              0.990    -0.433             0.4973
+
+The turn hypothesis is not supported. The turn conditional is nearly right: its
+residual is 4.6 percent wider than a real one where the feature space showed 51
+to 98 percent. Speed and turn are each off by about 0.055 over their control and
+together by 0.062, so those two errors mostly overlap rather than adding.
+
+The one large signal is the time step, at 0.6812 against a 0.4904 control, and it
+dominates everything it is combined with. It cannot be read. This cache predates
+the sampling clock fix, which is a defect in exactly that stream, so the honest
+statement is that the biggest token level number sits on the one axis this cache
+is untrustworthy for.
+
+So: the architecture hypothesis is not supported for the turn, and the time step
+is unresolved and worth a fresh cache. Nothing here changes the residual space
+arm, which is aimed at the feature space where the contract is scored.
+
+### The residual space arm was falsified before it ran. 2026-08-11
+
+The arm registered earlier today is withdrawn. It was built on a separation that
+does not exist, and the error was mine, in the denominator.
+
+The claim was that after a generated sample is transported to corpus marginals
+and corpus rank correlations, the conditional residual space still separates it
+from corpus at 1.08 of batch noise at 768 rows and 2.33 at 1536, where the plain
+feature space separates it at zero. The residual map, the joblib artifact and the
+two rollout flags were all built on that pair of numbers.
+
+The numbers came from drawing repeated subsets out of one fixed generated sample
+and one fixed corpus sample and calling the spread of those draws the noise. At
+1536 rows out of a 2499 row cache, consecutive draws share about two thirds of
+their rows, so that spread measures how much a sample jitters when it is
+resampled, not how much two independent samples differ. It is the same mistake
+that invalidates bootstrapping an out of bag two sample test, which is already on
+record in this file, applied to the energy distance instead of to the forest.
+
+Redone against forty disjoint corpus blocks of the same size, drawn from rows
+that are in no pool and no fit set:
+
+    rows    feat rungB   resid rungB   both rungB   resid raw
+     256         -1.47         -0.16        -0.35        11.33
+     512         -1.54         -0.42        -0.55        26.07
+    1024         -0.96         -0.12        -0.21        22.14
+    2048         -0.31          1.82         1.79        43.20
+
+A fixed effect read by an energy distance grows like the square root of the
+batch, which is a doubling every fourfold increase. The last column does that.
+The residual column does not. It sits at zero for three sizes and jumps once at
+2048, where the null has the fewest blocks and the sample uses 82 percent of the
+generated cache. At 1536 rows against forty blocks it reads 0.56 with 29 of the
+40 blocks below it, which is a p near 0.28.
+
+So the residual space separates the raw generated sample, which the plain feature
+space already does at 40 null sd, and reads nothing on the part of the gap the
+four plateaued arms could not reach. It is not a fix.
+
+What survives. The diagnosis is untouched and if anything was understated. The
+controlled scramble that proved the energy distance is blind used the forest for
+its signal and only needed the energy readings to be near zero, and a denominator
+that is too small can only make a near zero reading look larger. The finding that
+a +0.21 AUC difference is invisible to the loss stands.
+
+What does not survive. research/w4_resmap.py, research/w4_resmap.joblib and the
+two --resmap flags in w4_rollout.py are dead weight. They are left in place
+because the map is a correct implementation of a conditional residual map and
+the next person may want one for diagnosis, but nothing should be trained on it.
+The registered prediction, that the arm would beat 0.5954, is recorded as
+withdrawn rather than tested.
+
+The cost was about three hours of an authorised window and no GPU time, because
+the pre-run checks caught nothing and the arithmetic error was upstream of all of
+them. Every pre-run check passed on an artifact aimed at noise. The lesson is
+narrow and worth keeping: a check that the plumbing works is not a check that the
+signal is there, and the separation statistic used all session needs a disjoint
+block null every time it is quoted.
+
+### Why five arms stopped in the same place. Measured 2026-08-11
+
+The plateau has a cause and it is not the optimiser, the credit assignment, the
+learning rate or the batch size. The objective runs out of finite sample power at
+almost exactly the point every arm stops.
+
+The rollout's own docstring says the energy distance is zero only if two
+distributions are equal at every order, so it has no ceiling. That is true of the
+population statistic. The arm computes a sample statistic on a batch, and a
+distance based two sample test in twelve to twenty four dimensions spreads its
+power over every direction at once. Against a difference that lives in a few
+directions it is beaten badly by a test that concentrates, which is the ordinary
+reason classifier based two sample tests outperform distance based ones in
+moderate dimension.
+
+The test. Take the generated sample and transport it to corpus marginals and
+corpus rank correlations. That sample scores 0.5885 through the contract against
+a 0.5163 corpus floor, so roughly where the five arms have stopped, and every
+low order difference has been removed by hand. Calibrate each candidate against
+forty disjoint corpus blocks of 1536 rows. The raw generated sample is carried
+alongside as a sanity column.
+
+    statistic         null mean   null sd   rungB sd   below    raw sd
+    energy               0.0002    0.0012      -0.46   16 /40      40.3
+    mmd g=0.25m         -0.0000    0.0001       0.45   27 /40      48.0
+    mmd g=0.5m           0.0000    0.0002      -0.04   20 /40      50.3
+    mmd g=1m             0.0000    0.0002      -0.41   13 /40      43.8
+    mmd g=2m             0.0000    0.0002      -0.51   14 /40      37.4
+    mmd g=4m             0.0000    0.0001      -0.52   13 /40      34.6
+    quad energy          0.0013    0.0027      -0.48   16 /40      24.7
+    quad mmd             0.0000    0.0001      -0.06   22 /40      23.5
+    sliced               2.7344    0.6493       0.15   26 /40      10.4
+    linear critic        0.4953    0.0130       1.42   38 /40      10.3
+    forest               0.4953    0.0119       3.47   40 /40      10.6
+
+No distance statistic sees it. Not the energy distance, not a gaussian mmd at any
+of five bandwidths around the median heuristic, not the energy distance on the
+twelve features plus all seventy eight pairwise products, and not the largest of
+256 fixed random projections. Every one of them sits inside a corpus null.
+
+Both classifiers see it. A logistic regression on the quadratic lift, trained on
+half the batch and read on the other half, clears 38 of 40 blocks. The contract's
+own forest clears all 40 at 3.47.
+
+The raw column is the other half of the finding and explains the shape of every
+training curve on file. The distances read the low order gap at 25 to 50 null sd
+where the classifiers read it at about 10. The two families have opposite power
+profiles. That is why the energy arms fell fast from 0.63 to 0.60 in under a
+hundred steps and then stopped dead: they were descending the part of the gap
+their statistic could see, and they emptied it.
+
+This reframes the whole file. The four arm plateau at 0.595 to 0.60, the fact
+that per token credit changed nothing, the fact that a wider buffer changed
+nothing, and the blindness the scramble control proved directly are one
+phenomenon measured four ways. Nothing that keeps a fixed distance statistic on a
+fixed feature map will move past it, which rules out the remaining tuning ideas
+as a class rather than one at a time.
+
+The consequence for the design. w4_rollout's docstring gives a reason for
+preferring a fixed statistic: the 2026-07 learned critic reached 0.94 by round
+eight and outran the generator, and a fixed statistic cannot do that. The reason
+was sound and the conclusion no longer follows, because the same table supplies
+the bound that prevents it. A logistic regression at C 0.05 on ninety lifted
+columns reads the raw gap at 10.3 null sd against the energy distance's 40.3. It
+is a deliberately weak classifier. It cannot sprint to 0.94 because it does not
+have the capacity to, and it is the weakest thing measured that still sees what
+is left.
+
+That is the arm that runs next, as --objective critic. The critic is refitted
+every step on the last sixteen steps of generated rows against the human pool and
+scores the current batch before that batch is added to its training buffer, so
+every weight is out of sample. Everything else is unchanged: same rollout, same
+teacher forced anchor, same advantage normalisation, same trained twelve, the
+held out six still absent from the objective.
+
+## The critic arm, registered 2026-08-11 before it ran
+
+Written before launch so the result cannot be read backwards, and because the
+arm this replaces was registered the same way and that is what made its failure
+legible rather than arguable.
+
+What it is. --objective critic. A logistic regression at C 0.05 on the twelve
+trained features plus all seventy eight pairwise products, each clipped at four
+sd before squaring because mean_acceleration reaches 158 sd on corpus rows and
+its square would otherwise own the statistic. The critic is refitted every step
+on the last sixteen steps of generated rows against an equal draw from the human
+pool, and it scores the current batch before that batch enters its buffer, so
+every weight is out of sample. The weight on a row is its logit, which is the
+derivative of the mean logit with respect to including that row, so the sign
+convention and the advantage normalisation are the ones every previous arm used
+and --clip-w stays at its usual 5.0.
+
+Why, in one line. No distance statistic can see the part of the gap that is left
+and a weak classifier can, measured against forty disjoint corpus blocks in the
+section above.
+
+Why it will not repeat the 2026-07 critic failure. That critic reached 0.94 by
+round eight and outran the generator. This one is capacity limited on purpose,
+and the limit is measured rather than hoped for: it reads the raw low order gap
+at 10.3 null sd where the energy distance reads it at 40.3. Replayed offline on
+generated batches of 96 with the real buffer schedule, its out of sample accuracy
+goes 0.603, 0.652, 0.668, 0.697 over forty steps and flattens. On corpus batches
+through the identical loop its mean logit sits between -0.034 and 0.012, which is
+the null behaving.
+
+The prediction. Best evaluation beats 0.5954, which is the best reading any of
+the five arms produced, and reaches 0.585 or better. The second number is the
+one that matters: 0.5885 is what a generated sample scores once its marginals and
+rank correlations are set to corpus exactly, so it is the level no fixed distance
+statistic can push past. An arm that goes below it has done something none of the
+others could.
+
+The falsifier. No evaluation beats 0.5954. If that happens with the critic's
+accuracy behaving as replayed, then the power measurement was right about what
+the statistic can see and wrong about it being followable as a training signal,
+and the next move is a stronger critic with a slower update rather than a
+different family again.
+
+The Goodhart risk, and how it will be caught. A classifier reward can be gamed in
+a way a distance cannot. The generator may find a direction that fools a logistic
+regression on a quadratic lift while making the contract worse, and the honest
+signature of that is the contract AUC rising while the mean logit falls. Watched
+at every evaluation: spread err trained, spread err held, and the collapse flag.
+The held out six are the check that cannot be gamed by construction, because
+nothing in the objective has ever seen them.
+
+Cost. 200 steps at about 26 s/step plus four evaluations, finishing inside the
+authorised window with margin.
+
+### The buffered statistic arm, result 2026-08-11
+
+Registered claim: a larger generated sample in the energy distance reaches 0.5826
+or better, and the rise after step 100 that the two previous arms showed goes
+away. Falsifier: no evaluation beats 0.5954, the best reading any arm has
+produced.
+
+    EVAL base     rf 0.6290   gbm 0.6418   spread err trained 0.3487  held 0.1622
+    EVAL step100  rf 0.5972   gbm 0.6121   spread err trained 0.2190  held 0.1091
+    EVAL step200  rf 0.5995   gbm 0.6144   spread err trained 0.1654  held 0.0618
+
+Falsified on the number. The best evaluation is 0.5972 against a falsifier set at
+0.5954, and 0.5826 was never approached. Stopped after step 200 rather than run
+to 300, because the arm's remaining question was answered and the card was needed.
+
+The mechanism claim is supported, which is the part worth keeping. The rise after
+step 100 is +0.0023 here against +0.0102 for the clock arm and +0.0196 for the
+per token arm, and the two draws at step 200 differ by 0.0009, so what is left of
+the rise is inside the noise. Widening the generated side of the statistic from
+one batch to eight did stop the drift. It just did not buy any descent, because
+by step 100 there was nothing left for the statistic to descend.
+
+The whole set, in the order they ran:
+
+    plain   base=0.6682  0.6141  0.6301
+    clock   base=0.6290  0.5986  0.6088  0.5997
+    cont    base=0.6364  0.6303  0.6225  0.6271  0.6281
+    energy  base=0.6812  0.6193  0.6219  0.6033  0.5949
+    token   base=0.6311  0.5954  0.6150  0.6093
+    zbuf    base=0.6290  0.5972  0.5995
+
+Six arms, starting between 0.629 and 0.681, all landing between 0.595 and 0.63.
+
+The reading that matters is not in the auc column. The spread error falls
+monotonically on both the trained twelve and the held out six, 0.3487 to 0.2190
+to 0.1654 and 0.1622 to 0.1091 to 0.0618, while the contract auc sits flat within
+noise. The objective is still working. It is closing the moments it can see, and
+it keeps closing them right through a hundred steps in which the number the
+contract reports does not move. That is the same finding the power measurement
+made directly, arriving from the opposite direction: what the energy distance can
+still fix is no longer what the contract is scoring.
+
+It also disposes of the last tuning hypothesis on the list. A noisier statistic
+was a plausible reason for the post step 100 drift, and it was the real reason,
+and fixing it changed nothing that matters. Nothing else about the sample size,
+the credit assignment or the buffer is worth another arm.
+
+### Amendment to the critic arm registration, before launch
+
+Two changes to what was registered above, both made before the run started.
+
+It starts from the plateau, not from base. The init is the zbuf checkpoint that
+evaluated at 0.5972 rather than event_ar_v2_s40000. Every arm so far started from
+base and spent its first hundred steps re descending a low order gap that is
+already known to close, and the critic is the worst of the six at that part: it
+reads the raw gap at 10.3 null sd where the energy distance reads it at 40.3.
+The hypothesis is about what happens after a distance objective has taken the
+model as far as it can, so the experiment should start where those objectives
+stopped. All 200 steps then go to the question.
+
+This costs the pairing with the five arms at base and buys a sharper read. The
+starting point is a measured 0.5972 rather than a shared 0.6290, which is a
+cleaner reference than pairing was.
+
+What a null result will and will not mean. At the plateau the energy distance has
+no signal left at all, measured at -0.46 null sd, so the comparison is not 1.42
+against 40.3 but 1.42 against nothing. The critic is the only objective on file
+with any information at this starting point. But 1.42 null sd per batch is a
+modest signal, and the learning rate stays at 1e-5 for comparability with the
+lineage this checkpoint came from. The energy arms moved about 0.03 in a hundred
+steps at that rate while their signal was strong. A weaker signal over 200 steps
+may move only 0.01, which is at the edge of what two evaluation draws can
+resolve, since the draw noise is about 0.010.
+
+So the falsifier above is kept but its reading is qualified. If no evaluation
+beats 0.5954 and the trajectory is flat, that is ambiguous between no followable
+signal and a real signal too small to show at this learning rate in this many
+steps, and the next run should raise the rate rather than abandon the family. If
+the trajectory moves down monotonically across base, 100 and 200 without any
+single step clearing noise, the trend is the result. If the contract gets worse
+while the mean logit falls, that is the Goodhart signature and the family is
+wrong, which is the one outcome that would settle it against the critic.
+
+Length. 150 steps rather than 200. Each evaluation on this machine takes about
+fifteen minutes rather than the ten assumed when the arm was sized, which is
+readable from the step 100 checkpoint's timestamp against the run's start. At 200
+steps the final evaluation would land near 08:46 against a window that ends at
+09:00 and a thermal rule that can require a cooldown at any point. 150 steps
+finishes near 08:25 and leaves that margin. Evaluations at base, 100 and 150.
+
+The live diagnostic. featloss now prints the mean critic logit on the batch the
+critic has not been fitted on. Falling means the generator is beating the critic.
+Rising means the critic is outrunning the generator, which is how the 2026-07
+critic failed, and it is visible every ten steps rather than only at an
+evaluation.
+
+### Second amendment. The critic is a forest, switched before any result was seen
+
+The arm was launched with the logistic critic at 06:32 and restarted with a
+forest critic at 06:36, four minutes into a base evaluation and long before any
+number from it existed. The measurement that caused the switch is offline and
+independent of the running arm, which is why switching on it is legitimate rather
+than a peek.
+
+The score function estimator never differentiates the weight. It only needs one
+number per trajectory, so the critic does not have to be smooth, and a forest is
+as usable as a logistic regression. That was true when the arm was registered and
+I had not acted on it.
+
+Power against sprint, on a grid of forest capacities. Power is separation on the
+transported sample against forty disjoint corpus blocks of 1536. Sprint is out of
+sample accuracy replayed through the arm's real buffer schedule, batches of 96
+and a sixteen step buffer.
+
+    capacity              power    step 5   step 10   step 20   step 40
+    leaf 5 depth none      5.42     0.674     0.744     0.821     0.860
+    leaf 20 depth 8        3.38     0.644     0.675     0.731     0.691
+    leaf 50 depth 6        0.66     0.622     0.659     0.706     0.705
+    leaf 100 depth 4      -0.84     0.667     0.602     0.671     0.644
+    leaf 200 depth 3      -1.22     0.598     0.596     0.585     0.632
+    logistic C 0.05        1.42     0.603     0.652     0.668     0.697
+
+Leaf 20 depth 8 carries 2.4 times the logistic's power at the same sprint
+profile, 0.691 against 0.697 at step forty. The unconstrained forest is the
+2026-07 failure reproduced on demand: 5.42 of power and an accuracy still
+climbing at 0.860 by step forty. The depth limit is what separates the two, and
+it is now a measured setting rather than a hope.
+
+A second reason, found while checking the code path rather than predicted. The
+logistic's weights are badly skewed: standardised, they run from -0.59 to +9.49,
+so a handful of rows carry the update and --clip-w is doing real work. The
+forest's run from -3.42 to +1.63 with no row reaching the clip at all. The
+logistic reproduces, inside the new objective, exactly the outlier domination
+that this morning's null investigation found in the energy distance. The forest
+does not.
+
+Cost of the fit is 0.18 s per step against 26 s of rollout, so it is free.
+
+Everything else is unchanged, including the prediction, the falsifier, the
+Goodhart signature to watch for, and the qualification that a flat result is
+ambiguous between no followable signal and too small a learning rate. The one
+change to the reading: the ambiguity is now narrower, because the signal being
+followed is 3.38 null sd rather than 1.42.
+
+### The twelve trained features carry the remaining gap, measured 2026-08-11
+
+Every arm optimises the trained twelve. The contract scores all eighteen. That
+split is a generalisation check, but it also sets a ceiling nobody had priced. If
+what survives a distance objective lives in the six features no loss has ever
+seen, then no amount of critic capacity on the twelve reaches it, and the limit
+would be the split itself rather than the objective. The critic arm was launched
+without knowing which of those two worlds it is in. This settles it.
+
+Forest out of bag accuracy on column subsets, generated against corpus, with a
+corpus against corpus control on the same columns. Nothing is replaced or
+reconstructed, only subsetted, so there are none of the chimeric row artefacts
+that invalidated the payoff probe. 1536 rows a side, disjoint corpus halves.
+
+    columns                      n   raw gen  transported  corpus control
+    all eighteen                18    0.6421       0.5475          0.4786
+    the trained twelve          12    0.6326       0.5481          0.4849
+    the held out six             6    0.5696       0.5074          0.4655
+    time_to_peak_velocity        1    0.5178       0.5062          0.5017
+    the held out five others     5    0.5720       0.5335          0.4634
+
+Above each subset's own control:
+
+    columns                      n   raw gen  transported
+    all eighteen                18    0.1635       0.0689
+    the trained twelve          12    0.1477       0.0632
+    the held out six             6    0.1041       0.0419
+    time_to_peak_velocity        1    0.0161       0.0045
+    the held out five others     5    0.1086       0.0701
+
+The transported column is the one that matters, because it is what five arms
+could not move and what the critic arm is aimed at. Of the 0.0689 that a forest
+reads on all eighteen, the trained twelve alone carry 0.0632. The twelve the arms
+can actually touch are where almost all of the readable difference sits.
+
+The held out six read 0.0419 on their own, which is not a second independent
+gap. Five of the six are recoverable from the trained twelve on corpus rows at
+0.87 to 0.999, so the two subsets are reading overlapping information and the
+numbers do not add. The clean test is the sixth. time_to_peak_velocity is the
+only one not recoverable from the twelve, at 0.381, and on its own it carries
+0.0045 above control, which is nothing. There is no hidden reservoir of
+separation sitting in a place the objective cannot see.
+
+So the split is not the limiter and the critic arm is pointed at the right
+target. This is worth stating plainly because it removes an explanation that
+would have been available for a flat result and that I would not have been able
+to rule out afterwards. If the critic arm comes back flat, "the objective can
+only see two thirds of the features" is not the reason.
+
+The caveat on reading these numbers. Subset accuracies are not a variance
+decomposition and they do not sum. Each row says how much a forest can read from
+those columns alone, which is the quantity that matters here, since the contract
+scorer is itself a forest. It does not say how much each feature contributes to
+the eighteen column score.
+
+## The sequence critic arm, registered 2026-08-11 before the feature critic reported
+
+Registered while the feature critic arm is still in its evaluations, so nothing
+below was chosen knowing how that one turned out. The reason to write it now is
+that the same arm follows from either branch, and if I wrote it afterwards I
+would not be able to show that.
+
+### Why the same arm follows from either result
+
+The arm running now scores each trajectory with a depth limited forest over the
+twelve trained features. That is still a descriptive instrument, and this file
+already priced how much any descriptive instrument can see. Nine blocks of hand
+written token statistics read an excess of 0.1107 where a learned critic reading
+the raw token sequence read 0.2273, slightly more than twice as much, and the
+file's own conclusion at the time was that arms designed by looking at summary
+statistics work with half the available signal at best. The arm running now is
+one of those arms wearing a better readout.
+
+It is still the right thing to have run first, because it changes exactly one
+variable against the five arms before it. Those used a distance; this uses a
+classifier; the feature space is held fixed. That isolates the objective family,
+which is what this morning's power measurement said was the thing that mattered.
+
+If it moves the contract, the objective family is confirmed and the obvious next
+step is to give it the instrument with twice the signal. If it stays flat, the
+flatness has two possible causes, the objective family or the feature space, and
+the sequence critic separates them, because it is the same objective family on a
+space that is not capped at 0.1107. Either way this is next.
+
+### The build
+
+The generator side is unchanged machinery. `w4_rollout.py --objective critic`
+already implements score function credit at trajectory level with the weight
+standardised and clipped, and the score function estimator never differentiates
+the weight, so swapping what produces the number is a local change.
+
+The critic is the `Critic` class already in `research/w4_critic.py`: three class
+streams and the command, a four layer transformer encoder at width 192, pooled
+at a command initialised query. It cannot be refitted from scratch each step the
+way a forest can, so it is updated online, k gradient steps per generator step on
+a buffer of recent generated rows against fresh human rows.
+
+### The capacity control, and why it needs restating rather than copying
+
+The forest arm's capacity was chosen by an offline power against sprint grid,
+where power was separation on the transported sample against forty disjoint
+corpus blocks. That protocol does not carry over. Transport is an operation on
+features and there is no transported token sequence, so power in that sense is
+undefined here.
+
+What carries over is the failure it was guarding against. An unconstrained critic
+wins, the generator gets no usable gradient, and this file has that failure on
+record from 2026-07. For a sequence critic the honest control is direct rather
+than inferred: hold the critic's out of sample accuracy inside a band by skipping
+its updates when it gets too far ahead. The band is registered as 0.60 to 0.75.
+The floor is where a signal exists at all, the ceiling is the 0.751 the offline
+critic reached with a full eight epoch fit, so the controller is being asked to
+keep the critic somewhere between useful and fully trained and never past the
+best it is known to do.
+
+### Readouts, prediction and falsifier
+
+The contract, through `research/autoloop/scoring.py`, is the only readout any
+decision is taken from. The critic's own accuracy is a diagnostic.
+
+The prediction. Best evaluation reaches 0.585 or better. The five distance arms
+produced a best of 0.5949 and 0.5885 is the level no fixed distance statistic can
+read, so 0.585 is a number that cannot be reached by anything already tried.
+
+The falsifier. No evaluation beats 0.5949.
+
+The Goodhart signature, which is larger here than in any previous arm and is the
+main reason to distrust a good result. The critic reads the token stream and the
+contract reads eighteen path features. The generator can beat a token critic
+without moving the features at all. The signature is the critic's accuracy
+falling while the contract sits still, and it is watched with the same three
+instruments as the arm running now: spread error on the trained twelve, spread
+error on the held out six, and the collapse flag, with the held out six being the
+part that cannot be gamed by construction.
+
+### What is already ruled out, so nobody re-runs it
+
+Three programmes are closed and none of this reopens them. Per trajectory latent
+variable approaches are closed on three independent measurements. Feature
+conditioning is closed: obedience is 0.998 on duration and 0.289 on mean_jerk,
+and the switch is worth 0.0156 against a distance to target of 0.144. Fixed
+distance statistics are closed as of this morning, on the direct measurement that
+none of eleven of them can read a gap two classifiers read at 1.42 and 3.47 null
+standard deviations.
+
+### One number that belongs next to the target
+
+The deliverable is 0.50. Real human tokens pushed through the serving decoder and
+scored against human validation read 0.5163, and independent floors elsewhere in
+this file sit between 0.4732 and 0.5260. So the reachable target through this
+decoder is about 0.52 rather than 0.50, and the honest distance from the best arm
+result to that floor is about 0.075 rather than 0.095. This does not change any
+arm, and it is not an excuse; it is the number the work should be measured
+against, and I would rather have it written down before a result than produced
+after one.
+
+### What the critic objective is, in the vocabulary of the over dispersion result
+
+Written while the feature critic arm is still evaluating, so it is a reading of a
+design rather than an explanation of an outcome. It is not a prediction and it
+does not amend the registered one.
+
+The 2026-08-06 typicality result is the sharpest statement of the defect in this
+file. Free running, the model's entropy exceeds the data's by at least 0.2659
+nats per token. Teacher forced, it is very nearly perfectly calibrated, best
+inverse temperature 1.05 worth 0.0008 nats. The position decomposition made it
+sharper still: at absolute event 0, the only position with no history, the gap is
++0.0329 and is nothing; at event 1 it is +0.2338 and it stays flat to the end of
+the movement. A step, not a drift.
+
+The stated mechanism there is that maximum likelihood minimises H(q,p), which
+punishes p for failing to cover q and does not punish p at all for putting mass
+where q has none. That is the forward KL. A model can be far broader than the
+data and pay almost nothing.
+
+The objective that punishes exactly what the forward KL ignores is the reverse
+one, and reverse KL is an expectation under the model of the log ratio of the
+model to the data. It has no closed form here because neither density is
+available, and the standard way to get it is an estimate of the ratio from a
+classifier, since a discriminator's logit is an estimate of the log density ratio
+up to a constant.
+
+That is what the arm running now computes. It samples trajectories from the
+model, scores each one with a classifier trained to tell generated from human,
+and pushes down on the ones the classifier is confident about. Up to the mean
+subtraction, which is a baseline and does not bias the direction, and the
+division by the standard deviation, which rescales the step, the surrogate is a
+descent direction on the reverse KL.
+
+So the arm is the first mode seeking objective in this file. Every previous arm
+was matching moments or distances, which are symmetric in the two samples and
+carry no preference for narrowing over broadening, and the model's defect is
+specifically an excess of breadth that a symmetric criterion has no reason to
+remove. The five distance arms and the maximum likelihood training that preceded
+them were all blind to the defect in the same way and for the same reason.
+
+Two things keep this from being worth more than it is. First, this file's record
+on mechanism accounts attached to results is 5 of 16, and this is a mechanism
+account, so it should be read as a reason the design is coherent rather than a
+reason to expect it to work. Second, it is a description of what the objective
+optimises, not evidence that the optimiser can follow it at the learning rate,
+batch size and step count this arm is running at. A flat result would leave both
+explanations open, and the registration already says so.
+
+The reason to write it down before the number arrives is that if the arm moves
+the contract, this is the account I would reach for afterwards, and an account
+reached for afterwards is worth much less.
+
+### An arm considered and dropped without running it, entropy regularisation
+
+The over dispersion result makes an obvious and much cheaper arm available than
+the sequence critic, and it is worth writing down why it is not being run,
+because the argument against it is not obvious and someone will think of it
+again.
+
+The idea. The measured defect is at least 0.2659 nats per token of excess
+entropy on the model's own histories. The entropy of a categorical conditional is
+differentiable in the logits. So instead of a score function estimator fighting
+sampling variance, add a term that penalises the conditional entropy along self
+generated rollouts, anchored by a penalty keeping the model close to its parent
+on real histories so it cannot simply collapse. Fully differentiable, low
+variance, no discriminator, no REINFORCE. On the face of it that is a better
+instrument aimed at exactly the measured quantity.
+
+Why it is dropped. Its only effect is to narrow the generated distribution, and
+the existing arms have already narrowed it a long way without the contract
+following. The buffered statistic arm's spread error on the trained twelve went
+0.3487 to 0.2190 to 0.1654 across its evaluations, and on the held out six 0.1622
+to 0.1091 to 0.0618, while its contract AUC sat at 0.6290, 0.5972, 0.5995. Spread
+error was more than halved on both the features being optimised and the features
+being withheld, and the deliverable did not move.
+
+That is a direct measurement of what a spread narrowing intervention buys on this
+model, taken on the way to somewhere else, and it is close to nothing. An
+objective whose entire mechanism is narrowing spread is predicted to hit the same
+wall, and predicted by data already in hand rather than by an argument.
+
+The reading that survives is that over dispersion is real and is not the whole
+story. Breadth in the marginals is largely fixable and largely fixed; what
+remains is where the mass sits, and a criterion that only removes mass uniformly
+cannot put it in a different place. The sequence critic is being preferred
+because a density ratio can move mass, not merely shrink it.
+
+Two caveats on this reasoning, since it is being used to not run something.
+Spread error is not entropy, it is a feature space summary, so the correspondence
+is loose at both ends. And the zbuf arm narrowed spread as a side effect of a
+different objective rather than by optimising it directly, so a dedicated
+objective would narrow further than it did. The claim is not that entropy
+regularisation would do nothing, it is that the evidence available says its
+ceiling is low, and with one instrument left in the window the sequence critic is
+the better use of it. If the sequence critic fails, this is the cheapest thing
+still standing and the argument above should be re-read rather than trusted.
+
+## The target is not 0.50, and the reason is in the data rather than the model
+
+Measured 2026-08-11 while the feature critic arm was in its base evaluation. This
+is the most decision relevant thing found today and it should be read before any
+further arm is planned.
+
+### What was checked and why
+
+This file records 0.5163 for real human tokens pushed through the serving decoder
+and scored against validation, and has carried it as the ceiling of what any
+generator can reach. That one number decides whether the remaining distance is
+0.095 or 0.075, and it had been measured once. It is the sum of three things and
+only one of them is a limit anyone can do anything about: the finite sample floor,
+any difference between the event corpus and the validation sample, and whatever
+the serving decoder itself loses.
+
+### The measurement
+
+The contract recipe exactly, reimplemented so that neither side has to be
+validation, over disjoint blocks of 2000. No block is ever a resampled subset of
+another, which is the error that invalidated the residual arm this morning.
+
+    floor      corpus against a disjoint corpus block, 14 pairs
+               mean 0.5021   sd 0.0133
+    shift      corpus against validation, 14 blocks
+               mean 0.5170   sd 0.0091
+    val floor  validation half against its own other half, 8 splits, n=1000
+               mean 0.4910   sd 0.0208
+
+    shift minus floor   +0.0149   se 0.0043   3.5 standard errors
+
+### The two conclusions
+
+**The serving decoder costs nothing.** Raw corpus feature rows, which never go
+near the decoder, read 0.5170 against validation. Decoded human tokens read
+0.5163. Those are the same number. The 0.516 that this file has been calling a
+decoder ceiling is not the decoder, and the decoder is not standing between the
+model and the target. That also agrees with the 2026-08-09 restricted views
+result, which found the decoder amplifies nothing, reached by a completely
+different route.
+
+**The training corpus and the validation sample are genuinely different
+populations, by 0.0149 of AUC at 3.5 standard errors.** A generator that
+reproduced its own training corpus perfectly, with no defect of any kind, would
+still read about 0.517 against the sample it is scored on. That is a floor on the
+deliverable that comes from the data and not from the model, and no objective,
+architecture or training signal can remove it.
+
+So the honest target for a corpus trained generator is about 0.517, not 0.50. The
+best arm result is 0.5949 and the distance left is about 0.078 rather than 0.095.
+Roughly a sixth of what has been called the remaining gap was never the model's
+to close.
+
+### What is not established
+
+The shift does not localise, and the attempt to localise it should not be quoted.
+A per feature pass appeared to put num_direction_changes, angular_velocity_mean
+and max_deviation in front at 0.05 of excess each, but those three read jointly
+against validation at 0.4983 against a control of 0.4974, which is nothing at
+all. The per feature control was a single block pair and is too noisy to rank
+anything; the ranking is an artefact of that noise and the joint read is the one
+to believe. Every median ratio sits between 0.87 and 1.21, so there is no units,
+clipping or preprocessing blunder to find. Diffuse, again, in a file where
+everything has been diffuse.
+
+This does not say validation is wrong or that the corpus is wrong. It says they
+differ, and that the difference is priced.
+
+It also does not say the shift is fully unavoidable in principle. A generator
+whose commands and conditioning were drawn to match validation rather than the
+corpus might pay less of it. Nothing here measures that, and it would need a
+separate arm to find out. What is established is that matching the training data
+better is not, by itself, a route to 0.50.
+
+### The correction this forces
+
+An earlier section written today said the reachable target is about 0.52 based on
+the single 0.5163 reading. That guess happens to be right, but it was right for
+the wrong reason, since it attributed the number to the decoder. The decoder's
+share is about zero and the corpus to validation shift is the whole of it.
+
+### An operational error during the critic arm, 2026-08-11
+
+The logistic critic run was launched at 06:32 and replaced by the forest critic
+run at 06:36. The kill that was supposed to end the first one targeted the wrapper
+shell rather than the python process it had started. The wrapper died, the python
+child was reparented and kept running, and two rollout jobs shared the GPU for
+twenty minutes before I noticed the second PID in a routine process check.
+
+What it cost. Wall clock only. Both jobs were still inside their base evaluation
+when the second was stopped at 06:57, and neither had written any output file, so
+there was no clash on `research/w4_rollout_critic.json` or on the checkpoints,
+which both would have written to the same paths because both were launched with
+the same tag. GPU memory fell from 2639 MiB to 1564 MiB when the orphan stopped,
+which confirms it had been holding a full second copy of the model. Sampling is
+seeded, so contention changes speed and not numbers, and the arm's results stand
+as run. The finish estimate moves from about 08:29 to about 08:40.
+
+What was actually wrong. Killing a wrapper does not kill what it launched. The
+check that would have caught it immediately is to confirm the absence of the
+child rather than the absence of the wrapper, and the check that did catch it, 20
+minutes late, was listing every process matching the script name rather than
+looking up the one PID I expected. The second is the better habit and is cheap.
+
+The standing rule against pkill by pattern is what made this harder to get right
+and it is still the correct rule, since that pattern would match the calling
+shell. The right form is to resolve the child PIDs explicitly and kill those.
+
+Recorded because an unexplained twenty minute slip in a timeline is exactly the
+kind of thing that gets attributed to the workload later.
+
+## Every rollout arm has been aiming at the wrong human sample, 2026-08-11
+
+A consequence of the floor measurement above, found by following it rather than
+by looking for it. It is cheap to act on and it applies to every arm in the
+rollout family, including the one running now.
+
+### The finding
+
+`research/w4_rollout.py` line 493 loads its human reference from
+`events_feat18`, the training event corpus. The contract scores against
+`data/human_val_features_grpo.npy`. Those are two different populations,
+separated by 0.0149 of AUC at 3.5 standard errors.
+
+There is already a human sample in `data/` drawn from the same pool as
+validation. `data/human_ref_features_sir.npy`, 4000 rows, is the default
+reference in `experiments/event_stream_polar.py` and in several research
+scripts, and it is the obvious reference for a rollout arm and has never been
+used as one.
+
+At n=1000, disjoint blocks throughout, the contract recipe with neither side
+pinned to validation:
+
+    comparison                          k     mean       se
+    sir against validation              8   0.4971   0.0052
+    corpus against validation          16   0.5073   0.0031
+    sir against corpus                 16   0.5137   0.0033
+
+    floor, sir against itself           6   0.5044   0.0050
+    floor, corpus against itself       10   0.4990   0.0058
+
+sir and validation are indistinguishable, 0.4971 against sir's own 0.5044
+floor. The corpus sits above its floor against validation and further still
+against sir. Two samples agree with each other and the third does not, and the
+third is the one every arm has been steering toward.
+
+### Why using it is not fitting the scorer
+
+This was checked before the recommendation was written, because training against
+the array the scorer loads would destroy the meaning of every number in this
+file. From `RL_PILOT.md`: the sir file is 4000 rows from the same 4.16M pool as
+the eval with the eval's 2000 seed-42 indices excluded by index, and validation
+was built afterwards with rows matching the sir file excluded by 18 dimensional
+feature match, which dropped exactly 2 rows out of 2000, consistent with chance
+collision. So sir is disjoint from eval exactly, disjoint from validation by
+construction, and drawn from the population both come from. Steering toward it
+is using a less biased picture of a human, not learning the answer sheet.
+
+### What it is worth, and what it costs
+
+The bound is about 0.015, which is roughly a fifth of the 0.078 that remains
+after the floor correction, and about two replicate spreads. It is not a fix for
+the plateau and should not be sold as one.
+
+It is worth more than a floor though, and this is the part that matters for the
+critic family specifically. A critic trained to separate generated rows from
+corpus rows produces a gradient that points at the corpus. The corpus is 0.015
+away from the thing being measured, so some fraction of every update the
+generator receives is spent moving toward a target it should not be moving
+toward. That is a misdirected signal rather than a constant offset, and there is
+no reason to keep paying it.
+
+The cost is real and should be weighed. The sir file has 4000 rows against the
+corpus's roughly a million. The arm running now uses 3865 reference rows, so
+4000 fits with no headroom at all, and a critic refitted every step against a
+4000 row reference will overfit that reference sooner than one refitted against
+an effectively unlimited corpus. For the forest at leaf 20 depth 8 that is
+probably tolerable and it is measurable in advance by the same power against
+sprint protocol used to choose the capacity. It should be measured, not assumed.
+
+### The recommendation
+
+Add a reference selection flag to `w4_rollout.py` rather than changing the
+default, run the next arm with sir, and keep the corpus available so the two can
+be compared on identical seeds. Do not retrofit this to the arms already run:
+their numbers are what they are, and the correct statement about them is that
+they optimised toward a target 0.015 from the one they were scored on.
+
+### The generated sample is measurably corpus shaped, and by more than the shift
+
+The reference section above is an argument about the target. This is the
+consequence measured on the generated sample that already exists, same recipe,
+same n, disjoint blocks throughout.
+
+    reference       k  gen vs ref      se  ref floor
+    corpus          8      0.6284  0.0030     0.4961
+    sir             8      0.6414  0.0051     0.5044
+    validation      4      0.6522  0.0069     0.4711
+
+    validation minus corpus  +0.0237  se 0.0075  (3.2 standard errors)
+
+A discriminator finds the generated rows 0.0237 easier to separate from
+validation than from the corpus. The corpus to validation shift itself is 0.0149,
+so the model is not merely inheriting the shift, it sits slightly further from
+validation than the corpus does. That is what training on the corpus and then
+steering toward the corpus would produce, and it is the first direct measurement
+of the cost rather than an argument from the target.
+
+sir sits between the two at 0.6414, which is the expected ordering if sir and
+validation are one population and the reads differ by sampling.
+
+One number here should not be quoted. The validation floor of 0.4711 is a single
+pair of validation halves at n=1000, it is the only floor in this file below
+0.48, and it is too noisy to support the excess over floor arithmetic that the
+other two rows would invite. The comparison to trust is the direct one between
+the three gen against ref reads, which share a single generated sample and differ
+only in what they are compared against.
+
+## The rollout arms are being judged inside their own error bar, 2026-08-11
+
+Found by following a discrepancy rather than by looking for one. The critic arm
+initialises from `w4_rollout_pilot_zbuf_step100.pt` and its base evaluation read
+0.6193. That is the same checkpoint the zbuf arm evaluated at step 100, where it
+read 0.5972. Same weights, same evaluation commands, 0.0221 apart.
+
+### First, the good news, and it is worth having
+
+The evaluation is exactly reproducible. The clock arm and the zbuf arm both start
+from `event_ar_v2_s40000.pt` at seed 17 and their base draws are identical to
+four decimals, [0.6236, 0.6344] in both. `eval_cond` is built once at line 533
+before any objective setup, so the commands do not vary between evaluations or
+between runs at the same seed. Given the weights, the command set and the torch
+stream position, the number is deterministic.
+
+So the 0.0221 is not a bug, a config difference or a corrupted checkpoint. The
+checkpoint is written immediately after the evaluation with no optimiser step in
+between, and both runs used seed 17, human_n 4000, eval_n 2500, eval_draws 2. The
+only thing that differed is where the torch stream had got to: fresh at a base
+evaluation, 100 training steps deep at a step100 evaluation.
+
+### What the error bar actually is
+
+Every two draw spread recorded across the four arms that logged draws:
+
+    clock   0.0108  0.0029  0.0178  0.0152
+    token   0.0017  0.0045  0.0034  0.0091
+    zbuf    0.0108  0.0156  0.0009
+    critic  0.0025
+
+Mean absolute difference between two draws is 0.0079, which puts the per draw
+standard deviation near 0.0070 and the standard error of a two draw mean near
+0.0050. The difference between two such means carries a standard error near
+0.0070. That is close to the 0.006 single run floor this file already recorded
+from three replicate snap runs, so the two measurements agree.
+
+### The consequence, which is the part that matters
+
+Every arm endpoint in the rollout family:
+
+    plain   0.6141  0.6301
+    clock   0.5986  0.6088  0.5997
+    cont    0.6303  0.6225  0.6271  0.6281
+    energy  0.6193  0.6219  0.6033  0.5949
+    token   0.5954  0.6150  0.6093
+    zbuf    0.5972  0.5995
+
+The five best endpoints span 0.5949 to 0.5997, a range of 0.0048, against a
+standard error on the difference of about 0.0070. **No arm in this family is
+distinguishable from any other.** The plateau is real, and it is more thoroughly
+real than it looked: there is not a best arm, there is one number that six
+different objectives all reach.
+
+It also means registered thresholds in the 0.005 to 0.03 range have been asking
+the evaluation for a precision it does not have. A falsifier written as "no
+evaluation beats 0.5954" is a coin flip at the boundary. This applies to the arm
+running now, and it is being written down before that arm reports rather than
+after, because it is a property of the instrument and not of the result.
+
+### What is not settled
+
+Whether the 0.0221 gap between two evaluations of one checkpoint is an unlucky
+draw or evidence that the noise is larger than the two draw spreads imply. At a
+0.0070 standard error it is about three standard errors, which is unusual, but it
+was noticed precisely because it looked odd, and picking the strangest pair out of
+many and then testing it is not a test. Pooling all four draws of that checkpoint,
+0.5894, 0.6050, 0.6181 and 0.6206, gives a standard deviation of about 0.014,
+twice the pooled estimate above, which would make the gap ordinary.
+
+Those two readings cannot be separated without the GPU. The decisive test is
+cheap and should be the first thing run when it frees: evaluate one fixed
+checkpoint five or six times from different stream positions and read the spread
+directly, instead of inferring it from within evaluation pairs.
+
+### The recommendation
+
+Raise `--eval-draws` from 2 to at least 4, which halves the standard error for a
+linear cost in a part of the run that is already the longest, and stop writing
+falsifiers finer than 0.015 until the spread above is measured properly. Do not
+retrofit either to the arms already run.
+
+### A correction to the section above, made twenty minutes after writing it
+
+The section derives a per draw standard deviation of 0.0070 from the two draw
+spreads and treats it as agreeing with the 0.006 replicate floor. There is a
+third number already in the repository that it should have cited and did not.
+
+`research/w4_rollout.py` line 539 carries the comment "a single draw of 2500 rows
+carries sd 0.0141 on a trained checkpoint, measured in w4_seedvar and w4_budget".
+`w4_seedvar` was registered to measure exactly this: same checkpoint, same cond
+rows, same scoring shuffle, varying only the torch seed. That is precisely the
+quantity the 0.5972 against 0.6193 comparison needs, and it is twice what I
+derived.
+
+The two are not measuring different things and cannot both be right. Twelve two
+draw spreads give a mean absolute difference of 0.0079, which puts the standard
+deviation near 0.0070 with an uncertainty around 0.0014, so the gap to 0.0141 is
+not sampling error in my estimate. One possibility is the sequence length:
+w4_seedvar ran blocks at 160 and at 256 and the comment does not say which figure
+it is quoting, while the rollout arms run at 256. I am not going to guess which,
+because guessing a root cause is how this file has gone wrong before.
+
+What changes in the reading:
+
+  At 0.0141 the 0.0221 gap between two evaluations of one checkpoint is about
+  1.6 standard errors and is entirely ordinary.
+
+  At 0.0070 it is about 3.2 standard errors and is odd, though it was picked out
+  because it looked odd, which is not a test.
+
+What does not change is the conclusion, and it holds more firmly at the larger
+figure than the smaller one. The five best arm endpoints span 0.0048. Against a
+difference standard error of either 0.0070 or 0.0141, no arm in the rollout
+family is distinguishable from any other, and registered thresholds finer than
+about 0.015 have been asking the instrument for precision it does not have.
+
+The decisive test is unchanged and still cheap: evaluate one fixed checkpoint at
+256 six times, varying only the torch seed, and read the spread. That resolves
+which of the two figures applies and it should be the first thing run when the
+GPU frees.
+
+### The resolved position on evaluation noise, superseding both paragraphs above
+
+Two corrections in a row is a sign I was writing faster than I was checking. This
+supersedes the arithmetic in both; the conclusion they reached is unchanged and is
+restated at the end.
+
+**The 0.0141 in the code comment is not in w4_seedvar's results.** Line 539 of
+`w4_rollout.py` says a single draw of 2500 rows carries sd 0.0141 "measured in
+w4_seedvar and w4_budget". `research/w4_seedvar.json` records sd 0.0060 at
+seq_len 160 over five torch seeds and sd 0.0059 at seq_len 256 over three, on the
+frozen base checkpoint, same cond rows, same scoring shuffle. The comment does
+not quote its own cited source. Whether 0.0141 came from `w4_budget`, which the
+seedvar registration says confounds the budget with the draw and cannot settle
+either, is not something I can establish from what is on disk, and I am not going
+to reconstruct a story about it.
+
+**Where 0.0141 does show up.** The four existing draws of
+`w4_rollout_pilot_zbuf_step100.pt`, two from the zbuf arm's step100 evaluation
+and two from the critic arm's base evaluation, are 0.5894, 0.6050, 0.6181 and
+0.6206. Their standard deviation is 0.0143. So the figure describes that
+checkpoint even if its citation is wrong.
+
+**The checkpoint is the right one.** `w4_rollout_pilot_zbuf_step100.pt` is
+timestamped 05:45 on 2026-08-11, which is the zbuf arm's step 100, and the save
+at line 872 follows the evaluation at line 864 with no optimiser step between. So
+this is genuinely one set of weights read twice, 0.5972 and 0.6193.
+
+**Why the two sd figures cannot currently be separated.** 0.0059 rests on three
+draws and 0.0143 on four. A standard deviation from three or four samples is
+almost uninformative; both intervals are wide enough to contain both numbers, so
+there is no established disagreement here, only two weak estimates. The tempting
+reading, that a fine tuned checkpoint is less stable draw to draw than the frozen
+base, is a mechanism guess of exactly the kind this file's record says not to
+trust, and nothing measured supports it over sampling noise in two small
+estimates.
+
+**What stands.**
+
+  The sampler draw standard deviation on a rollout checkpoint at seq_len 256 is
+  somewhere between about 0.006 and about 0.014 and has never been measured with
+  enough draws to say which.
+
+  At either end, the five best arm endpoints, spanning 0.5949 to 0.5997, are
+  indistinguishable from each other.
+
+  At either end, registered thresholds finer than about 0.015 are asking the
+  instrument for precision it does not have.
+
+  `--eval-draws 2` gives a standard error between 0.004 and 0.010 on every number
+  this workstream has quoted.
+
+**The test, which is now the first GPU job when the arm finishes.** One fixed
+checkpoint at seq_len 256, eight to ten torch seeds, same cond rows, same scoring
+shuffle. `research/w4_seedvar.py` already does exactly this and needs only to be
+pointed at a rollout checkpoint with more seeds. It costs one evaluation's worth
+of sampling per seed and it settles a number that every verdict in this file
+depends on.
+
+### Pricing the misaim before spending GPU on it, 2026-08-11
+
+The reference finding above says every rollout arm steered toward the training
+corpus while the contract scores against validation, and that the generated
+sample sits 0.0237 further from validation than from the corpus. That argues for
+a GPU arm with `--human-ref sir`. This prices the argument in feature space
+first, on the generated sample that already exists, with the model held
+completely fixed.
+
+The tool is the transported gap ladder, which has only ever been run against the
+corpus. Rung A replaces every marginal with the reference's quantiles. Rung B
+adds a Gaussian copula match of the rank correlation. Running the ladder toward
+sir instead of toward the corpus, and scoring both by the contract, isolates what
+changing the aim is worth.
+
+**The first pass was confounded and its sign was wrong.** It read rung B toward
+sir at 0.5940 against rung B toward corpus at 0.5875 and reported +0.0065, the
+opposite of the predicted direction. Two faults. Both were single contract reads
+against an instrument whose noise is between 0.004 and 0.014, so neither could
+carry the sign it was being asked to carry. And it compared a 40000 row corpus
+reference against a 4000 row sir reference, so a noisier transport target was
+free to masquerade as a worse population.
+
+**Matched at 3000 rows a side, five replicates, paired by replicate so the
+common noise cancels:**
+
+    reference  rung     mean       se
+    corpus     A      0.6310   0.0042
+    sir        A      0.6325   0.0036
+    corpus     B      0.6014   0.0041
+    sir        B      0.5952   0.0031
+
+    rung A, sir minus corpus   +0.0015  se 0.0069  (0.2 standard errors)
+    rung B, sir minus corpus   -0.0062  se 0.0023  (2.7 standard errors)
+
+Two things follow, and they point in opposite directions for the arm.
+
+**Matching marginals to the right population is worth nothing.** Rung A is flat
+at 0.2 standard errors. Whatever separates the corpus from validation, it is not
+where the individual feature distributions sit, which is the same conclusion the
+shift localisation reached from the other side when the three apparently biggest
+features read jointly at 0.4983 against a 0.4974 control.
+
+**Matching the rank correlation to the right population is worth 0.0062.** That
+is the whole of the measurable effect and it is real at 2.7 standard errors,
+though five paired replicates make the standard error itself shaky and this
+deserves a repeat before anything is built on it.
+
+**The consequence for the arm, which is the point of running this.** 0.0062 is
+at or below the sampler draw noise, which is somewhere between 0.006 and 0.014
+and is being measured properly in the next job. **A single sir arm therefore
+cannot demonstrate its own effect**, and reading one against a corpus arm at two
+draws each would be exactly the error this file spent the morning documenting.
+If the arm is run it needs a paired design, the same seeds and the same cond
+rows on both sides with the reference as the only difference, and more than two
+draws an evaluation.
+
+**What is not settled, and it is the interesting part.** Low order matching
+recovers 0.0062 of a 0.0237 misaim. The other 0.017 is not in the marginals and
+not in the rank correlation, so it is in exactly the higher order structure the
+copula ladder cannot touch and a learned critic can in principle reach. That is
+an argument for the critic objective aimed at sir rather than against it. It is
+also unmeasured, and nothing here says the critic can actually capture it.
+
+### research/w4_seedvar.py cannot run as written, found 2026-08-11
+
+The evaluation noise section names re running `w4_seedvar` on a rollout
+checkpoint as the first GPU job, on the understanding that it "needs only to be
+pointed at a rollout checkpoint with more seeds". That is wrong and would have
+failed on import.
+
+`w4_seedvar.py` line 64 reads
+
+    from w4_rollout import feature_matrix, gpu_temp, to_paths
+
+and neither `feature_matrix` nor `to_paths` exists in `w4_rollout.py`. The
+module's top level functions are `gpu_temp`, `load_human`, `dt_to_z`,
+`decode_batch`, `verify_mirror`, `token_logprob_pos`, `token_logprob`,
+`anchor_nll`, `dispersion`, `summarise` and `main`. The current entry point is
+`decode_batch(s_cls, th_cls, dt_cls, angles)`, which returns the contract
+features of the surviving rows, their positions in the batch and their credit
+terms in one pass, replacing what used to be a to_paths call followed by a
+feature_matrix call.
+
+So `w4_seedvar.json` was produced against an earlier `w4_rollout.py` and the
+script has been dead ever since that refactor. Nothing in the recorded results
+is invalidated by this, they were real when they were taken, but the script
+cannot reproduce them and no result in this file should be described as one
+rerun away.
+
+The replacement is `research/w4_drawvar.py`, written against the working import
+and with the import path executed before it was queued rather than assumed. It
+also fixes a trap the original carried into any rerun: `w4_seedvar` keys its
+token cache on sequence length and seed alone, so pointing it at a second
+checkpoint would have silently reused the first checkpoint's cached draws and
+reported them as the new model's. `w4_drawvar` puts a checkpoint tag in the
+cache key.
+
+The general lesson is the one already in this file about verifying on the real
+seam. An import is a seam. Checking that a script exists is not checking that it
+runs, and "needs only to be pointed at X" is a claim about code that was never
+executed.
+
+## Two arms proposed on 2026-08-11, neither run, and why they come before another objective
+
+Nothing below is a result. Both are registered here before running so that the
+prediction cannot be written after the number.
+
+### The observation that motivates both
+
+Three measurements taken on 2026-08-11 line up in one direction.
+
+  Matching every marginal to the human sample is worth nothing. Rung A of the
+  transported ladder sits at 0.2 standard errors whether it aims at the corpus
+  or at sir.
+
+  Matching the full rank correlation is worth 0.0062.
+
+  Rung B, which is every marginal and the whole rank correlation replaced by
+  human values, still reads about 0.595 against a floor of about 0.517.
+
+So the entire remaining gap is higher order dependence among the eighteen
+features. It is not where the features sit and it is not how they co vary at
+first order. This was already the file's top open item; what is new is that it
+now has a number attached from three directions at once.
+
+Against that, six rollout objectives, plain, clock, cont, energy, token and
+zbuf, all land between 0.5949 and 0.5997, a range of 0.0048 that is inside the
+draw noise. Six different objectives reaching one number is not six objectives
+being equally good ideas. It is the signature of a shared limit that none of
+them touches.
+
+**The hypothesis: the limit is the gradient estimator, not the objective.**
+Every arm so far is REINFORCE on a reward computed from a batch level feature
+statistic. That is a high variance estimator at the best of times, and higher
+order dependence is exactly the part of a distribution that a batch of 96
+estimates worst. If the per step gradient is mostly noise, then every objective
+performs a similar random walk from the same initialisation and stops in the
+same place, which is what the table shows.
+
+### Proposed arm one, the gradient signal to noise probe. Cheap, decisive, do it first
+
+Split one rollout batch into two halves, compute the REINFORCE gradient from
+each independently, and measure the cosine similarity between them, repeated
+over a few batches and reported per parameter group. This is one forward and
+backward pass per half and costs minutes.
+
+  PREDICTION. Mean cosine similarity between half batch gradients is below 0.05,
+  which would mean the useful signal is a small fraction of each step and the
+  arms have been mostly diffusing.
+
+  FALSIFIER. Cosine similarity above about 0.2. That would say the gradient is
+  informative, the plateau is a real optimum of these objectives, and the
+  estimator is not the thing to fix.
+
+  WHY IT MATTERS EITHER WAY. If the prediction holds, the next thing to build is
+  variance reduction or a lower variance estimator, and any seventh objective is
+  wasted GPU. If it is falsified, the plateau is genuine and the search should
+  move to what the objectives cannot express rather than how they are estimated.
+
+This probe should be run before any further objective arm, including the sir arm
+queued above, because it decides whether that arm can express its 0.0062 at all.
+
+### Proposed arm two, straight through differentiable decode. Larger build, only if arm one predicts
+
+If the gradient is the limit, the fix is to stop using REINFORCE. The decode path
+from tokens to the eighteen features is differentiable almost everywhere: soft
+token distributions give expected step vectors, integrating them to a path is a
+cumulative sum, resampling onto the fixed time grid is interpolation, and most
+of the features are means, standard deviations and skewnesses. The parts that
+are not are the pixel snapping in the served decoder, the discrete token draw,
+and the handful of features built from a maximum or a count.
+
+The construction is straight through. **The forward pass calls the served
+decoder unchanged**, so every number this produces is a number the real decoder
+produced; the backward pass substitutes the relaxed path, with Gumbel softmax
+over the token classes and softened maxima and counts. Gradients then flow from
+a feature space discrepancy straight into the trunk with no score function term
+at all.
+
+  PREDICTION. Lower variance moves the plateau, so the endpoint clears 0.585,
+  the best any REINFORCE arm reached, by more than the draw noise measured by
+  the drawvar job.
+
+  FALSIFIER. It lands in the same 0.5949 to 0.5997 band as the other six. That
+  would put the plateau somewhere neither the objective nor the estimator can
+  reach and would be strong evidence the limit is in the model class or the
+  conditioning, not the training signal.
+
+  THE TRAP TO WATCH, and it is the one this file has been bitten by twice. A
+  relaxed decoder is not the served decoder. If the forward pass ever drifts to
+  the relaxation, the model will learn to exploit it and the contract score will
+  be measured on something the served path cannot produce. The forward pass must
+  stay the served decoder and `verify_mirror` must be run on the model's own
+  output at launch, exactly as `decode_batch` already does.
+
+  COST. This is a real build rather than a flag, and it should not start until
+  arm one has reported.
+
+## The sequence critic arm, result, 2026-08-11
+
+    EVAL base     rf 0.6193 (range 0.0025)  gbm 0.6318  spread trained 0.1797  held 0.0963
+    EVAL step100  rf 0.5900 (range 0.0077)  gbm 0.6018  spread trained 0.1470  held 0.0748
+    EVAL final    rf 0.5920 (range 0.0055)  gbm 0.6047  spread trained 0.2135  held 0.0719
+
+    base to final  +0.0273        runaway spread vs corpus  mean_jerk
+    VERDICT PARTIAL   peak 76C, 20.9 min cooling of 78.9 min, collapse flag True throughout
+
+Forest critic, twelve trained columns, trajectory credit, buffer 16, 150 steps,
+batch 96, lr 1e-5, lam 1.0, from `w4_rollout_pilot_zbuf_step100.pt`, seed 17.
+
+### Against what was registered
+
+The prediction was that the best evaluation beats 0.5954 and reaches 0.585 or
+better. The best evaluation is 0.5900. The first clause holds and the second
+does not, which is the partial verdict the script printed. The falsifier, no
+evaluation beats 0.5954, is not met.
+
+**That falsifier should not be read as passed, and this was written down before
+the arm reported rather than after.** The draw noise is somewhere between 0.006
+and 0.014, the previous best was 0.5949, and the difference is 0.0049. This
+arm's own two draws at step 100 span 0.0077, which is larger than the margin it
+supposedly cleared. So 0.5900 is the lowest number recorded and it is not
+distinguishable from the five arms above it. The plateau now has seven members
+rather than six, and its band is 0.5900 to 0.5997.
+
+### The Goodhart watch, which is the part that came out clean
+
+There is no Goodhart signature and the check that matters is the one that cannot
+be gamed. The held out six, which never enter the loss, improved monotonically:
+spread error 0.0963 to 0.0748 to 0.0719. Whatever this arm did, it did not do it
+by exploiting the twelve columns the critic was fitted on.
+
+`featloss`, the mean critic logit on a fresh out of sample batch, ended at 0.109,
+its highest reading of the run, after bouncing in a band of about plus or minus
+0.05 throughout. The generator never beat the critic.
+
+### The inference that matters, and it is not about this objective
+
+The critic kept finding separation to the last step. So the objective did not run
+out of signal: there was a descent direction available at every step, and the
+contract score still did not leave the band. That rules out the most comfortable
+explanation for the plateau, which is that each objective simply saturates.
+
+Two explanations survive. Either the gradient estimate is too noisy to use the
+signal that is demonstrably there, or the model class cannot express the
+correction. The first is cheap to test and is registered above as the gradient
+signal to noise probe. **This arm is the strongest argument yet for running that
+probe before any eighth objective**, because it is the first arm that can show
+its objective was still informative at the point where its score stopped moving.
+
+### Two things that are not clean
+
+The trained twelve spread error goes 0.1797 down to 0.1470 and then back up to
+0.2135, ending worse than it started, while the held out six improve throughout.
+An arm whose loss is computed on the twelve making the twelve worse and the six
+better is backwards and is not explained. `mean_jerk` is flagged as runaway
+spread against the corpus, which is a specific and checkable lead.
+
+The step 100 best followed by a worse step 150 repeats the pattern both earlier
+arms showed, and the file already records that pattern. Nothing here changes it.
+
+The collapse flag was True at every evaluation including the base, so it says
+nothing about this arm.
+
+## The draw noise is 0.0133, and it invalidates every arm comparison in this file, 2026-08-11
+
+`research/w4_drawvar.py`, one frozen checkpoint `w4_rollout_pilot_zbuf_step100.pt`,
+seq_len 256, same cond rows and scoring shuffle, varying only the torch seed.
+Three new draws before the authorised window closed, pooled with the three
+usable earlier draws of the same checkpoint.
+
+    distinct draws   0.5894  0.5900  0.6050  0.6052  0.6181  0.6206
+    n 6   mean 0.6047   sd 0.0133   standard error of that sd 0.0042
+
+### The alignment control passed exactly, which is why the pooling is honest
+
+Seed 17 here read 0.61807775 against the critic arm's first base draw of 0.6181.
+Identical. `w4_drawvar` reproduces `w4_rollout`'s evaluation bit for bit, which
+confirms both scripts build the same cond rows from `perm[4000:6500]` and settles
+that the two are measuring one quantity.
+
+It also means that draw is **the same draw**, not an independent one, so it is
+excluded from the pool above. The script's own pooled line double counts it and
+should not be quoted; six distinct values are what the table reports.
+
+### Against what was registered
+
+The prediction was sd between 0.006 and 0.014, nearer 0.010. It lands at 0.0133,
+inside the range and at the top of it. Neither falsifier is met: side A required
+0.0075 or below, side B required 0.018 or above.
+
+So of the two figures in the repository, **the 0.0143 from four draws was right
+and the 0.0059 from `w4_seedvar` does not transfer.** The comment in
+`w4_rollout.py`'s `--eval-draws` help quoting 0.0141 has the right number
+attached to the wrong citation. Whether a fine tuned checkpoint is genuinely
+noisier than the frozen base is still untested and still a mechanism guess: that
+needs the base measured with six draws too, and nothing here does it.
+
+### What this does to the results in this file
+
+    standard error of a single arm endpoint at two draws     0.0094
+    standard error of the difference between two such        0.0133
+    the seven arm plateau band, 0.5900 to 0.5997               0.0097
+
+**The entire plateau fits inside three quarters of one standard error.** Plain,
+clock, cont, energy, token, zbuf and critic are one measurement, not seven. Any
+sentence anywhere in this file that ranks one rollout arm above another is
+unsupported, and that includes sentences written earlier today.
+
+**The sharpest illustration, and it lands on the arm that just finished.** One
+draw of the untrained starting checkpoint, seed 31, reads 0.5900. The critic
+arm's best evaluation, its headline number, is 0.5900. The checkpoint the critic
+arm initialised from produces the critic arm's best result by chance, on one
+draw, with no training at all. The critic arm's PARTIAL verdict stands as
+recorded, but its number demonstrates nothing.
+
+### What to do differently
+
+`--eval-draws 2` is not enough and never was. Six draws give a standard error of
+0.0054 on an endpoint, which is the minimum that can see an effect the size of
+the 0.0062 the sir arm is predicted to be worth. Better still, run arms paired,
+same seeds and cond rows on both sides with one difference between them, so the
+draw noise cancels instead of being averaged down.
+
+Nothing above needs the GPU to apply. It is arithmetic on numbers already
+recorded, and its main effect is to delete claims rather than add them.
+
+### State of the job
+
+Three of eight seeds ran, and the run was stopped at the edge of the authorised
+window rather than extended. `research/w4_drawvar.json` holds the three rows with
+`"complete": false`. The token streams for seeds 17, 23 and 31 are cached in
+`/tmp/w4_cache` under a key that includes the checkpoint tag, so resuming costs
+only the five seeds not yet drawn, at about 409 seconds each. Those cached
+streams are also exactly the generated input the within trajectory temporal probe
+needs, so that probe now costs no sampling at all.
+
+## The rollout gradient carries no batch to batch signal, 2026-08-11
+
+The plateau is the estimator. Eight independent gradients per arm from
+`w4_rollout_pilot_zbuf_step100.pt`, batch 96, cap 256, eval mode with dropout
+off and amp off so the only thing varying is which rows the batch contains.
+Twenty eight pairs per arm, cosines in float64, run by
+`research/w4_gradsnr2.py`.
+
+    arm                      raw pairwise cos      block normalised
+    REINFORCE surrogate      -0.0846  se 0.0793    -0.0071  se 0.0125
+    anchor NLL control       +0.2033  se 0.1071    +0.0942  se 0.0192
+    difference                                     -0.1012  se 0.0229
+
+Read the block normalised column, which is the same statistic with each
+parameter tensor scaled to unit norm first, and which has four times the
+precision of the raw one for the reason given below. The supervised control sits
+5 standard errors above zero. The rollout surrogate sits on zero, and the gap
+between them is 4.4 standard errors.
+
+Two gradients drawn from the same objective at the same weights agree about as
+often as two random directions in 21 million dimensions do, which is never. The
+prediction registered before the run, surrogate below half the control on both
+statistics, is met on both. The falsifier, surrogate reaching the control, is not
+met on either.
+
+### What the number converts to
+
+Mean pairwise cosine between minibatch gradients estimates
+`|mu|^2 / (|mu|^2 + sigma^2)`, the share of gradient power that is the true mean
+rather than batch noise. Inverting it:
+
+    anchor NLL      0.094  ->  about 10 batches averaged before the mean
+                               direction dominates the noise. on the raw
+                               statistic it reads 0.203 and 4 batches, so call
+                               it 4 to 10 and do not quote one digit of it
+    surrogate       0.000  ->  unbounded. at 1.5 se the most it could be is
+                               0.018, which is 55 batches, and it is consistent
+                               with there being no mean direction at all
+
+Every rollout arm in this file took one optimiser step per batch of 96. On this
+measurement each of those steps was noise. One hundred and fifty of them is a
+random walk with a learning rate, which is a better account of seven objectives
+landing in one band than seven good ideas agreeing.
+
+### This does not say the objective is wrong, and the distinction matters
+
+A cosine of zero means `|mu|` is small next to `sigma`. It cannot tell apart a
+mean direction that exists and is drowned from a mean direction that is not
+there, because a checkpoint sitting at a stationary point of the moment objective
+would read zero too. The two have opposite remedies: averaging more batches fixes
+the first and does nothing for the second.
+
+The critic arm is the reason to prefer the first reading, and it is indirect.
+Its critic was still separating generated from human at the final step, so a
+descent direction demonstrably existed at the point where the score stopped
+moving. That is a different objective on a different checkpoint, so it is
+evidence and not proof.
+
+### Why the first attempt could not be read, and what saved it
+
+`research/w4_gradsnr.py` ran six repeats of a single pair and registered
+"cosine below 0.05" as its threshold for a broken estimator. It returned -0.59,
+-0.12, -0.54, -0.54, +0.53, -0.11 for the surrogate and -0.36, -0.44, -0.56,
++0.83, +0.30, -0.71 for the control. It printed PREDICTION MET. That line is
+wrong and is not the finding.
+
+The control is what caught it. A gradient known to train this model scattered
+across almost the whole range, so a near zero cosine cannot by itself mean
+anything is broken. It is the ordinary condition of minibatch training, and
+without something on the same footing to compare against, 0.05 was a number with
+no units. Any registration that fixes an absolute threshold on a quantity nobody
+has measured on a working instance of the same thing is guessing, and it is worth
+noticing that the registration itself passed review here before the control did
+its job.
+
+`research/w4_gradsnr_check.py` then took the reader apart in four controls:
+
+    1  same batch, eval mode, amp off      cos +1.006397   must be 1
+    2  same batch, train mode, amp on      cos +0.629517
+    3  disjoint batches, eval, amp off     cos -0.288141
+    4  the same in float64                 cos -0.286816
+
+Control 1 clears the reader: identical inputs through a deterministic network
+return the same vector. It also shows float32 is not good enough here, since a
+true cosine cannot exceed 1 and this one does by 0.6%, which is larger than
+several effects in this file. Everything above is float64.
+
+Control 2 prices dropout and fp16 autocast at 0.37 of same batch cosine on their
+own. Both were turned off for the real measurement rather than charged to both
+arms, because they add variance and answer nothing.
+
+### Where the agreement lives, block by block
+
+Per parameter tensor, share of squared gradient norm averaged over the eight
+control gradients, and the mean pairwise cosine within that block for each arm.
+
+    block                     share of |g|^2   surrogate    anchor
+    state_proj.0.weight            75.9%        -0.0955    +0.2549
+    cond_embed.0.weight            13.5%        -0.0458    +0.0506
+    state_proj.0.bias               2.7%        -0.0918    +0.2199
+    layers.0.qkv.weight             2.6%        -0.0619    +0.1363
+    state_proj.2.weight             0.7%        -0.0605    +0.2255
+    s_head.weight                   0.3%        -0.0013    -0.0334
+    th_head.weight                  0.2%        -0.0005    +0.0078
+
+The split is the same in every block that holds any gradient. The control agrees
+with itself most strongly in the input projection and the first attention block,
+0.14 to 0.25, and the surrogate agrees with itself nowhere. The two output heads
+are near zero for both arms, so nothing here is driven by one lucky tensor.
+
+### The finding that was not being looked for
+
+Two thirds to three quarters of the squared gradient norm sits in
+`state_proj.0.weight`, 2304 numbers out of 21.7 million, with
+`cond_embed.0.weight` and its bias taking most of the remainder. The whole
+attention trunk gets a few percent.
+
+That is why the raw cosine scatters near plus and minus one: it is a cosine in a
+handful of dimensions wearing a 21 million dimensional coat, which is also why
+the block normalised statistic is four times more precise and is the one to read.
+
+Note that the single batch check put `cond_embed.0.weight` first at 51.4% and
+`state_proj.0.weight` second, while this eight batch average reverses them. Both
+readings agree that the same two input projections hold nearly everything; which
+of the pair leads is not stable across batches, so the eight batch figure is the
+one to quote and neither should be quoted to three digits.
+
+Independent of anything above, this says nearly all the optimiser's step budget
+goes to the two projections that read the conditioning vector, and the trunk
+barely moves. Whether that starves the part of the model that would have to
+change is untested and is a separate question from the one this run answered.
+
+### One thing that is not explained
+
+The surrogate's per block cosines are not merely zero, they are slightly negative
+in every block carrying gradient, from -0.05 to -0.10. Two gradients from
+independent batches at fixed weights should average zero, not below it, and the
+batch centering of the weight vector does not obviously produce cross batch
+anti correlation. No account of this is offered here rather than a guessed one.
+It does not change the conclusion, since anti correlation is worse for an
+estimator than independence, but it is a loose end and it is the kind of loose
+end that has previously turned out to be a bug.
+
+### What follows
+
+The straight through differentiable decode, registered earlier and made
+contingent on this probe, is now the arm to run. The reason is specific rather
+than general: REINFORCE's variance comes from the score function term, and a
+pathwise gradient removes that term instead of averaging it down. Averaging it
+down is the alternative and it is expensive, needing on this measurement at least
+five times the batches per step that supervised training needs, with no upper
+bound established.
+
+Nothing here should be read as saying the model can reach 0.50. It says that
+whatever the arms have been measuring, they have not yet been measuring their own
+objectives.
+
+## The straight through differentiable decode, and a correction to every gradient cosine reported before it, 2026-08-11
+
+Short version. The straight through arm was built, measured against its own
+registrations, and stopped on its own falsifier. Along the way the standard
+errors this session has been quoting on every gradient cosine turned out to be
+understated by about a factor of two on any arm carrying signal. The headline
+result of the previous section survives that correction at 4.0 se instead of
+4.4 se. One question the arm opened is still open and is being measured.
+
+### Why the arm existed
+
+The previous section measured that the rollout gradient carries no batch to
+batch signal: block normalised pairwise cosine -0.0071 se 0.0125 for the
+REINFORCE surrogate against +0.0942 se 0.0192 for a supervised anchor on the
+same weights and the same batch size. Averaging the noise away would need
+roughly fifty batches per step with no known ceiling. Replacing the estimator
+was the cheaper move, so the registered next arm was a pathwise gradient: send
+the forward pass through the served decoder exactly as the scorer sees it, and
+send the backward pass through a relaxed decode joined to it at the eighteen
+features.
+
+The join sits at the features rather than at the path points, which is what
+makes the construction possible at all. Written at the feature level,
+
+    X = X_hard.detach() + X_soft - X_soft.detach()
+
+the forward values are byte for byte what the contract scorer receives, while
+the gradient is the relaxed path's. Because the join is at the features and
+not at the path, the relaxed decode never has to put its points in
+correspondence with the served decoder's, which would have been the hard part.
+Per position it takes a straight through one hot at the sampled token and
+decodes expectations against the class tables, then follows the model's own
+`prefix_state` geometry rather than re-deriving the served decoder.
+
+The trained and held out split cooperates with this. Every feature that needs
+an argmax, a skewness or a sign change count falls in HELD_OUT, so the twelve
+trained features are the ones that relax cleanly.
+
+### Fidelity, measured before any gradient was taken
+
+`w4_softdec_check` part one compared the relaxed features against the served
+ones on identical tokens, 87 of 96 rows surviving the served decode. Nine of
+the twelve trained features track above 0.9:
+
+    movement_duration      +1.0000        max_deviation          +0.9998
+    max_velocity           +0.9996        path_efficiency        +0.9988
+    mean_velocity          +0.9957        angular_velocity_mean  +0.9806
+    std_jerk               +0.9779        std_velocity           +0.9738
+    std_acceleration       +0.9563
+
+and three do not:
+
+    mean_acceleration      -0.9054        curvature_mean         +0.6277
+    mean_jerk              -0.5572
+
+Two of those are actively inverted, not merely approximate. A Jacobian that
+points backwards is worse than a noisy one, and no variance reduction rescues
+it. Its registered prediction wanted all twelve above 0.5 and was not met; its
+falsifier, any of the four near direct features below 0.5, was not met, so the
+arm continued with the nine.
+
+### What the attribution found, rather than what was assumed
+
+The first gradient measurement returned norms spanning 728 to 2.3e12 across
+eight batches of the same quantity at the same weights. Six orders of
+magnitude is not a converged measurement of anything.
+
+The temptation was to blame the second and third differences on general
+principle, since a 125 Hz grid multiplies by 125 per division and a third
+difference carries about 125 cubed. Taking the gradient of each feature's own
+term separately instead named the culprit:
+
+    curvature_mean       2018534565.6      mean_acceleration          22.2
+    angular_velocity_mean      3379.5      mean_jerk                  13.6
+    everything else           under 11
+
+`curvature_mean` alone accounted for the explosion, and it was already failing
+the fidelity gate. `angular_velocity_mean` at 3379 was a separate bug with a
+physical fix: the served decoder rounds path points to whole pixels, so an
+interval displacing a hundredth of a pixel has no direction the scorer can
+see, while `atan2` happily differentiates it. A displacement floor took it to
+24.5.
+
+Three NaN sources were fixed in the relaxation itself, all of them the same
+shape of error, a value that is finite in the forward pass and undefined in
+the backward one: a masked soft maximum offset by the float minimum, which
+overflows to negative infinity and gives a clean zero forward with a NaN
+backward; a standard deviation clamped at zero before a square root, whose
+derivative is infinite exactly when a trajectory holds a quantity constant;
+and `atan2(0, 0)` on still intervals.
+
+### The temperature sweep, and the falsifier
+
+Three separate readings at eight batches came back -0.0088, +0.0729 and
++0.0232 against a standard error near 0.05. They cannot be told apart, and the
+middle one is exactly the kind of encouraging number that would have justified
+a training run on nothing. The correct response to three unreadable numbers is
+more precision, not a fourth reading, so the sweep went to 24 batches and
+swept the relaxation temperature, which is the one knob that trades bias for
+gradient smoothness:
+
+    tau 1   block -0.0051 se 0.0147
+    tau 2   block +0.0083 se 0.0193
+    tau 4   block +0.0130 se 0.0213
+
+The registered falsifier was all three at or below +0.03, and it triggered.
+The cosine does rise monotonically with temperature, which is the predicted
+direction, but nothing reaches the +0.05 the prediction required, and the
++0.0729 at eight batches regressed to +0.0130 with three times the data,
+exactly as an unreadable number should.
+
+The registered meaning stands: a pathwise gradient of the moment objective
+through this decode carries no more batch to batch signal than the score
+function estimator it was built to replace, at any temperature.
+
+### The standard errors were wrong
+
+Every cosine in this session came out of one helper that divides the standard
+deviation of the pairwise cosines by the root of the pair count. With 24
+gradients that is 276 pairs, but each gradient appears in 23 of them, so the
+pairs are not independent draws and the divisor is too large. The mean
+pairwise cosine is a U statistic and its variance is set by the number of
+gradients, not the number of pairs. The worst case inflation is root 23, about
+4.8, which would have turned the anchor's +0.0942 se 0.0192 into one standard
+error from zero and taken the headline with it.
+
+`w4_cosse` measured it with a jackknife over gradients on three arms sharing
+identical batches:
+
+    arm                                cosine     naive se   jackknife se   x
+    anchor NLL, per row target        +0.0992      0.0068       0.0139     2.04
+    moment objective, batch statistic +0.0058      0.0227       0.0190     0.84
+    per row target, pathwise          +0.0483      0.0203       0.0344     1.70
+
+The registered prediction wanted at least 2x on all three and the falsifier
+wanted all three within 25 percent of 1x. Neither fired, and the pattern that
+came out is more informative than either would have been: the inflation is
+about 2x on the arms with a real mean direction and absent on the arm without
+one. That is what should happen. Pairs only become dependent through a shared
+mean direction, so a null arm has nothing to inflate.
+
+**The headline survives.** The anchor beats the batch statistic objective by
++0.0934 with a jackknife se of 0.0235, which is 4.0 se rather than the 4.4 se
+quoted before. Every conclusion drawn from that gap is unchanged. What does
+not survive is any reading of a single arm near the threshold: the pathwise
+per row cell at +0.0483 se 0.0344 is 1.4 se from zero and says nothing.
+
+Two lessons, and they are the same lesson twice. Earlier this session an
+absolute threshold was registered on a statistic nobody had measured on a
+working instance, and a control killed the threshold. Here a standard error
+was inherited from a helper nobody had checked against the dependence in its
+own inputs. Both were caught by measuring the instrument rather than trusting
+it, and in both cases the instrument check was cheaper than the experiment it
+protected.
+
+### What is still open
+
+The four cells of the design are not symmetric:
+
+                          score function          pathwise
+    batch statistic       -0.0071 se 0.0125       +0.0058 se 0.0190
+    per row target        +0.0992 se 0.0139       +0.0483 se 0.0344
+
+The supervised anchor is the only clearly positive reading, and it differs
+from the three others in two ways at once, a different estimator and a
+different shape of objective. With those confounded, the three near zero
+readings cannot be attributed to either. The bottom right cell separates them
+and it is currently undecided.
+
+That cell is worth deciding because of what each answer implies. If a per row
+target does transmit a well determined gradient through the same relaxation,
+the relaxation is not the problem and the fault lies with the batch statistic
+objective, which every arm run in this whole programme has used. If it does
+not, the straight through construction is the fault and the arm is finished
+outright.
+
+It is being measured now at four times the batch. Batch 192 with gradients
+through the trunk does not fit in 8 GB and fails as
+`dxgk: dxgkio_make_resident: Ioctl failed: -12`, the WSL paravirt layer
+reporting an out of memory as a driver error. The way around it is that a per
+row objective is a sum over rows, so its gradient is exactly additive across
+sub batches while a batch mean and standard deviation are not. Summing four
+96 row gradients gives the 384 row gradient with no approximation, which is
+also why only the per row arm can be measured this way.
+
+### One thing that is not explained
+
+The per tensor pattern differs between the two objectives in a way nothing
+here accounts for. On the moment objective at tau 4, `cond_embed.0.weight`
+carries 13 percent of the gradient and is the only block with a positive
+cosine, +0.055, while `state_proj.0.weight` carries 23 percent at -0.002. On
+the per row objective the small feedforward blocks read highest, +0.035 to
++0.044, and `state_proj.0.weight` is again the largest and again near zero.
+The largest block by gradient mass being the least self consistent, on both
+objectives, is a real pattern with no account attached to it. Recording it
+rather than guessing.
+
+### The per row cell decided, one mechanism found and one fix ruled out, 2026-08-11 late
+
+The section above left a cell of the design undecided and said why it
+mattered. It is now measured. Two things came out, one about the shape of the
+objective and one about the distribution of gradient magnitudes, and they are
+not the same thing. A fix that looked like it followed from the second does
+not survive being measured properly, and the retraction is below.
+
+#### The relaxation is not the fault
+
+At 64 gradients rather than 24, a per row target through the relaxed decode
+reads +0.0818 se 0.0280, which is 2.9 se from zero. Against the other cells:
+
+    supervised anchor NLL, per row target    +0.0992 se 0.0139
+    per row target through the decode        +0.0818 se 0.0280   0.6 se from it
+    moment objective, batch statistic        +0.0058 se 0.0190
+
+A per row target pushed through the relaxed decode is indistinguishable from
+ordinary supervised teacher forcing. Same weights, same estimator, same
+relaxation, same nine features, same cached tokens. So the failure is not the
+model class, not the pathwise estimator, and not the relaxation. Whatever is
+wrong is in what is being asked for.
+
+#### The shape effect, measured paired, and how strong it actually is
+
+The comparison above puts a 64 gradient number next to a 24 gradient number
+from a different run, which is exactly the sort of thing that has been wrong
+twice today. `w4_shape.py` measured both objectives on the same 64 cached
+batches, the same tokens, the same pair indices, taking the difference pair by
+pair so the shared batch draw noise cancels:
+
+    per row target        +0.0667 se 0.0233     2.9 se from zero
+    batch statistic       +0.0119 se 0.0075     1.6 se from zero
+    paired difference     +0.0548 se 0.0261     2.1 se, band [+0.0026, +0.1070]
+
+The registered prediction wanted the difference above +0.05 and at least 3 se
+clear of zero. The point estimate clears +0.05 and the significance does not.
+The falsifier, at or below +0.02 or within 2 se of zero, did not fire either.
+**So the shape effect is supported and not established.** It is the best lead
+in the workstream and it must be carried forward with that qualifier attached,
+not as a fact.
+
+If it is real the mechanism is not mysterious. A batch statistic objective
+condenses ninety odd trajectories into eighteen numbers, nine means and nine
+standard deviations, before any gradient is taken. A per row target keeps nine
+residuals per trajectory, about eight hundred numbers out of the same batch.
+On that reading the objectives this programme has used have been starved of
+information by construction, which would explain seven ideas landing in one
+band better than seven ideas being coincidentally equally good.
+
+What it does not license: a per row target is a diagnostic and not a training
+objective. Hitting each real trajectory's own eighteen features is also what a
+model collapsed onto the conditional mean would do, and the contract scorer
+punishes that through the dispersion ratios. The lesson is about the shape of
+the credit, per trajectory rather than per batch, not about that particular
+target.
+
+A reproducibility note. The same per row quantity on the same 64 batches read
++0.0818 in `w4_softdec_pair2` and +0.0667 in `w4_shape`. Both are correct runs
+of the same deterministic construction, differing only in floating point
+accumulation order on the GPU, and they sit 0.5 se apart. The jackknife error
+is therefore about right rather than optimistic, but no cosine in this
+workstream should be quoted past the second decimal.
+
+#### Gradient magnitudes are extremely heavy tailed, and that is not the problem
+
+Every run in this arm reported gradient norm spreads of two to three orders of
+magnitude and it had been read as an annoyance. Measured across 64 sub batches:
+
+    per row objective     min 15593   median 156489   p99 39.9e6   spread 2557x
+    batch statistic       min 13.3    median 449      p99 1.44e5   spread 23242x
+
+    four of the 64 sub batches hold 58 percent of the total gradient mass
+    within each group of four, the largest member contributes on average 0.699
+    of the summed norm (per row) and 0.675 (batch statistic), where four equal
+    members would each contribute 0.25
+
+That is a direct measurement of a distribution and does not depend on any
+cosine. A sum of four things where one contributes seventy percent is not an
+average of four, and it explains why summing four disjoint sub batches took
+the per row cosine from +0.0818 only to +0.0944 when averaging errors would
+have given +0.2628.
+
+**But reweighting does not fix it, and an earlier statement that it did is
+withdrawn.** `w4_softdec_tail` reported unit normalised summing at +0.2026
+against +0.0904 for a plain sum and called the prediction met. That gate asked
+whether a point estimate exceeded +0.20 without asking whether it was
+distinguishable from what it was being compared against. Measured paired on
+identical gradients in identical groups:
+
+    per row objective     unit minus plain   +0.1123 se 0.0911   1.2 se
+                          clip minus plain   +0.1028 se 0.0832   1.2 se
+    batch statistic       unit minus plain   -0.0190 se 0.0210
+                          clip minus plain   -0.0010 se 0.0272   band to +0.0533
+
+On the diagnostic objective the improvement is suggestive and unproven. **On
+the objective that would need rescuing it is absent, and tightly enough that an
+improvement above +0.055 is excluded at two standard errors.** Clipping is not
+the fix and rerunning the existing arms with it would be wasted GPU time.
+
+This is the third instrument error of the day and the second within an hour of
+the write up warning about the first: an absolute threshold on a statistic,
+with no requirement that it be separable from its comparison. The pattern is
+specific enough to state as a rule. **Register gates as differences in
+standard errors against a named comparison, never as levels.** A level can
+only be read if someone has already measured the same statistic on a known
+good instance, and in a new construction nobody has.
+
+#### Two defects, and only one of them is the blocker
+
+  1  The batch statistic objective yields little usable gradient direction,
+     +0.0119 se 0.0075, against +0.0667 se 0.0233 for a per row target on
+     identical machinery. Supported at 2.1 se, not established.
+  2  Gradient magnitudes are heavy tailed enough that averaging does not reduce
+     noise at anything near the expected rate. Established directly, and
+     unfixed by either reweighting rule tested.
+
+Defect 2 is real and is not what is holding the score back. Defect 1 is the
+lead. The next arm should give per trajectory credit through the relaxed
+decode with an objective that cannot be satisfied by collapsing onto the
+conditional mean, which is what a differentiable critic on the relaxed features
+would be. The existing critic arm is not that: it used a forest critic with
+trajectory credit through REINFORCE, so it inherited the estimator this whole
+line of work has now measured as carrying no signal.
+
+### The gradient cosine measures the wrong thing, and what that retracts, 2026-08-11 later
+
+Yesterday's section ended by naming per trajectory credit as the lead and a
+differentiable critic as the arm that would carry it. The critic was built and
+it failed. Chasing why it failed found that the instrument used to rank every
+objective in this workstream ranks them by something other than merit, so the
+critic's own verdict is void too, along with several conclusions written up
+above. This section is mostly a retraction.
+
+#### The critic arm
+
+A frozen MLP on the nine trained features, fitted to separate this checkpoint's
+own generated rows from human ones, then used as a per row objective through the
+straight through join. Held out AUC 0.6208, so there is real separable structure
+in those nine features and the critic is neither useless nor saturated. On the
+same 64 cached batches as everything else:
+
+    per row target        +0.0667 se 0.0233
+    critic, per row       +0.0185 se 0.0147
+    batch statistic       +0.0119 se 0.0075
+    critic minus batch statistic, paired   +0.0066 se 0.0157   0.4 se
+    critic minus per row target, paired    -0.0482 se 0.0272  -1.8 se
+
+The critic gives credit one trajectory at a time, summed over rows, which is
+exactly the shape yesterday's section said was the thing that mattered. It
+carries no more gradient than a batch statistic. So per row against per batch is
+not what separates these objectives.
+
+#### What actually separates them
+
+`w4_residual` ran the same batch statistic objective three times on the same 64
+batches and the same tokens, changing nothing but the target it was asked to
+hit. Target 0 is where the model already sits.
+
+    moment objective, target 0        +0.0119 se 0.0075
+    moment objective, target 1 sd     +0.1542 se 0.0482
+    moment objective, target 4 sd     +0.1998 se 0.0518
+    paired, 4 sd against 0            +0.1879 se 0.0526     3.6 se
+
+Same shape, same batch statistic, same eighteen numbers per batch. Moving the
+target away from the model multiplies the cosine by seventeen, and a batch
+statistic then reaches three times the per row target's value. The instrument is
+reading how far the model is from its target, not how the objective is shaped.
+
+The fourth arm makes the same point from the other side. A per row target
+against a randomly drawn human row, which destroys per row correspondence
+entirely, scores higher than the same objective against the row the generator
+was actually conditioned on:
+
+    per row, own row      +0.0667 se 0.0233     squared residual 1.46
+    per row, random row   +0.0904 se 0.0250     squared residual 2.63
+
+Bigger residual, bigger cosine, and correspondence contributes nothing.
+
+#### What this retracts
+
+  the shape effect of yesterday, +0.0548 se 0.0261, and the mechanism written
+  for it about a batch statistic discarding information before differentiating.
+  The per row target's advantage was its residual. Withdrawn.
+
+  the critic arm's falsifier verdict, printed an hour before this was known. The
+  critic was judged by a broken instrument and is neither supported nor refuted
+  by that run.
+
+  every other cross objective comparison in this workstream, which includes the
+  session headline that the REINFORCE rollout gradient carries no batch to batch
+  signal while supervised teacher forcing does. Those are two objectives at very
+  different distances from satisfaction and the comparison cannot separate the
+  estimator from the residual.
+
+What survives is any comparison at matched residual: the temperature sweep in
+`w4_softdec_tau`, the aggregation rules in `w4_softdec_clip`, and the heavy tail
+measurements, which are direct measurements of a distribution and depend on no
+cosine at all.
+
+#### The one thing the cosine still says, and it agrees with the copula work
+
+The residual is small because the model is close. Across the nine trained
+features the generated batch mean sits 0.10 standard deviations from the human
+mean and the generated log standard deviation sits 0.26 from the human one.
+Every arm in the rollout family optimises exactly those quantities.
+
+That is the same conclusion `w4_copula` reached from the scoring side and it is
+already in RESUME: marginals are worth nothing, rank correlation is worth
+0.0062, a full copula transport still reads about 0.595 against a floor of about
+0.517. Two independent lines now say the same thing. The arms were not failing
+to optimise. There was little left in what they optimise, which is why they have
+no gradient signal and why they land in one band.
+
+#### Four errors, three of them the same error
+
+`w4_marginal` was built to measure the marginal ceiling and mostly re derived
+what RESUME already recorded. RESUME should have been read first. Its two
+quantile arms do confirm the known result on this checkpoint's own output:
+matching every marginal of the twelve trained features buys -0.0106 se 0.0061,
+and matching all eighteen buys +0.0429 se 0.0071.
+
+Its affine arm is an artifact and is withdrawn. Setting each column's mean and
+standard deviation to the human corpus took the AUC to 0.9999, and the control
+that should have been run first shows why: real human rows put through the same
+transform also read 0.9992. The transform is detectable on its own. It measures
+nothing about the generator.
+
+Its gate printed PREDICTION MET on a condition, `gm < 0.02`, that a large
+negative number satisfies. The arm it was gating had gone catastrophically the
+wrong way. That is the fourth gate of this family in two days and the rule
+written yesterday, register gates as differences in standard errors against a
+named comparison, was not enough on its own. The missing half is that a gate
+needs a lower bound as well as an upper one, because an arm can fail by
+overshooting in the direction nobody thought to check.
+
+The fourth is a scare that was caught. A real human sample scored 0.6407 against
+the contract reference in the fold sizes `w4_marginal` used, which would have
+meant this model already sits at the human floor and the whole target is
+misconceived. At the contract's own n of 2000 the same measurement reads 0.5135
+and 0.5172 over six independent draws, matching the 0.517 to 0.535 already
+recorded. The 0.6407 was an artifact of scoring 1160 row folds and does not
+stand.
+
+#### What the next arm must be, and how it must be judged
+
+Not by gradient cosine. Nothing in this workstream should rank two different
+objectives by that number again. The only remaining way to rank an objective is
+to train on it and score the result.
+
+The objective has to express higher order dependence, because that is the only
+place the remaining gap lives. A critic is such an objective and the critic
+result no longer stands against it. The relaxed decode is validated as a way to
+get pathwise gradient into the generator, which is the one thing this line of
+work did establish and did not retract.
+
+### The adversarial critic collapses the model, and that closes a family, 2026-08-11 later still
+
+Job 3d ended by saying the only remaining way to rank an objective is to train
+on it and score, and that the objective has to express higher order dependence
+because that is the only place the gap lives. A critic is such an objective. It
+was built, it was trained three times, and it fails. This section is the third
+run, which is the only one clean enough to say anything about the objective, and
+what its failure means for every objective this programme has tried.
+
+#### The run
+
+`research/w4_advpath.py`. A learned critic on the twelve trained features,
+refitted forty steps per generator step against a buffer of earlier batches so
+every logit the generator is graded on is out of sample. The generator
+differentiates through nine of those features by the straight through join
+validated in job 3, which is the one construction this line established and did
+not retract. Anchored on a teacher forced negative log likelihood over real
+corpus batches. Scored against `data/human_ref_features_sir.npy`, not the
+corpus, so the objective is not aimed at the thing that scores it.
+
+    base        0.6338    spread err trained 1.6953   collapse False
+    step 50     0.7131    spread err trained 1.8124   collapse True
+    step 100    0.7794    spread err trained 2.0651   collapse True
+
+That is +0.1456 the wrong way, against a two draw standard error near 0.0094, so
+about fifteen standard errors. The two draws inside each evaluation differ by
+0.0013, 0.0004 and 0.0048, so sampling noise is not in it anywhere. Registered
+prediction not met. Registered falsifier triggered on its upper bound.
+
+Runs one and two do not get a vote on the objective and are recorded elsewhere.
+Run one carried no anchor and no gradient clip, both my omissions. Run two
+carried both but its anchor was numerically negligible, and it died of memory in
+the anchor's backward. Run three chunked the anchor, scored at the contract's
+own n of 2000 rather than 800, and set the anchor strength from a measured
+gradient balance instead of an assumed one. It failed anyway, and it failed
+harder than the two broken runs did.
+
+#### The mechanism, and it is in the diagnostics rather than inferred
+
+Across the whole run the location error barely moves, 0.0684 to 0.0850, while
+the spread error climbs 1.6953 to 2.0651 and the collapse flag turns on at step
+50 and never turns off. The means stay right and the spread collapses.
+
+That is not the optimiser failing to find the objective's minimum. It is the
+objective's minimum. The loss is a sum over rows of `softplus(-critic(row))`,
+and the thing that minimises a sum of per row humanness scores is to emit the
+single most human looking trajectory every time. A point mass is then trivially
+separable from a spread out human sample, which is exactly what the contract
+forest reports.
+
+The critic watched it happen and could not stop it. Its own held out AUC rose
+from 0.574 to 0.780 over the run, so it was detecting the collapse it was
+causing. What it could not do is outweigh it. The gradient norms were printed
+every step for this reason:
+
+    step 10    anchor 20.9    total  23.7
+    step 40    anchor  9.3    total 116.0
+    step 100   anchor 17.5    total 384.6
+
+The anchor strength was set at lam 10 from a measurement at step 10, where it
+held about equal pull. By step 40 the critic term had grown tenfold and the
+anchor was back to a tenth, because the generator's gradient scales with how
+confidently the critic separates and the critic keeps sharpening. A constant lam
+cannot hold a term whose size is set by an adversary that is still learning.
+Anyone rerunning this should scale the anchor to a fixed share of the critic's
+norm each step rather than pick a constant, but that is a fix to the balance and
+not to the objective, and the objective is what is wrong.
+
+#### The dichotomy this leaves, and it is the useful part
+
+Every objective this programme has run falls into one of two families, and they
+fail for opposite reasons.
+
+  A batch statistic is distribution aware. It compares a generated batch's
+  moments against a human batch's moments, so a collapsed batch is punished
+  immediately. But moments are all it can reach, and `w4_copula` established
+  that marginals are worth nothing, rank correlation is worth 0.0062, and a full
+  copula transport still reads about 0.595 against a floor near 0.517. There is
+  almost nothing left in what it optimises, which is why seven such arms landed
+  inside 0.0048 of each other.
+
+  A per row critic is expressive enough for the higher order structure that
+  actually separates. But it grades each trajectory alone, so it is not a
+  comparison of distributions at all, and its optimum is a point mass.
+
+Both halves are now measured rather than argued. The next objective has to be
+distribution aware AND higher order at the same time, and neither family is.
+
+#### What that says the next arm is
+
+Match the distribution of the critic's own output rather than pushing every row's
+output up. The critic is a learned nonlinear map from the nine differentiable
+features to a scalar chosen to separate maximally, so the direction it picks is
+where the remaining separation lives. Matching the mean and the standard
+deviation of that scalar between a generated batch and a human batch is a batch
+statistic, so it punishes collapse the way every moment arm does, and it is
+computed on a learned higher order direction, so it is not confined to the
+moments `w4_copula` closed off. It is the one cell the two failed families leave
+open, and it needs no new machinery: the critic exists, the straight through
+join exists, and the batch statistic aggregation is the one every earlier arm
+used.
+
+The obvious objection is that a collapsed generator could match the mean and
+standard deviation of one scalar while being wrong in every other direction. It
+could. What stops that here is that the critic is refitted continuously, so a
+generator that satisfies today's direction is separated along a new one
+tomorrow, and the objective moves with it. That is a claim about the training
+dynamics and it is not established. Register it as the prediction, not as
+background.
+
+#### The host crashed, and it did not affect the verdict
+
+Windows blue screened at 18:30 during step 101 or later, Kernel Power 41 with
+bugcheck 0x50, PAGE_FAULT_IN_NONPAGED_AREA. No minidump was written, so the
+faulting driver cannot be named and no root cause is offered here. What can be
+ruled out is the memory bug that killed the distro three times before: the
+flight recorder at `C:\Users\aaron\wsl-blackbox.log` shows 10 GB available and
+swap untouched at 18:29:43, its last sample. This is the second host crash on
+this workload after 2026-08-06, which is why it already runs a tightened 79C
+kill.
+
+The verdict survives the crash because the step 100 evaluation had already been
+written to disk and the trend is monotone over two evaluations, so the missing
+steps 101 to 150 could not have reversed +0.1456. What was lost is
+`/tmp/w4_cache`, which is on tmpfs: 64 cached token batches and the 1.4 GB
+gradient cache, all regenerable at about thirty to forty minutes of GPU.
+
+#### An operator error worth writing down
+
+Run one was stopped by killing pid 624310. That was its parent shell. Its python
+child, 624312, survived and ran orphaned for an hour, training an unanchored
+adversarial model and holding about 2 GB of an 8 GB card. Run two was launched
+into that and is why run two ran at half run one's speed and ran out of memory
+at all, which I initially wrote up as a defect in the anchor's memory footprint.
+The anchor's footprint was a real defect too and is fixed, but it was not the
+whole story.
+
+The cause is that the launch was written as `cd dir && VAR=x nohup python ... &`,
+and the trailing `&` on a `&&` list backgrounds a subshell, so `$!` reports the
+subshell and not python. Use `;` instead of `&&`, and confirm the reported pid
+is python with `ps` before trusting it. The standing rule against `pkill -f` is
+what stopped the obvious shortcut here, and it was right to, but "kill the pid I
+recorded" is not sufficient on its own.
+
+### The standard deviation is not an estimable statistic here, and the whole batch statistic family was aimed at it, 2026-08-11 later still
+
+This came out of building the next arm rather than from running it. While
+`w4_advmoment` was doing its base evaluation I went back to a number I had been
+reading past for weeks: the base checkpoint's `spread_err_trained` is 1.6953 when
+`w4_advpath` reports it against the sir reference and 0.3444 when
+`w4_rollout_clock` reports it against the corpus. Those are the same quantity on
+the same kind of sample, a mean of absolute log spread ratios, differing by a
+factor of five. One of the two references had to be wrong about something.
+
+Neither is. What is wrong is the statistic.
+
+#### A control of mine was broken, and the correction comes first
+
+My first measurement said the training corpus was separable from the scorer's own
+human reference at 0.8142, which would have meant the model is trained to imitate
+a distribution that scores worse than the model does. That was my error and not a
+property of the data. `scoring.score_features` balances the two samples by taking
+the FIRST n rows of what it is handed, and I handed it the first two thousand
+rows of a twenty thousand row draw that had been index sorted. The corpus is
+ordered, so that is the lowest ten percent of the corpus by index and not a
+sample of it at all. The same rows shuffled read 0.5114 and 0.5184 on two draws.
+
+So the corpus is a valid sample of the target distribution, and so is sir, which
+reads 0.5132. Real corpus tokens pushed through the serving decoder read 0.5239
+and the stored features for those same rows read 0.5131, so the precomputed
+feature file and the decode path agree, medians identical to three figures.
+
+Every arm shuffles before scoring and none of them has this bug. My ad hoc
+controls did. The rule that matters for anyone writing another one: anything
+handed to `score_features` must be shuffled first, because the first n rows is
+what it reads, and an index ordered block of a corpus is not a sample.
+
+#### The measurement that survives, and it is the important one
+
+On the eight speed family features, the standard deviation of a human sample is
+set by a handful of rows. Bootstrapped over four thousand rows of the sir
+reference, the coefficient of variation of the estimated standard deviation is
+0.609 for `max_velocity` and 0.649 for `std_jerk`, against 0.022 for
+`path_efficiency` and 0.043 for `movement_duration`. The speed family standard
+deviations move by about sixty percent from resample to resample. They are not
+estimable at this sample size.
+
+The same fact from the other side. The corpus and the scorer's reference agree on
+the body of every feature, medians within eight percent and ninetieth percentiles
+within twelve, and disagree by a factor of six on the standard deviation of
+`max_velocity`, 5133 against 32245. The sir reference disagrees with the scorer's
+in the other direction, seven to eight times larger, on the same features whose
+medians match to within five percent. Three samples of one distribution, three
+different answers, and the disagreement is entirely in a statistic that a few
+rows control.
+
+#### A conclusion I drew here and then had to withdraw
+
+I first wrote that this makes the batch statistic family's target catastrophic. I
+affine corrected a generated sample so every column's mean and standard deviation
+matched a human reference exactly, which is the state those arms optimise toward,
+and it scored 1.0000 against the sir moments and 0.9997 against the corpus
+moments. Perfect separability in both directions against both references, which
+looked like a decisive indictment of the whole family.
+
+It is not. The control I skipped is to apply the same transform to REAL HUMAN
+ROWS. Two disjoint halves of the sir reference score 0.5078 against each other
+untouched, and 1.0000 once one half is affine matched to the other. The transform
+is what the forest detects, and it detects it just as perfectly on real human data
+as on generated data. It measures the transform and says nothing about the target.
+
+`w4_marginal.py` established exactly this on 2026-08-11 and RESUME already carries
+it: its affine arm is withdrawn as an artifact, real human rows through the same
+transform score 0.9992, so it measures the transform. I re-derived the artifact
+and wrote a conclusion on it before reading that entry. The DO NOT RE DERIVE
+discipline exists for this and I did not apply it. The withdrawal is the finding
+worth carrying, not the number.
+
+The mechanism ties back to the part that does survive, and is worth stating
+because it explains why the artifact is so violent. Rescaling by a ratio of two
+standard deviation estimates, on a feature whose standard deviation carries a
+sixty percent coefficient of variation, applies an essentially random rescale of
+that size to the body of the distribution. That is trivially detectable no matter
+what it is applied to.
+
+#### What the surviving measurement does say
+
+The narrower claim needs no artifact and rests on the bootstrap alone. An
+objective term of the form log of the ratio of generated to reference standard
+deviation is chasing a target that moves by about sixty percent from resample to
+resample on exactly the speed family features. On those features it is mostly
+optimising noise. That is a real criticism of the currency and it is supported
+directly.
+
+What it does NOT support, and what I claimed and withdraw: that the objective's
+minimum is catastrophic, or that this is why seven arms plateaued. Those arms
+plateaued within 0.0048 of each other, meaning they barely moved, and the anchor
+is the obvious reason. A random forest does split on thresholds and is invariant
+to monotone reparameterisation of a column, so quantiles remain the better
+currency than moments on that argument alone. That argument stands on its own and
+did not need the affine number.
+
+#### A smaller defect, found the same way and already fixed
+
+Every arm in the critic family standardised the critic's input by the reference's
+mean and standard deviation. On the speed family that puts the entire body of the
+distribution inside a band of about a hundredth, with all the range taken up by
+the outliers, and those are the features the record says the remaining gap lives
+in. Measured on a saved generated sample, same architecture and budget:
+
+    forest on the raw columns                 0.6515
+    critic on squashed mean/sd z, as shipped  0.6315
+    critic on squashed median/IQR z           0.6563
+    critic on rank transformed columns        0.6838
+
+So the shipped standardisation cost the critic about 0.025 against an affine fix
+and 0.052 against the best transform available. The rank transform wins and
+cannot be used, because its gradient is zero almost everywhere and the generator
+has to differentiate through this map. Median and interquartile range is affine,
+keeps the pathwise gradient, and is what `w4_advmoment` now uses. The squash then
+does what it was meant to, resolve the body and clip the tail, rather than never
+engaging on the body at all.
+
+This does not overturn `w4_advpath`. That arm failed by +0.1456 with the collapse
+flag on, and a 0.025 handicap on the critic does not produce that. It is a defect
+in its own right and it is fixed.
+
+#### Why the running arm is already in the right currency
+
+`w4_advmoment` matches the generated and human distributions of the critic's
+output by the sorted matching distance, which is the mean absolute gap between
+the two sorted samples. That is a quantile statistic, not a moment. I chose it
+over the mean and standard deviation registered in job 3e because it is strictly
+stronger, before any of this was measured. It happens to be the only form of the
+arm that this section does not indict, which is luck rather than foresight, and
+worth saying plainly so the next person does not read a rationale into it that
+was not there.
+
+### Matching the critic's whole output distribution collapsed the model anyway, and that closes the objective as the explanation, 2026-08-12
+
+`w4_advmoment` was built to answer the dichotomy the previous window ended on.
+Batch statistic objectives are distribution aware but reach only moments. Per row
+critic objectives reach higher order structure but their optimum is a point mass,
+which is what `w4_advpath` walked into at +0.1456. The arm was the cell those two
+leave open: a per row differentiable objective whose optimum is NOT a point mass.
+It matches the full one dimensional distribution of each of eight independently
+trained critic heads by sorted matching distance, on the same straight through
+pathwise gradient, with the anchor rescaled every step to equal the generator's
+gradient norm exactly.
+
+Sorted matching distance against a spread human sample is MAXIMAL for a point
+mass. Collapse is close to the worst value this objective can take.
+
+    base                     rf 0.6338   spread err trained 1.6953  held 0.6447
+    step 50                  rf 0.6774   spread err trained 1.8367  held 0.7126  collapse
+    step 100                 rf 0.6860   spread err trained 1.9704  held 0.7729  collapse
+
+It collapsed anyway. +0.0522 at step 100 against a two draw standard error of
+0.0043, about twelve standard errors the wrong way, triggered on two successive
+evaluations with a monotone climb. The registered falsifier was two sided, above
++0.02 or within two standard errors of zero, and the upper bound fired. Stopped
+at step 100 of 150 because a third evaluation could not change the verdict.
+
+The base read 0.6338 to four decimals, identical to `w4_advpath`'s, so the two
+arms are directly comparable and the comparison is the point of the run.
+
+#### What this rules out
+
+Changing the objective from the per row form to the distributional form did not
+change the outcome. The two arms differ in exactly the property that was supposed
+to matter, whether collapse is their optimum, and they fail the same way. So
+whatever is driving the collapse is not the objective, and the dichotomy that
+motivated the arm is not the right frame.
+
+That is worth more than the arm succeeding would have been in one narrow sense:
+it is a negative result that eliminates a whole axis rather than one point on it.
+
+#### The anchor does not prevent it, and this run measured that
+
+The teacher forced negative log likelihood across the whole run:
+
+    1.537  1.526  1.576  1.505  1.520  1.556  1.599  1.512
+
+Flat. No trend. Meanwhile the collapse flag turned on and the trained spread error
+climbed from 1.6953 to 1.9704.
+
+This was not an anchor that had been allowed to go slack. The balance rule
+recomputed it every step to equal the generator's gradient norm, and the
+instrumentation confirms it worked: `tot` tracked `gen` times root two at every
+step, which is what two equal and roughly orthogonal gradients sum to. The anchor
+was at full pull and fully satisfied while the thing it was there to protect
+degraded monotonically.
+
+The reason is not subtle once stated. A teacher forced likelihood is evaluated on
+REAL HUMAN PREFIXES. It constrains the model's conditional distribution at states
+a human visits. The contract score is computed on what the model produces when it
+runs on its OWN output. Those are different distributions and a model can hold the
+first exactly steady while the second collapses. That is exposure bias, and this
+run measured it rather than assuming it.
+
+Every anchored arm in this programme has used the teacher forced anchor.
+
+Anchor strength against damage at step 50, across the family:
+
+    w4_advpath run 1   no anchor at all                      +0.0806
+    w4_advpath run 3   constant lam, about a tenth pull by 40  +0.0793
+    w4_advmoment       full equal pull, every step            +0.0436
+
+So the anchor roughly halves the damage and does not stop it. Tuning it harder is
+not a promising direction, because the version at full equal pull is already the
+strongest form the construction allows and it still lost.
+
+This also partly reframes `w4_advpath`'s verdict. Its objective's optimum
+genuinely is a point mass, that stands. But that is no longer the whole
+explanation for what happened to it, because an objective without that property
+collapsed too.
+
+#### One defect fixed in this arm, for the record
+
+Every earlier critic arm standardised the critic's input by the reference's mean
+and standard deviation, which on the speed family puts the entire body of the
+distribution inside a band of about a hundredth. This arm uses the median and the
+interquartile range, which is affine and so keeps the pathwise gradient intact.
+Measured separately at 0.6563 against 0.6315 for the shipped form. It does not
+change this verdict and it was not meant to.
+
+#### What follows, and it is two arms not one
+
+Both hold something fixed that the other changes, which is the only way the
+answers stay attributable.
+
+`w4_klanchor` holds the objective identical and replaces the anchor. Instead of a
+teacher forced likelihood on human batches it uses the exact per position KL
+divergence from the live model to a frozen copy of the base, evaluated at the
+states the live model visits when it samples. Both models see the same prefixes,
+so it is a divergence between two conditionals at a fixed state and carries no
+score function term. The balance rule is inverted with it: the critic is
+normalised to unit norm and the KL enters at its natural scale under an adaptive
+coefficient, because renormalising a KL every step destroys the one property that
+makes it an anchor, that it grows as the model drifts.
+
+`w4_estimator` holds the objective identical too and changes the GRADIENT
+ESTIMATOR. That arm is described in its own section; the short version is that
+both collapsing arms were pathwise straight through and the rollout objectives
+that never collapsed were score function, six of them landing within 0.0048, which
+is the textbook biased versus high variance pair. RESUME had already reached half
+of this on its own, saying of that plateau that six objectives agreeing to within
+0.0048 is more easily explained by a shared noisy estimator than by six
+independently good ideas agreeing; what is new is that the same framing covers the
+collapse on the pathwise side, and the fact that an objective whose optimum is not a point
+mass still collapsed is exactly what a biased estimator following its own fixed
+point would look like.
+
+#### A qualification I have to put on the section above, found by checking the record afterwards
+
+RESUME's own bullet 2 in the 2026-08-07 list says, in as many words, that the
+collapse flag does not mean what this workstream keeps reading it as. On the
+three features it fires on, the interquartile ratio to human is 1.04 to 1.10
+while the standard deviation ratio is 0.16 to 0.22. The bulk is already the right
+width. The flag is reporting missing extreme tails on features whose human
+distributions are enormously heavy tailed, and the entry ends "do not treat the
+collapse flag as a dispersion target".
+
+I wrote the section above before rereading that. It matters, because the two
+claims in it do not rest on the same evidence and only one of them survives
+untouched.
+
+WHAT STANDS, and it needs no dispersion statistic at all. The contract AUC rose
+0.6338 to 0.6774 to 0.6860, monotone, about twelve standard errors, on the
+scorer. And the teacher forced negative log likelihood was flat at 1.480 to 1.599
+across the entire run while that happened, at full equal gradient pull, verified
+by `tot` tracking `gen` times root two every step. That is the exposure bias
+finding and every number in it is independent of `spread_err` and of the collapse
+flag. It is the more important of the two claims and it is unaffected.
+
+WHAT DOES NOT YET STAND. The argument that this is SURPRISING. That argument runs
+"sorted matching distance is maximal for a point mass, so this objective punishes
+collapse, so an optimiser walking into collapse anyway means the gradient is not
+the objective's". Every step of it needs the model to actually be moving toward a
+point mass. What I have is `spread_err_trained` rising 1.6953 to 1.9704 and a
+flag whose meaning the record explicitly warns against, measured against the sir
+reference whose speed family standard deviations have a bootstrap coefficient of
+variation of about 0.6. If what actually happened is that the tails thinned while
+the bulk held its width, then the model is not near a point mass, the objective is
+not being driven to its worst value, and there is nothing to explain.
+
+`loc_err_trained` moved only 0.068 to 0.081, so the model is not simply
+translating, but that does not separate the two cases either.
+
+THE MEASUREMENT THAT SETTLES IT, and it is cheap. The step 100 checkpoint is
+saved at `research/w4_advmoment.pt`. Sample from it and report, per feature, the
+INTERQUARTILE ratio to human beside the STANDARD DEVIATION ratio, which is
+exactly the pair the RESUME bullet used. A narrowed bulk means real collapse and
+the section above stands as written. A bulk that holds its width while the tails
+thin means the word collapse is wrong throughout this workstream's recent
+sections and the surprise evaporates.
+
+This has to be done before `w4_estimator` is read, because that arm's entire
+framing is the surprise. The arm is still worth running either way, since a
+biased against unbiased estimator comparison on the same objective is informative
+whatever the flag means, but what its result would license depends on this.
+
+### Anchoring to the base instead of to the data is worse, and the anchor axis closes, 2026-08-12
+
+`w4_klanchor` held `w4_advmoment`'s objective and gradient fixed and changed only
+the anchor. Instead of a teacher forced likelihood on human batches it used the
+exact per position KL from the live model to a frozen copy of the base, evaluated
+at the states the live model visits when it samples. The balance rule was inverted
+with it: the critic was normalised to unit norm and the KL entered at its natural
+scale under a PPO style adaptive coefficient, because renormalising a KL every
+step destroys the one property that makes it an anchor, that it grows as the model
+drifts.
+
+    EVAL base     rf 0.6338 (range 0.0013)  spread trained 1.6953  held 0.6447  collapse False
+    EVAL step50   rf 0.7007 (range 0.0076)  spread trained 1.8925  held 0.7550  collapse True
+
++0.0669. The registered falsifier was two sided, above +0.02 or within two
+standard errors of zero, and the upper bound fired. Killed at step 50 of 150, for
+a reason given below that is not the usual one.
+
+#### The result is the ordering
+
+    no anchor at all, advpath run 1                     +0.0806
+    constant lam decaying to about a tenth, advpath 3   +0.0793
+    sampled state KL to the base, held at target        +0.0669
+    teacher forced likelihood at full equal pull        +0.0436
+
+The anchor built to REPLACE the teacher forced one is halfway back to having no
+anchor at all. It is worse than the thing it was meant to improve on, on the same
+objective, with a base matching to four decimals.
+
+That is a negative result about the axis rather than about the arm, because the
+arm was the strongest form of the idea available: right states, exact divergence,
+adaptive coefficient, engaged throughout at its target.
+
+#### The explanation that looked right, and the check that killed it
+
+The first reading was that the direction was wrong. A teacher forced likelihood is
+maximum likelihood, and maximum likelihood is a FORWARD KL, mass covering, and it
+charges the model for abandoning mass its parent had. `w4_klanchor`'s divergence
+takes its expectation under the LIVE model, which makes it REVERSE KL, mode
+seeking and zero forcing, minimised by concentrating onto a subset of the parent's
+support and charging nothing for abandoned mass because those terms carry a live
+probability going to zero. On that reading the anchor was cheapest in exactly the
+configuration it existed to prevent, and the fix was one expression.
+
+`w4_kldir` was written to test it, with `--kl-direction` so the reverse run
+reproduces `w4_klanchor` bit for bit as its own control. Its check script
+confirmed the property in the limit:
+
+     sharpen k     forward     reverse   fwd / rev
+           1.2      0.0375      0.0332        1.13
+           2.0      0.6331      0.3702        1.71
+           5.0      4.4521      1.0796        4.12
+
+Reverse KL saturates under sharpening while forward accelerates without bound,
+which is zero forcing shown directly. But the arm runs at a budget of 0.05 nats
+per decided token, which is sharpening of about k 1.25, and at that point the
+ratio is 1.13. The separation lives at k 2 and above, where the controller never
+goes.
+
+So the scalar was checked where the arm actually operates, along with the thing
+that matters more than the scalar, which is where each gradient puts its force:
+
+        k      fwd      rev   cosine  fwd|aband  rev|aband
+     1.10   0.0066   0.0063    0.998      0.500      0.499
+     1.25   0.0388   0.0345    0.988      0.500      0.497
+     1.50   0.1395   0.1110    0.962      0.500      0.487
+     2.00   0.4621   0.3019    0.906      0.500      0.468
+
+Cosine 0.988 at the operating budget, and an identical share of gradient magnitude
+on the abandoned set, 0.500 against 0.497. At any budget small enough to leave the
+model usable the two directions are the SAME ANCHOR. `w4_kldir` was withdrawn
+before it ran. The check cost two minutes of CPU and saved about two hours of GPU.
+
+This is the file's own lesson landing again. A mechanism was available, it was
+true, it was stated in the limit, and it was irrelevant at the operating point.
+The record on mechanism accounts attached to results is 5 of 16 and this is now
+one more on the wrong side of that ratio, caught before it was spent rather than
+after.
+
+#### What survives, and it closes the family
+
+With direction ruled out, the difference between the two anchors is what each one
+is tied TO.
+
+A KL to the base is a drift budget. It limits how far the model may walk from
+where it started. But the base is itself wrong, at 0.6338 against a target of
+0.50, so a budget around it slows the walk without aiming it anywhere. A teacher
+forced likelihood is not a budget at all, it is an attractor toward the human
+DATA, which is the target.
+
+Anchoring a model to its own past can only ever be a speed limit. That is why the
+weaker looking anchor wins, and it closes anchoring to the base as an axis, both
+the arm that ran and the successor that was built and withdrawn.
+
+It also sharpens `w4_advmoment`'s reading rather than overturning it. The teacher
+forced anchor still fails to prevent collapse, and its nll still sat flat at 1.50
+to 1.60 throughout while the damage accrued, so exposure bias is still real and
+still measured. What is no longer available is the repair that exposure bias
+suggested, because moving the anchor to the sampled states made it worse.
+
+#### Why it was killed at step 50 rather than at step 100
+
+`w4_advmoment` was run to a second evaluation before its verdict was taken,
+because the magnitude mattered there. Here no pending decision depended on the
+step 100 number. The falsifier had fired at more than twelve standard errors, and
+the successor arm was withdrawn by a CPU check in the same session, so the family
+was closed either way. The GPU went to `w4_bulktail`, which gates how this whole
+group of writeups may be read.
+
+### The collapse flag measures the outer one percent, and the arm that "collapsed" moved the widths toward human, 2026-08-12
+
+`w4_bulktail` was written because the `w4_advmoment` writeup leaned on the word
+collapse, and RESUME's 2026-08-07 entry says in terms that the collapse flag must
+not be read as a dispersion target. Diagnostic only: sample 2000 trajectories from
+each of two checkpoints, take four width statistics per contract feature, report
+ratios to the human reference and the change between checkpoints. No training, no
+gradient, no scoring decision.
+
+#### The base, and this is the more important half
+
+Ratios to the contract reference, base checkpoint:
+
+    feature                         iqr   p10_90    p1_99       sd
+    max_velocity                  1.043    1.041    1.343    0.295
+    max_acceleration              1.099    1.098    1.579    0.216
+    std_acceleration              1.171    1.080    1.388    0.337
+    mean_acceleration             0.895    1.002    1.273    0.387
+    mean_jerk                     0.991    1.216    1.457    0.346
+    std_velocity                  1.044    1.064    1.495    0.443
+
+The pattern holds across the whole velocity, acceleration and jerk family. The
+bulk width is CORRECT. The 1st to 99th percentile range is 27 to 58 percent too
+WIDE. The standard deviation is three to five times too NARROW.
+
+Those three only reconcile one way. The human distributions carry extreme
+outliers beyond their own 1st and 99th percentiles, those outliers dominate the
+human variance, and the model does not emit them. Inside the 1 to 99 range the
+model is if anything too broad.
+
+So `spread_err` and the collapse flag are measurements of the outer one percent of
+the human distribution and of nothing else. Every use of the word collapse in this
+file that rests on them is a claim about the extreme tail, not about dispersion.
+The 2026-08-07 entry said so and this is the per feature confirmation.
+
+#### The change, and it undercuts the arm's own writeup
+
+Mean change over the 12 trained features, step 100 ratio minus base ratio:
+
+    iqr      -0.038
+    p10_90   -0.046
+    p1_99    -0.152
+    sd       -0.056
+
+Predominantly tails, by a factor of four over the bulk. But not purely: the bulk
+did narrow substantially on a subset, and the two largest are both HELD OUT
+features, `curvature_std` from 0.903 to 0.525 and `time_to_peak_velocity` from
+1.162 to 0.956. Real bulk narrowing exists and it generalises off the trained
+twelve, which is the direction that matters.
+
+The decisive column is p1_99, and it does not say what the writeup assumed:
+
+    feature              base    step 100
+    max_velocity        1.343       1.018
+    max_acceleration    1.579       1.038
+    mean_jerk           1.457       1.071
+    std_acceleration    1.388       0.919
+
+The model began 30 to 60 percent too wide through that range and the arm brought
+the acceleration family onto target, overshooting slightly on two. It made the
+distribution measurably MORE human on the statistic it was optimising, and the
+contract AUC rose by 0.0522.
+
+#### What this does to the estimator hypothesis, which was mine
+
+`w4_estimator` was registered on the argument that `w4_advmoment` optimised an
+objective whose optimum is not a point mass, walked toward a point mass anyway,
+and that an optimiser does not walk toward the worst value of its own objective
+unless the gradient it is handed is biased.
+
+The first premise does not survive this measurement. The arm did not mostly walk
+toward a point mass. It mostly moved the widths toward correct, and where it
+overshot it overshot by 8 percent, not by an order of magnitude. There is no
+contradiction left for a biased estimator to explain.
+
+What actually happened is stranger and is the thing worth chasing: an
+intervention that fixed the widths made the sample easier to detect. That is the
+same shape as the 2026-08-06 finding that halving spread error on both the
+trained and the held out features moved the contract AUC not at all, except
+sharper, because here the widths landed ON target rather than merely improving.
+
+The bulk narrowing on `curvature_std` and `time_to_peak_velocity` is the only
+candidate left inside this measurement for what the classifier is picking up, and
+it is a much smaller effect than the AUC move. So the AUC rise is most likely
+being driven by something these four width statistics do not see at all, which
+would be consistent with the marginal and joint decomposition: 0.0931 of the
+0.1519 above chance is higher order structure, unreachable by any statement about
+per feature widths.
+
+`w4_estimator` should still run, but its registration must be rewritten. The
+cosine between the two estimators is diagnostic regardless of the collapse story,
+and the independent concern that six score function objectives landing within
+0.0048 of each other looks like one shared noisy estimator rather than six good
+ideas agreeing is untouched by any of this. What must be withdrawn is the claim
+that the pathwise arms' behaviour is evidence of estimator bias.
+
+## The gradient every objective in this workstream has used is noise at batch 96, 2026-08-13
+
+Four runs of `research/w4_estimator_rel.py` and one of `research/w4_estimator.py`.
+Ledger rows `w4_estimator_2026-08-12T234003+0000_abc0cc23` and the four
+`w4_estimator_rel` rows. The protected checkpoint MD5 is unchanged.
+
+### First, the straight through training arm, which triggered its own falsifier
+
+`w4_estimator --estimator st --tag st`. Base 0.6034, step 25 0.6512, step 50
+0.6991, difference +0.0957 se 0.0061, which is 15.7 se in the wrong direction.
+PREDICTION NOT MET and the registered FALSIFIER fires. `spread_err_trained` rose
+from 1.6707 to 1.9441 and the collapse flag never set, so this is not the point
+mass failure the earlier arms had. Training on this objective through the
+pathwise estimator simply makes the model worse.
+
+That closes ONE cell of the dichotomy, not the dichotomy. A correction was made
+to `w4_estimator` at the same time: it printed a sentence claiming both cells
+were closed, unconditionally, from a single arm. That sentence is inherited
+boilerplate from the parent file and was false the first time it ran here.
+
+### The instrument, and why it had to exist before anything was read
+
+`w4_estimator` prints a cosine between the pathwise and score function gradients
+of the same surrogate, and its registration said a near zero cosine means RELAX
+is not worth building. The st arm printed +0.078, +0.027, +0.152, +0.084, -0.016,
+mean +0.065 se 0.028.
+
+That number cannot be read as it stands, and this was caught before it was
+written up rather than after. Two noisy estimates of the same true direction have
+their cosine attenuated by the noise in both:
+
+    cos(g_st, g_sf)  =  cos(mu_st, mu_sf) * sqrt(r_st) * sqrt(r_sf)
+
+so a near zero reading is consistent with the estimators disagreeing AND with
+them agreeing perfectly while both are too noisy to correlate with anything.
+Those license opposite conclusions. `research/w4_estimator_rel_check.py` verifies
+the disattenuation arithmetic on CPU against known answers at 200,000 dimensions:
+a true cosine of 0.80 at an SNR of 0.03 reads a raw cross cosine of +0.023 and
+disattenuates back to +0.80, and a true cosine of 0.00 reads +0.000 and stays
+there. The +0.023 is almost exactly the +0.027 `w4_estimator` printed.
+
+`w4_estimator_rel` freezes both the model and the critic, takes NO generator step
+ever, splits each batch's surviving rows into two halves that compute their own
+critic coefficients against their own human sample, and reads six gradients per
+batch. The supervised teacher forced NLL runs on the same batches through the
+same accumulate and flatten path as the known good control, so every gate is a
+difference against it rather than a level.
+
+### The sweep
+
+Halves are half the surviving rows. Every column is a mean over independent
+batches with a plain standard error, which is correct here and is NOT the U
+statistic `w4_cosse` had to jackknife, because each batch yields exactly one
+reading.
+
+    half n            r_st            r_sf           r_nll
+        48   +0.113 se 0.078   +0.156 se 0.122   +0.478 se 0.071
+        96   +0.017 se 0.092   -0.052 se 0.127   +0.766 se 0.043
+       192   +0.249 se 0.122   +0.296 se 0.143   +0.775 se 0.051
+
+**At batch 96, the batch size every arm in this workstream has ever used, both
+training estimators are indistinguishable from noise.** 29 percent of batches
+put the pathwise gradient in the opposite direction to its own other half and 42
+percent do it for the score function. The supervised control through identical
+code reads 6.7 se, which is what proves the apparatus works rather than the
+question being unanswerable.
+
+This is the mechanism behind the long plateau and behind six objectives landing
+within 0.0048 of each other. They were not six ideas agreeing. They were six
+random walks.
+
+### The retraction, and it is the same failure mode the record already carries twice
+
+After the half 48 and half 96 points the claim written down was that there is no
+signal at any batch size and the objective route is closed. The half 192 point
+overturns it: both estimators clear zero at about 2 se. The half 96 row was a low
+outlier and two points were read as a trend. Signal DOES scale with batch, as it
+must.
+
+The implied batch, from SNR scaling linearly in rows, puts a reliability of 0.5
+at a full batch of about 1159 for the pathwise estimator and about 911 for the
+score function. That is 10 to 12 times the batch every arm here has used, and it
+is hours of GPU per arm rather than minutes. **The objective route is expensive,
+not closed.** Those two statements are very different and only the second one was
+written down first.
+
+### The secondary gate, readable for the first time
+
+Both reliabilities clear zero only at half 192, so only there is the
+disattenuated ratio anything but a division by noise. It reads
+
+    disattenuated cos(mu_st, mu_sf)  =  -0.21
+
+which is below the registered 0.2 band. The two estimators genuinely disagree in
+direction once the noise is divided out. The score function estimate is unbiased
+for the surrogate by construction, so **the straight through pathwise estimator
+is not estimating the surrogate it is written to estimate.** RELAX is not worth
+building. Both reliabilities only just clear 2 se, so this is strong suggestive
+and not settled, and it is quoted with that attached.
+
+### The W1 target was not the problem
+
+Hypothesis: the critic coefficients are signs of a sorted comparison against a
+fresh 48 row human draw, so at that size the draw itself flips them for reasons
+unrelated to the model. Replacing the draw with the exact order statistics of the
+whole 4000 row reference at the same plotting positions is a strictly lower
+variance estimate of the same target.
+
+    target       r_st              r_sf              r_nll
+    sample       +0.113 se 0.078   +0.156 se 0.122   +0.478 se 0.071
+    quantile     +0.158 se 0.078   +0.047 se 0.092   +0.501 se 0.060
+
+Nothing moves by as much as one standard error in either arm. The control moves
++0.023, which it must, since the NLL never touches the W1 target at all, and that
+is the check that the two runs are comparable rather than a result. The
+hypothesis is FALSIFIED. The noise is not in the human draw.
+
+## Two of the three newly authorised architecture options are already dead, 2026-08-13
+
+L unlocked phase conditioning, the spectral loss term and the FiLM rewrite of
+`th_head` and `dt_head` on 2026-08-12, all three of which this file had been
+carrying as NOT AUTHORISED. Two of them do not survive contact with the record.
+
+**FiLM is refuted, not merely unnecessary.** `w4_coupletok` measured eleven token
+level rank correlation pairs, human against model, and got ratios between 0.86
+and 1.12 with every sign matching and no systematic attenuation. Its own written
+conclusion is DO NOT rewire `th_head` and `dt_head` to FiLM on this evidence. The
+authorisation removes a permission that was never the binding constraint.
+
+**Phase conditioning is already built.** `models/event_ar.py` line 94 defines
+`prefix_state`, a six dimensional per position vector carrying log1p of the
+distance still to cover, the unit vector of that remaining displacement, elapsed
+time as a fraction of the commanded duration, step index as a fraction of the
+buffer, and log1p of the distance travelled so far. It is added into the trunk
+alongside the s, th and dt embeddings and the positional embedding at line 251,
+and recomputed inside `sample()` at line 406 so it is live at generation time as
+well as under teacher forcing. Building it again would build nothing.
+
+This was recommended as a next step before the model source was read. The
+recommendation was made by reasoning from the measurement record alone, which was
+the wrong order, and the rule that follows is now stated with the others: read
+what the model already does before proposing to add it.
+
+## The spectral target that survives is the free running one, and it costs the noisy estimator, 2026-08-13
+
+The third authorisation, the spectral loss, was proposed here as a cheap route on
+the grounds that the mid band speed power excess could be attacked TEACHER
+FORCED, which would put its gradient in the reliable supervised class rather than
+the class the section above just measured as noise. That reasoning is wrong and
+the record already contains the refutation.
+
+**The teacher forced excess is not a defect.** `w4_forcing` ran the identical
+pipeline on rows the model generated itself, where nothing is wrong by
+construction. Inside the pre registered 11 to 41.5 Hz band the forcing increment
+reads 1.173 and the construction artefact reads 1.172, residual 1.002. There is
+nothing left over. `w4_artefact` had already done the same to arm G, and
+`w4_dtcal` and `w4_launch` then found the one step conditionals calibrated on
+every axis they tested, to about a thousandth in tilt from position 1 onward.
+
+So there is nothing for a supervised spectral term to correct. A teacher forced
+spectral objective would be training against the measurement's own construction.
+
+**What survives is arm C**, the model generating freely against people, +0.1825
+at 8.3 sd. That arm forces nothing and none of the artefact controls touch it. It
+is a property of the JOINT, which is where the record already located the defect,
+and it is reachable only through sampling.
+
+The two lines therefore converge rather than conflict. The only spectral
+discrepancy still standing is one that can only be attacked with a free running
+gradient, and free running gradients are the ones that need 10 times the batch.
+There is no cheap supervised shortcut hiding in the spectrum, and the batch size
+finding is the binding constraint rather than a side observation.
+
+What is being run rather than assumed: `w4_estimator_rel --objective both` adds
+the band power reward as a third arm on the same batches, paired against the
+critic reward and the supervised control at one half size for all three. The
+question is whether a per ROW reward is better conditioned than the critic's
+batch statistic, since a sorted matching couples every row to every other while
+band power does not. The registration, the loss form and the reason the linear
+form is measured rather than the squared one are in that file's docstring, fixed
+before the arm ran.
+
+One number from building it is worth keeping on its own. This code reproduces
+`w4_forcing`'s reported human window retention of 43.5 percent to within a tenth
+of a point, on rows drawn independently, which is the check that the band it
+trains on is the band that measured the defect.
+
+### The spectral reward is blind too, and the per row hypothesis is falsified, 2026-08-13
+
+`w4_estimator_rel --objective both --batch 208`, halves of about 43 after the
+window requirement, 24 batches, ledger row
+`w4_estimator_rel_2026-08-13T173235+0000_aa360b65`.
+
+    quantity     mean       se
+    r_st        +0.12     0.07
+    r_sf        +0.09     0.10
+    r_spec      -0.15     0.12
+    r_nll       +0.65     0.04
+
+    paired r_nll - r_spec   +0.80 se 0.12   6.5 se
+    paired r_spec - r_sf    -0.25 se 0.16   1.5 se
+
+The registered hypothesis was that a per ROW reward would be better conditioned
+than the critic's batch statistic, because a sorted matching couples every row to
+every other and band power does not. **It is not.** The band power gradient's two
+halves are if anything anticorrelated, it sits 6.5 se below the supervised
+control through identical code, and against the critic reward it is 1.5 se worse,
+which leaves "worse" unresolved but rules out "better" cleanly. By the
+registration this is the BLIND cell: no training arm at ordinary batch size.
+
+The reward structure is not the lever. The batch is. That is now the consistent
+answer from three different rewards.
+
+`r_st +0.12 se 0.07` and `r_sf +0.09 se 0.10` here reproduce the base run's
++0.113 and +0.156 at a comparable half size, which is the check that the paired
+arms are one measurement rather than three.
+
+**An incidental confirmation worth keeping.** The band power ratio reads 1.136
+against a human H of 0.1853 estimated from 4831 corpus rows. Arm C read +0.1825
+through the serving path. Same direction, same rough size, arrived at through
+different sampling code. The spectral defect is real. It is simply not reachable
+by any cheap objective.
+
+### The batch tax is payable in wall clock, not hardware, 2026-08-13
+
+`w4_estimator` computes its gradient in chunks of `--chunk` and accumulates, so
+the gradient side already works at any batch. The only ceiling on `--batch` was a
+single unchunked `model.sample` call. `--sample-chunk` is now added, mirroring the
+one in `w4_estimator_rel`, defaulting to 96 so every earlier run is reproduced
+exactly. A second site was fixed at the same time: the evaluation loop chunked by
+`--batch`, which was harmless while the two numbers were equal and would have run
+the card out of memory the first time the batch was raised.
+
+So a batch of 1000 costs about ten times the wall clock per step and no extra
+hardware. That turns "hours of GPU per arm" from a blocker into a price.
+
+Nothing is concluded from this yet. The SNR extrapolation that sets the price
+rests on three points, and this file already carries one retraction from reading
+a trend off too few. A fourth point at halves of 512 is being measured before any
+training arm is funded.
+
+## The batch does not buy reliability either, and the supervised control proves the apparatus can see it when it is there, 2026-08-13
+
+`w4_estimator_rel --batch 1024`, halves of about 496, 10 batches. Ledger row
+carries the caveat below. The protected checkpoint MD5 is unchanged.
+
+    half n            r_st              r_sf             r_nll
+        48   +0.113 se 0.078   +0.156 se 0.122   +0.478 se 0.071
+        96   +0.017 se 0.092   -0.052 se 0.127   +0.766 se 0.043
+       192   +0.249 se 0.122   +0.296 se 0.143   +0.775 se 0.051
+       496   +0.090 se 0.140   -0.150 se 0.150   +0.950 se 0.010
+
+**The registered prediction was r near 0.5 at halves of 496 and it FAILS.** Both
+training estimators read zero to within their own error bars, at more than ten
+times the rows every arm in this workstream has used.
+
+**Read the control column first, because it is what makes the other two
+readable.** The supervised NLL, measured on the same batches through the same
+accumulate and flatten path, climbs monotonically from +0.478 to +0.950. The
+apparatus resolves a reliability that scales with batch, cleanly, over exactly
+this range. The two training estimators do not scale at all.
+
+**So the noise in these gradients is not finite batch sampling noise.** That is a
+different statement from anything this file has carried before. Sampling noise
+falls as 1 over root n by construction, so an estimator whose reliability is flat
+across a tenfold range in n is not limited by how many rows it averages. The
+batch cannot be the fix, and the "expensive, not closed" framing written earlier
+today is superseded: the price was never the obstacle.
+
+**This also puts the half 192 row in its place.** That point, +0.249 and +0.296,
+was the one that overturned the earlier two point claim and it was read at the
+time as evidence of scaling. With four points and a control that demonstrably
+scales, it is the outlier, not the trend. Both retractions in this file, the one
+made this morning and this one, come from the same source: reading a slope off
+too few points of a very dispersed statistic. Single batch cosines run from -0.86
+to +0.94 in EVERY run at EVERY batch size, and that dispersion barely narrows
+with n.
+
+**CAVEAT, and it is mine.** This run also cut the critic warm up from 16 batches
+at 40 steps to 4 at 160, to save sampling time. That is two changes in one step
+and it means this row is not yet a clean point on the curve, since every earlier
+point used 16/40. `n1024w16` repeats it at the original recipe. Against this run
+it isolates the critic recipe; against the half 192 row it extends the curve at a
+fixed recipe. Nothing above is quotable as settled until it lands.
+
+**What the repeat also carries.** A per row advantage participation ratio,
+(sum|adv|)^2 over n times sum adv^2, recorded for every half at no runtime cost.
+It separates the only two mechanisms that produce a reliability floor:
+
+    a heavy tailed advantage, in which a few rows carry the whole gradient, so
+    the EFFECTIVE row count never grows and reliability creeps up far slower
+    than the SNR model's linear rate. The participation ratio is small.
+
+    a true expected gradient near zero, in which the frozen model already sits
+    where this objective has almost nothing to say, so there is no direction for
+    any number of rows to resolve. The participation ratio is ordinary.
+
+Those license opposite next moves, which is why the diagnostic was added before
+the run rather than after it.
+
+## The rollout gradient is not noisy, it is absent, 2026-08-13
+
+Runs `w4_estimator_rel_2026-08-13T182516+0000_1d0d15c8` (n1024) and
+`w4_estimator_rel_2026-08-13T194846+0000_3dc908d7` (n1024w16, tier 2 confirming
+it). Frozen model, no generator step taken in either.
+
+### The critic recipe confound is cleared
+
+n1024 changed two things at once, the batch and the critic warm up recipe, and
+was recorded as not quotable until that was separated. n1024w16 repeats it at
+the original 16 warm batches of 40 steps. The recipe contrast is nothing:
+
+```
+  quantity   4x160 minus 16x40      se     se units
+  r_st                    +0.221   0.189        1.2
+  r_sf                    -0.237   0.233        1.0
+  r_nll                   -0.004   0.016        0.3
+```
+
+So the two runs measure the same thing and pool. Eighteen batches at halves of
+about 496:
+
+```
+  r_st    -0.009  se 0.097
+  r_sf    -0.047  se 0.115
+  r_nll   +0.950  se 0.008
+```
+
+Both training estimators are zero to within 0.10 at a thousand rows a batch,
+while the supervised control through identical code reads 0.95.
+
+### The full curve, and the extrapolation it falsifies
+
+```
+   half n            r_st              r_sf             r_nll
+       48   +0.113 se 0.078   +0.156 se 0.122   +0.478 se 0.071
+       96   +0.017 se 0.092   -0.052 se 0.127   +0.766 se 0.043
+      192   +0.249 se 0.122   +0.296 se 0.143   +0.775 se 0.051
+      496   -0.009 se 0.097   -0.047 se 0.115   +0.950 se 0.008
+```
+
+The SNR model fitted on the halves of 48 point predicts 0.568 at 496. Measured
+zero, so falsified at about 5.7 se. The control climbs monotonically across the
+same batches, which proves the apparatus resolves scaling when scaling exists.
+The half of 192 row is the outlier, not the trend.
+
+### The participation ratio settles which mechanism, and it is the bad one
+
+Registered in advance: a reliability floor has two causes, a heavy tailed
+advantage in which a few rows carry the whole gradient so effective rows never
+grow, or a true expected gradient near zero. The per row advantage participation
+ratio separates them and reads
+
+```
+  participation, sf   0.457 se 0.010 over 16 halves
+  effective rows      227 of 496
+```
+
+That is well above the one third heavy tail threshold, so effective rows do grow
+close to linearly with the batch. The heavy tail explanation is ELIMINATED. Even
+re fitting the SNR model on effective rather than nominal rows predicts 0.376
+here, still falsified at 3.9 se.
+
+What remains is the second mechanism. The true expected gradient of the W1
+statistic objective and of the critic reward objective, taken through the sampler
+by score function, is at or indistinguishable from zero at this frozen model.
+This is not a variance problem that rows can fix, because there is no signal
+underneath the variance to recover. Exactly zero cannot be separated from too
+small to reach and for the decision it does not matter.
+
+### What this closes, and it is the thing the record had named next
+
+CLOSES the score function family at any batch this project can afford. That
+includes the sequence critic, the W1 statistic objective, RELAX, and the spectral
+per row reward that went BLIND at halves of 43 earlier today.
+
+The weight of this is that the record's own designated next arm was exactly this
+family. The spike rate section ends "the next arm is a training arm, the
+objective has to be stated over the model's own rollouts", and the rollout level
+registration of 2026-08-10 built on it. That route is now measured shut rather
+than argued shut.
+
+### Where that leaves the programme, read against what was already closed
+
+Nothing new was derived here, but the surviving lever is worth stating in one
+place because four separate closures now point at it.
+
+```
+  representation           NOT the ceiling. w4_token_ceiling round trips real
+                           human tokens to 0.5118 against a floor of 0.467
+                           to 0.497. The vocabulary can carry human texture.
+  more data                excluded, w4_arfit, 0.57 percent generalisation gap
+  more capacity            excluded at any price this programme can pay
+  token space edits        five defects found, fixed or priced, none worth
+                           more than 0.012 of 0.107
+  feature conditioning     closed. The trunk obeys coarse geometry at 0.94 to
+                           1.00 and fine texture at 0.29 to 0.60, and the
+                           features it cannot be steered on are the features
+                           carrying the separation
+  rollout objectives       closed today, gradient absent not noisy
+```
+
+Three independent methods already agreed that the residual is fine moment to
+moment texture rather than path shape. Today adds a fourth reading of the same
+fact from the gradient side: if no reachable parameter direction moves the
+texture, then a texture sensitive objective has zero expected gradient, which is
+what was measured. The obedience failure and the gradient absence are one
+phenomenon seen from two ends.
+
+What survives is what this file named at the close of the capacity work: the
+representation and the factorisation itself, meaning what the tokens are and what
+the model is asked to predict at each step. That lever is screened on held out
+likelihood, which is a teacher forced gradient, the one estimator in this whole
+programme that is reliable, at r_nll 0.95 today. It needs no generation to
+screen, so a structural change can be priced in hours rather than a day of GPU.
+
+Artifacts: `research/w4_estimator_rel_n1024.json`,
+`research/w4_estimator_rel_n1024w16.json`, `/home/aaronadmin/w4_arms/big.log`,
+`/home/aaronadmin/w4_arms/big16.log`.
+
+## The direction head cannot use the speed it just emitted, and that is worth 0.23 nats, 2026-08-13
+
+`research/w4_headcap.py`, runs `w4_headcap_2026-08-13T201553+0000_a1151af3` and
+the band rerun in `research/w4_headcap_bands.json`.
+
+This is the first branch opened since the rollout family was closed, and it is
+the largest single held out likelihood finding on the record.
+
+### The restriction
+
+In `models/event_ar.py` the within step conditionals are
+
+```
+  th_logits(x, s_cur) = th_head(th_norm(x + s_ctx_embed(s_cur)))
+  dt_logits(x, s, th) = dt_head(dt_norm(x + s_emb(s) + th_emb(th)))
+```
+
+`th_head` is linear, so the emitted speed reaches the direction logits only as
+an additive shift in logit space, rescaled by the single scalar `1/sd(x + e_s)`
+that the LayerNorm contributes. `x` is causal and is computed BEFORE this step's
+tokens, so it cannot see `s(t)`. Every route from the emitted speed to the
+direction distribution passes through that additive term. The head can add a
+fixed pattern per speed class; it cannot let the speed change the SHAPE of the
+direction distribution as a function of history.
+
+### How it was priced
+
+Four residual arms, each a correction ADDED to the frozen head with the output
+layer zero initialised, so every arm starts at exactly the checkpoint's loss and
+only the improvement is fitted. 60,000 held out trajectories never seen in
+training, split 50/25/25 by trajectory into fit, dev and eval. Standard errors
+clustered by trajectory.
+
+```
+  channel     frozen    R_same   R_depth    R_shuf    R_full   INTERACTION
+  s           2.0468      .      +0.0000      .         .             .
+  th          1.1326   +0.0000   +0.0037   +0.0011   +0.2342       +0.2305
+  dt          1.0643   +0.0000   +0.0004   +0.0000   +0.0028       +0.0024
+
+  interaction vs R_depth               +0.2329 se 0.0018
+  interaction vs R_shuf, width matched +0.2360 se 0.0018
+```
+
+`R_same` is the frozen head's own function class refitted as a residual, `R_depth`
+is an MLP with no access to the emitted token, `R_shuf` is the same MLP with the
+context stream replaced by a fixed permutation of itself, and `R_full` is the
+same MLP with the real context.
+
+All three controls are clean and they eliminate three different confounds.
+`R_same` at +0.0000 says the frozen head is at an optimum of its own function
+class on held out data, so nothing below is slack. `R_depth` at +0.0037 says the
+head is not depth limited. `R_shuf` at +0.0011 says the gain is not bought by
+`R_full`'s wider first layer, because an arm with identical parameter count and
+an identical marginal buys nothing. What is left is the information.
+
+The dt head shows +0.0028 and is not the story. The restriction is specifically
+on direction.
+
+At the `w4_arcurve` exchange rate of 0.1904 contract AUC per nat this is about
+0.044 AUC. That number is INDICATIVE ONLY and should not be quoted as a forecast.
+The rate was fitted across snapshots along one training trajectory, so applying
+it to an architectural change is an extrapolation off the manifold it was fitted
+on. What is solid is the nats.
+
+### The mechanism I proposed was refuted by its own test
+
+Registered in `/home/aaronadmin/w4_arms/headcap_mechanism_prereg.md` before the
+result was read. The account was that admissible turn angles form a comb whose
+spacing is set by the emitted speed and whose phase is set by the current
+heading, and that an additive term can add a comb but not rotate one. It
+predicted the interaction would concentrate at low speeds where the lattice
+constrains direction to at most eight headings.
+
+```
+  band              tokens   frozen  interaction      se
+  LOW  s2<=5       293,786   0.4440       0.0370  0.0005
+  MID  5<s2<=16     93,487   0.4029       0.1324  0.0019
+  HIGH s2>16       330,892   1.9502       0.4314  0.0031
+```
+
+The profile is inverted. HIGH is 11.7x LOW where the prediction was LOW at least
+3x HIGH. The comb account is dead and is not to be repeated. The measurement
+does not depend on it.
+
+There is no validated mechanism for the 0.23 nats. Per the standing rule, none
+is being supplied. The descriptive facts are that the interaction appears in
+every band, that in absolute nats it tracks the frozen head's own uncertainty,
+and that as a fraction of each band's frozen entropy it runs 8 percent at LOW,
+33 percent at MID and 22 percent at HIGH.
+
+### This does not contradict `w4_coupletok`, and the two agree on the deficit
+
+`w4_coupletok` measured Spearman rank correlations between physical channels in
+GENERATED trajectories, found no systematic attenuation, and closed with "DO NOT
+rewire `th_head` and `dt_head` to FiLM on this evidence". That instruction was
+right on that evidence and the present result does not reopen it by argument, it
+replaces it with a different measurement: held out nats per token rather than a
+rank statistic on output, paired on identical tokens, with a zero slack control.
+
+A rank correlation between speed and turn is a scalar summary of a monotone bulk
+association. An additive logit offset per speed class can already produce a
+monotone bulk association, which is presumably why that instrument read adequate.
+It is not evidence that the conditional SHAPE is right.
+
+The one robust deficit `w4_coupletok` did find points the same way as this
+result. Signed turn autocorrelation, human -0.3929 against model -0.3394, model
+14 percent short at about 15 standard errors, and `w4_seqstats` and `w4_turnruns`
+recorded the same shortfall independently on `event_ar_v1`. Three instruments and
+two checkpoints already said the model gets the direction sequence wrong. This
+run says the direction head is structurally prevented from conditioning on the
+speed it just emitted. Those are consistent. Whether one causes the other is
+NOT established and must not be written down as if it were.
+
+### What to build, and what NOT to build
+
+The arm that bought the nats is `R_full`, which is
+
+```
+  th_logits(x, s_cur) = th_head(MLP([LN(x), s_ctx_embed(s_cur)]))
+```
+
+one MLP on the concatenation instead of an addition before the norm. It costs a
+few hundred thousand parameters, no extra sequence length and no extra attention.
+
+DO NOT build the interleaved one token per channel factorisation on this
+evidence. That design was proposed when the suspicion was that the TRUNK needed
+to see the emitted token, and it costs 3x sequence length and 9x attention. The
+measurement locates the deficit in the head, which is the cheap fix. If the cheap
+fix is built and underdelivers against the 0.23, the interleaved design becomes
+worth revisiting and not before.
+
+Registered limitation, unchanged by the refutation. `x` comes from a trunk that
+was fitted jointly WITH the restricted head, so the trunk has already spent
+capacity hedging around the restriction. That biases this measurement, and the
+direction of the bias is not known with confidence, so 0.23 nats is what a
+residual correction on a co adapted trunk buys and is not a promise about what a
+jointly trained model buys. The training run is the only way to settle it.
+
+### Prediction record
+
+The registered forecast was 0.023 nats, PARTIAL. The result is 0.231, MATERIAL,
+ten times the forecast. Recorded WRONG. The mechanism prediction was also wrong,
+and inverted. Prediction record 5 of 15.
+
+## The coupled direction head is the first architecture change to move the contract, 0.6340 to 0.6145, 2026-08-14
+
+The restriction measured in the section above was fixed and trained, and it is
+the best contract AUC on this workstream. Both predictions registered in
+`/home/aaronadmin/w4_arms/headmlp_prereg.md` before the arm existed came in.
+
+The fix. `models/event_ar.py` gains one config option, `head_coupling`,
+defaulting to `"add"` which is the existing behaviour bit for bit, so every
+checkpoint on disk still loads unchanged. With `head_coupling="mlp"` the
+direction logits become
+
+    th_logits(x, s) = th_head(th_norm(x + e_s))            <- unchanged path
+                    + th_mix(cat([mix_norm(x), mix_emb(s)]))
+
+where `th_mix` is Linear(2d, 512), GELU, Linear(512, 257) with the output layer
+zero initialised, so the model at step zero is exactly the checkpoint and every
+nat after that is attributable. It costs 0.577M parameters, 2.7 percent. `dt`
+was deliberately left alone because its measured interaction was 0.0024 nats.
+
+Three arms, 6000 steps each from `event_ar_v2_s40000.pt`, identical data, seed,
+schedule and validation set, all starting from a held out th loss of 4.3834.
+`mlp` is the intervention, `mlp_nos` is the same module with the speed input
+removed so it controls for added depth, `add` is architecturally unchanged so it
+controls for the fine tuning itself.
+
+    ARM                    th nats gained     contract AUC, 5 seeds        se
+    base                        .                    0.6340             0.0024
+    add     (unchanged)      +0.0029                 0.6322             0.0050
+    mlp_nos (depth ctl)      +0.0062                 0.6342             0.0009
+    mlp     (COUPLED)        +0.2848                 0.6145             0.0033
+
+Paired over the five shared seeds, since seed sets the specification sample and
+is a real blocking factor. Lower AUC is better.
+
+    base    - mlp       +0.0195   se 0.0035   t +5.53   p 0.0052
+    mlp_nos - mlp       +0.0197   se 0.0033   t +5.92   p 0.0041
+    add     - mlp       +0.0177   se 0.0055   t +3.23   p 0.0321
+    base    - add       +0.0018   se 0.0069   t +0.26   p 0.8106
+    base    - mlp_nos   -0.0002   se 0.0018   t -0.14   p 0.8953
+    add     - mlp_nos   -0.0020   se 0.0055   t -0.37   p 0.7336
+
+Every contrast involving the coupled arm separates and every contrast among the
+other three is flat. The three non coupled arms are one population. So the gain
+is the coupling, not the extra training and not the extra depth. The held out
+nats agree: `mlp` minus `mlp_nos` is +0.2786, inside the registered 0.23 to 0.35
+band and slightly above the frozen probe's 0.2311, which is what a trunk free to
+co adapt should give. `s` and `dt` moved by about 0.002 in every arm, so the
+change stayed in the channel it targeted. Geometry agrees too: `mlp` has the
+best path efficiency at 0.9242 against a human median of 0.9430, where base is
+0.9057, and the lowest median miss at 3.98 against 4.27.
+
+Checkpoint `training/event_ar_hm_mlp.pt`. Ledger
+`w4_headmlp_2026-08-14T033404+0000_0fa8d3dd`, confirming
+`w4_headmlp_2026-08-13T232151+0000_4128b57a`.
+
+### Two facts about the instrument that came out of this and matter more widely
+
+ONE SEED IS NOT A MEASUREMENT ON THIS SCORER. At seed 0 alone the table read
+base 0.6412, mlp 0.6150, mlp_nos 0.6365, add 0.6130, which says the unchanged
+control beat the coupled arm and the 0.28 nats bought nothing. That conclusion
+was written down before the replication landed and it was completely inverted.
+`add` drew 0.6130 at seed 0 against its own five seed mean of 0.6322, 2.7 sd
+low and the most extreme cell in the grid. Nothing was defective about the run.
+Score five seeds before reading any arm comparison.
+
+THE 0.03 RUN TO RUN BAND IS 4x TOO WIDE FOR THIS COMPARISON. Pooled within arm
+sd across seeds is 0.0073. The 0.0300 that `research/w4_arcurve.py` quotes came
+from a different comparison, and carrying it forward would have buried a real
+0.0195 effect as unresolvable. At n 2000 with five paired seeds this measurement
+resolves a difference of about 0.005. Size future arms against 0.0073.
+
+### The nats to AUC exchange rate is channel dependent
+
+Regressing the four arm means on nats gained gives an in family slope of
+**-0.0673 AUC per nat, se 0.0047**, 2 se interval [-0.0767, -0.0579]. That
+excludes zero, so held out likelihood does still predict the two sample test on
+this model. It also excludes the -0.1904 per nat that `w4_arcurve` fitted across
+eight snapshots along one training trajectory. A nat bought inside a single
+conditional is worth roughly a THIRD of a nat bought as broad improvement across
+all three channels at once.
+
+Practical consequence. Ranking arms by held out nats is still sound. Converting
+a nat count into an expected AUC using 0.1904 is not, and every such conversion
+already in this record should be read as an upper bound. In particular the
+standing estimate that 0.65 to 0.80 nats separate this model from 0.50 assumed
+the broad improvement rate; at the concentrated rate the same distance is closer
+to 2.0 nats, and no single conditional is likely to carry that alone.
+
+## The detector reads dependence between features, not any feature, and that closes the 2026-08-07 fork, 2026-08-14
+
+Registered in `/home/aaronadmin/w4_arms/featmap2_prereg.md` before the matrices
+were generated. P1 refuted, P2 confirmed, record 8 of 19.
+
+`research/w4_featmap.py` re run on the base and on the coupled head checkpoint.
+Feature matrices from `research/w4_ar_eval.py`, which gained a `--save-feats`
+flag that writes the generated matrix after scoring and is read by nothing there,
+so it cannot affect the contract number. n 6000, same seed for both, so the two
+matrices are paired at the trajectory level. Five forest seeds per fit.
+
+    FULL 18 column   base 0.6307 se 0.0020   coupled 0.6099 se 0.0012
+                     reduction +0.0207, 8.8 se
+
+    group        base alone  cpl alone    delta     t  |  base drop  cpl drop
+    SPEED            0.5327     0.5177  +0.0150  +4.0  |    +0.0023   +0.0004
+    ROUGHNESS        0.5612     0.5806  -0.0194  -7.7  |    +0.0115   +0.0158
+    GEOMETRY         0.5620     0.5468  +0.0152  +5.5  |    +0.0069   +0.0060
+    TIMING           0.5278     0.5405  -0.0127  -8.9  |    -0.0011   -0.0022
+    ANGULAR          0.5597     0.5591  +0.0006  +0.2  |    +0.0127   +0.0182
+
+    sum of the five group alone reductions   -0.0012
+    reduction the full 18 column forest lost +0.0207
+
+### The result
+
+The eighteen column forest lost 0.0207 at 8.8 se. No group's standalone
+separability fell by anything close to that. SPEED and GEOMETRY fell by about
+0.015, ROUGHNESS and TIMING ROSE, ANGULAR did not move at all, and the net across
+all five is -0.0012, zero within noise.
+
+Stated carefully, because group alone AUCs are NOT additive with the full AUC and
+no decomposition identity holds here even in a purely marginal world. The claim
+is not that the arithmetic must balance. The claim is that every group is about
+as separable on its own after the fix as before, two are MORE so, and yet the
+forest that sees all eighteen together lost a large and highly significant
+amount. What the fix removed is information the detector could reach only by
+combining columns ACROSS groups. It is joint structure and it is in no group's
+own content.
+
+### This decides the fork left open on 2026-08-07
+
+That entry found DIFFUSE and named two worlds. World one, every marginal is
+slightly wrong and the errors accumulate, so marginal matching is slow but works.
+World two, the marginals are nearly right and what separates is the dependence
+between them, so marginal correction is capped well above chance.
+
+WORLD TWO. Four independent lines now agree:
+
+1. The only change ever to move this contract corrected a DEPENDENCE, direction
+   given the just emitted speed, and corrected no marginal at all. The `s` and
+   `dt` held out losses moved by 0.002 in every arm of that experiment.
+2. Its effect on the detector is invisible in every group's own content and large
+   in the eighteen column joint. That is what a dependence repair looks like and
+   it is not what a marginal repair looks like.
+3. Two groups became MORE separable on their own while the model as a whole
+   became much LESS separable. No marginal account produces that.
+4. Every marginal matching arm on this record bought nothing, which the
+   2026-08-07 entry forecast in advance for `w4_dttilt` and the moment matched
+   tilt.
+
+CONSEQUENCE FOR PLANNING. Do not fund another arm whose mechanism is "make
+statistic X match human". That family is now closed twice over, once by the
+DIFFUSE attribution and once by this. Fund arms that change what the model
+conditions on. The within step conditionals are exhausted, s has nothing before
+it in the emit order, th given s was worth 0.2311 and is fixed, dt given both s
+and th was worth 0.0024 and is empty. The dependence that has never been probed
+this way is ACROSS steps.
+
+### The cost inside the win, named so it is not lost
+
+`mean_acceleration` alone went 0.5075 to 0.5382, the largest single feature move
+in either direction, and its drop if removed went 0.0108 to 0.0166, the second
+largest single feature drop in the coupled model. The coupled model's
+acceleration profile is genuinely more distinguishable from human than the base's
+even though the model as a whole is much less so. Whether that is a necessary
+trade or incidental is NOT established.
+
+### Also worth carrying
+
+The full 18 column AUC on this human reference is 0.6307 for the base, against
+the 0.7149 the 2026-08-07 run reported for its then current generated matrix. The
+two are different checkpoints and different generated matrices, so that is a
+model improvement over the intervening week and not a discrepancy in the
+instrument. Do not read the two numbers as a contradiction.
+
+## Conditioning is closed as a lever. The trunk already carries the cross step joint, 2026-08-14
+
+`research/w4_trunkcap.py`, registered in `/home/aaronadmin/w4_arms/trunkcap_prereg.md`
+before the file existed. Ledger `w4_trunkcap_2026-08-14T191541+0000_899b1892`.
+
+### The question
+
+The featmap re run had just shown the detector reads dependence between feature
+groups rather than any group's content, and the binding consequence was to stop
+funding statistic matching arms and start funding changes to WHAT THE MODEL
+CONDITIONS ON. The within step conditionals were already exhausted. So the
+remaining candidate was across steps.
+
+The structural reason to look there: the trunk receives the previous step's three
+tokens as a SUM of three separate embeddings and never receives their
+combination, which is the same shape as the head defect one level up. That
+similarity is NOT an argument, and the difference is the whole point. The head
+defect was provable, since `th_head` is linear and x could not see s(t), so no
+training budget could ever have removed it. Here ten nonlinear layers follow the
+sum and a superposition of three embeddings in 384 dimensions is very probably
+injective over the 540 token values in play, so the trunk CAN form any joint its
+loss rewards. Whether it does had to be measured.
+
+### The measurement
+
+`research/w4_headcap.py` ported unchanged in method: frozen model, a correction
+added to the frozen head's logits with its output layer zero initialised, so
+every arm starts at the checkpoint's own held out loss and only the improvement
+is fitted. One thing changed. In `w4_headcap` the correction saw the CURRENT
+step's speed, which x provably could not know. Here it sees only HISTORY, which x
+was already handed. Nothing new enters, so any gain would be the trunk's own
+representation losing information it received.
+
+Every context stream was coarsened to 8 quantile bins so that the additive and
+joint arms see identical information and differ only in whether an interaction
+can be expressed at all. Family A is the previous step's three channels, family B
+is the speed at t minus 1 and t minus 2.
+
+### The harness is validated inside the run, which is what makes the null readable
+
+    th given the CURRENT step's speed, full 131 classes   +0.2349 nats
+    the same quantity from w4_headcap, different code     +0.2342 nats
+
+An independent replication to within 0.0007 nats, on the same tokens with the
+same fitting budget as every null below. The 8 bin version of that same arm
+bought +0.0463, so the coarsening keeps 0.20 of a known real effect, which was
+registered in advance as a number to measure rather than an excuse to offer.
+
+### Every history arm is empty
+
+    channel   frozen   R_depth    A_add   A_joint   A_shuf    B_add   B_joint
+    s         2.0468   +0.0000   +0.0000  +0.0000  +0.0000  +0.0000   +0.0000
+    th        1.1326   +0.0034   +0.0012  +0.0010  +0.0009  +0.0012   +0.0011
+    dt        1.0643   +0.0004   +0.0000  +0.0000  +0.0000  +0.0000   +0.0000
+
+    joint residue     family A  -0.0002 se 0.0000
+                      family B  -0.0001 se 0.0000, -0.0004 at full resolution
+    marginal residue  family A  -0.0023 se 0.0001
+                      family B  -0.0023 se 0.0001
+
+The marginal residue is NEGATIVE on every channel. Supplying the previous step's
+tokens made the correction worse than the depth control that received no context
+at all, which is what redundant input looks like: the extra embedding parameters
+cost generalisation and bought no information.
+
+The arm that closes the last excuse:
+
+    th, the WHOLE previous step at FULL class resolution   +0.0009
+    th, depth control with no context at all               +0.0034
+
+Handing the head every token of the step the trunk was just fed, with no binning
+anywhere, is worse than handing it nothing. No coarsening story is available.
+
+### What this closes, stated with its limit
+
+The trunk carries the previous step and its joint structure completely. Combined
+with `w4_headcap` and `w4_headmlp`, which found the one real within step defect,
+priced it, built it and moved the contract 0.6340 to 0.6145, and with more
+capacity and more data already excluded by `w4_arbench`, `w4_arcurve` and
+`w4_arfit`, there is no conditioning deficit left to find. The per token
+conditionals are at the optimum this architecture and this data reach.
+
+The limit, registered before the run so it cannot be added afterwards: x is the
+output of a trunk trained WITH this input structure, so it had every incentive to
+precompute what it needed, which biases the measurement against finding a
+residue. The instrumental version of that worry is dead, because the positive
+control in the same run had roughly 500x the sensitivity required. The co
+adaptation version survives: this says the residue is small GIVEN a trunk fitted
+to this input, and does not exclude that a differently structured model trained
+jointly does better.
+
+### The next question, and the objection to it stated first
+
+The tempting conclusion is that the objective ignores the joint. As stated that
+is false, and it should not be written down that way. Maximum likelihood is
+CONSISTENT for the joint: if every conditional were exact the trajectory
+distribution would be exact. What is true is finite. Per step errors compound
+over about forty steps, and MLE weights every per step error equally regardless
+of how much it propagates into the trajectory level statistics the detector
+reads.
+
+That makes the next question measurable rather than arguable, and nothing on the
+record has measured it:
+
+    IS THE REMAINING SEPARATION A PER STEP DEFECT OR A COMPOUNDING ONE?
+
+Take real human trajectories, replace k of their steps with model samples drawn
+on the true prefix, and sweep k from one to all. A sharp move at small k means
+the defect is local and visible with no compounding at all. A move only as k
+approaches full length means the defect is the propagation rather than the step.
+The two worlds want opposite arms. The measurement needs no training and no
+gradient and runs on the already validated contract scorer.
+
+## The sharpening turnaround is real and it is bracketed, 2026-08-14
+
+The question. RESUME carried the exposure bias reading as live but flagged its own
+weakness in writing: "exposure bias predicts a SHIFTED optimum and nothing here
+turns around, but the turnaround was never bracketed, so that is an argument and
+not a measurement." Two readings of the temperature result predicted opposite
+things at low temperature and nobody had looked.
+
+    EXPOSURE BIAS     the model over disperses on its own histories by a FINITE
+                      amount. Correct sharpening undoes exactly that. Sharpen
+                      further and the sampler under disperses and the detector
+                      reads that just as easily. -> INTERIOR MINIMUM.
+    DETECTOR GAMING   sharpening degrades the model, the detector happens to like
+                      degraded trajectories, no reason for that to stop.
+                      -> MONOTONE fall to greedy.
+
+Registered in `/home/aaronadmin/w4_arms/bracket_prereg.md` before any low
+temperature trajectory existed. Eight direction temperatures, two seeds, paired,
+`event_ar_hm_mlp`, n 2000, one trajectory per specification, no selection, speed
+and dt pinned at 1.0 so it is comparable to the record's existing point of th
+0.85 reading 0.6221 on the base checkpoint.
+
+```
+ th_temp     auc   path_eff  curv_std     seed 0    seed 1
+   1.00   0.6165    0.9238    0.4430      0.6180    0.6150
+   0.90   0.5841    0.9272    0.4022      0.5751    0.5931   <- min
+   0.80   0.5869    0.9365    0.3763      0.5835    0.5902
+   0.70   0.5939    0.9472    0.3475      0.5956    0.5923
+   0.60   0.5967    0.9521    0.3480      0.5983    0.5952
+   0.50   0.6196    0.9538    0.3470      0.6196    0.6197
+   0.35   0.6414    0.9605    0.2999      0.6370    0.6458
+   0.20   0.6591    0.9594    0.3025      0.6518    0.6664
+  human               0.9430    0.3459
+```
+
+It turns around, in both seeds independently, by ten noise units. Rise from the
+minimum to th 0.20 is +0.0767 on seed 0 and +0.0733 on seed 1, against a
+registered bar of 0.02 and a pooled within arm sd of 0.0073. Greedy is WORSE than
+sampling at full breadth. The detector gaming branch is refuted.
+
+The closer is the geometry. Path efficiency crosses the human median of 0.9430
+between th 0.80 and th 0.70, that is, immediately AFTER the minimum. The detector
+starts punishing at almost exactly the point the paths become straighter than
+people's. It is not still improving where the geometry has gone non human, which
+was the registered instrument failure mode. The detector is reading the model,
+not being gamed by it.
+
+What it does NOT establish. Serving at 0.90 is not progress. Sharpening degrades
+held out likelihood at 8.7 sigma and that is on the record. Temperature is a one
+parameter patch on a distribution shift; locating its optimum measures the SIZE
+of the shift, which is the number needed to price a training time fix. It was
+registered before the run that this must not be reported as a gain.
+
+Two things that are worth more than the number. First, the minimum is at 0.90 on
+seed 0 and 0.80 on seed 1, 0.0028 apart on the paired mean, well inside noise. P3
+predicted the minimum sits above 0.85 and the sweep cannot rule either way. It
+was reported confirmed off seed 0 alone before seed 1 finished, and that was
+wrong, which is the exact failure `w4_headmlp` is in the record to prevent.
+Second, the best AUC is NOT where the marginals best match human: curv_std hits
+the human 0.3459 almost exactly at th 0.70 and 0.60, where AUC is a full 0.010 to
+0.013 worse. Same lesson as `w4_featmap2` from the other side. The detector reads
+the joint, and matching any single marginal walks the wrong way.
+
+Next question. The over dispersion was measured on the WHOLE model, 0.2659 nats
+per token, and was never attributed to a head. This swept one head of three and
+found 0.032 of AUC in it. The speed and dt heads have never been swept on this
+checkpoint. Registered in `/home/aaronadmin/w4_arms/threehead_prereg.md`, with the
+objection stated first: this fits parameters against the contract scorer, it is a
+fitted serving configuration and not a model improvement, and its only real
+purpose is to measure how much of the remaining separation is sampling breadth
+rather than learned structure. Whatever is left after all three heads are at their
+optimum is the first honest estimate this programme will have of the actual
+modelling gap.
+
+## The 0.53 floor was a narrow draw. The floor is 0.512, 2026-08-14
+
+Correction to this file's own 2026-08-10 entry, measured on CPU while the GPU
+held a thermal cooldown. Registered in `/home/aaronadmin/w4_arms/floor_prereg.md`
+before any number, `research/w4_floor.py` and `research/w4_floorwidth.py`.
+
+The question was not the floor. It was whether the floor SUBTRACTS. The 2026-08-10
+entry concluded "the served model reads about 0.63 against a 0.53 floor, so there
+is still roughly 0.10 of real modelling gap", and that subtraction assumes the
+corpus offset and the model's defect add. AUC does not add. Nobody had scored the
+model against the corpus it was trained on, which is the arm that separates them.
+
+Ten paired replicates, `score_features` unmodified, n_use 2000 throughout.
+
+```
+  arm              mean       se      recorded 2026-08-10
+  c_vs_c         0.5016   0.0033     0.5002 0.5022 0.4969   reproduces
+  c_vs_grpo      0.5111   0.0040     0.5353                 does not
+  c_vs_sir       0.5151   0.0027     0.5354                 does not
+  grpo_vs_sir    0.5042   0.0033     0.5132                 does not
+  m_vs_grpo      0.6062   0.0026
+  m_vs_sir       0.5987   0.0025
+  m_vs_corpus    0.6014   0.0028
+```
+
+The scorer calibrates. Three human to human arms did not reproduce, so the
+registration held the new arm back until the discrepancy had a control. The one
+difference is that these corpus draws are uniform over all 4.03M rows, and this
+file already records that the corpus is ordered by session. So the offset was
+measured as a function of draw width, same reference, six replicates each:
+
+```
+  2000 contiguous  0.7548  sd 0.1497     one run of the file, fewest people
+  10k window       0.7221  sd 0.1303
+  100k window      0.7102  sd 0.1232
+  1M window        0.6001  sd 0.0308
+  all 4.03M        0.5147  sd 0.0073     the population
+```
+
+Monotone across 0.24 of AUC. The recorded 0.535 sits between the 1M and the full
+draw, which is what a wide but not uniform draw gives. The explanation is
+measured, not asserted.
+
+TWO CONSEQUENCES.
+
+First, the floor. Real human training data drawn as a population reads 0.5111
+against the scoring reference and 0.5151 against the second one, on an instrument
+that calibrates at 0.5016, and the two references read 0.5042 against each other
+which is not separable from calibration at all. The floor is about 0.512, not
+0.53. What is genuinely unavailable is roughly 0.012, not 0.03. The sentence in
+the 2026-08-10 entry saying "the last 0.03 of the way to 0.50 is not available"
+is withdrawn and replaced by 0.012.
+
+Second, and it was the registered question: the offset does not subtract anyway.
+Scoring the model against its OWN training corpus reads 0.6014 against 0.6062
+for the reference, a paired difference of -0.0048 se 0.0039. Nothing. Both
+separations live in the joint across features, `w4_featmap2` having established
+that for the model side, and the larger one absorbs the smaller. The model also
+does not care which human sample grades it: sir minus grpo is -0.0075 se 0.0036.
+
+So the gap estimate of 0.10 was about right by accident, and the floor estimate
+was not. The model is 0.094 from a floor of 0.512, and 0.012 of that is a
+disagreement between two recorded human corpora rather than a modelling failure.
+
+The between person mechanism was checked and is NOT the answer.
+`research/w4_hetero.py`: contiguous blocks read 0.755 because a single person is
+nearly perfectly separable from the population by eighteen summary features, and
+in six draws that arm ranged 0.618 to 0.980. But the median between block share
+of feature variance is only 7.6 percent, at most 15.1 percent, far too small to
+carry 0.09. The model shows no dispersion defect either: median IQR ratio 1.081
+against the corpus and 1.017 against the reference, largest single ratio 1.37 on
+path efficiency. No collapse, no missing mixture.
+
+The single person result is worth keeping for its own sake. It says the eighteen
+feature detector is not a weak instrument being asked a hard question. It can
+separate one human from other humans at 0.75 to 0.98, so a model reading 0.60
+against the population is not close to the instrument's noise floor and there is
+no argument that the remaining gap is unreadable.
+
+## The over dispersion is in the DIRECTION head. Speed is nearly calibrated, 2026-08-15
+
+`w4_typicality` measured 0.2659 nats per token of over dispersion on the model's
+own generated histories while it stayed near perfectly calibrated on real ones.
+That number was a whole model property and had never been attributed to a head.
+It now is.
+
+Twelve runs, two seeds, direction pinned at its bracket optimum 0.90, timing at
+1.00, sweeping the speed temperature. Files `research/w4_3h_s*_th0.90_dt1.00_s*.json`.
+
+```
+ s_temp    seed0    seed1     mean   path_eff   curv_std   n_ev
+   1.00   0.5781   0.5926   0.5854     0.9295     0.4098   40.0
+   0.95   0.5732   0.5852   0.5792     0.9402     0.3803   40.5   min, both seeds
+   0.90   0.5935   0.5993   0.5964     0.9410     0.3837   41.5
+   0.85   0.6158   0.6099   0.6128     0.9439     0.3895   44.5
+   0.80   0.6354   0.6261   0.6308     0.9473     0.3552   44.0
+   0.70   0.7029   0.6909   0.6969     0.9523     0.3406   48.0
+  human                                0.9430     0.3459
+```
+
+Both seeds independently put the minimum at 0.95, so the speed head IS slightly
+over dispersed. The size is the point: the paired gain is +0.0062, against 0.0324
+for the same measurement on the direction head. The pooled within arm noise sd is
+0.0073. So the speed head carries about a fifth of what direction carries, and it
+is within one noise unit of carrying nothing.
+
+Sharpening past the optimum is punished harder here than anywhere else measured.
+s 0.70 costs +0.1178 from the minimum. The direction head's entire bracket, all
+the way down to th 0.20, cost +0.0767. Event count rises 40 to 48 across the
+sweep, which is the mechanism: a sharper speed head emits smaller steps, a fixed
+distance then needs more events, and the scorer reads event count directly.
+
+CONCLUSION FOR ANY TRAINING TIME FIX. Do not spend a training step on speed
+distribution breadth. The exposure bias that is worth money is in the direction
+head, and the bracket already showed it is worth 0.043 there.
+
+Batch note, because it will bite anyone comparing tables. This sweep ran at batch
+32 and the bracket at batch 64. The torch RNG is not re seeded per batch, so the
+same specification is a different sampler draw: th 0.90 seed 0 reads 0.5851 here
+and 0.5751 there. That 0.010 is draw variance between two equally valid samples,
+not a model change. Compare paired gains, never absolute levels, across the two.
+
+Third instance of a pattern now. `path_eff` matches the human 0.9430 exactly at
+s 0.85, which is the worst point around it, and `curv_std` gets nearest human at
+0.70, the worst point in the sweep. The detector reads the joint across feature
+groups. Matching one marginal is evidence of nothing. Do not tune to a marginal.
+
+## Sampling breadth is exhausted. All three heads bracketed, residue is 0.067, 2026-08-16
+
+The timing head was the last unswept axis on this checkpoint. It is now swept on
+BOTH sides of neutral, seven points, speed pinned at 1.00 and direction at 0.90.
+Files `research/w4_3h_s1.00_th0.90_dt*_s0.json`.
+
+```
+  dt      auc   vs_1.00  dur_only  path_eff  curv_std  n_ev
+  1.50  0.8382  +0.2601   0.5599    0.9542    0.6349    26
+  1.25  0.7006  +0.1225   0.5454    0.9455    0.4681    32
+  1.10  0.6046  +0.0265   0.5199    0.9371    0.4771    38
+  1.00  0.5781        0   0.5526    0.9287    0.4028    39   minimum
+  0.90  0.6189  +0.0408   0.5517    0.9220    0.4100    44
+  0.80  0.6549  +0.0768   0.5752    0.9186    0.4041    45
+  0.65  0.7145  +0.1364   0.6090    0.9147    0.3907    44
+  human                             0.9430    0.3459
+```
+
+A sharp V with the minimum exactly at neutral. The timing head is CALIBRATED and
+that is now evidenced rather than assumed. The three points above 1.00 exist
+because the original design only looked at or below it, which cannot tell a
+calibrated head from an under dispersed one; the follow up was registered after
+the first point and before the rest, and it rules the second case out.
+
+The whole three head picture, which is what this line was for:
+
+```
+  head        mis set?              worth at the scorer
+  direction   yes, clearly          0.032 to 0.043, minimum near 0.85
+  speed       barely                0.006, minimum 0.95, inside the 0.0073 noise
+  timing      no                    0.000, minimum exactly at 1.00
+```
+
+EVERY SAMPLER ADJUSTMENT ON THIS MODEL HAS NOW BEEN MEASURED, on every head, in
+both directions. The total is about 0.049 and it lands near 0.579. Against the
+0.512 floor that leaves a residue of about 0.067 that NO SERVING SETTING CAN
+REACH. It has to come from training or architecture. That is the first honest
+estimate of the real modelling gap this programme has had.
+
+Provisional in one respect, stated so nobody quotes it as final: step 3, the re
+sweep of direction at the chosen speed and timing, has not run. It checks that
+the coordinate descent did not land off a ridge. The heads overlap almost
+totally, so a large move there would be a surprise, but it is unrun.
+
+THE TIMING HEAD IS NOT A TIMING ONLY KNOB. `dur_only`, a single feature AUC on
+duration alone, moves +0.056 across the sweep while the contract AUC moves
++0.260. Most of the damage is in PATH GEOMETRY, because direction and speed are
+conditioned on dt, and the event count runs 26 to 45 across the sweep. Anyone
+reasoning about dt as if it only sets timing will be wrong.
+
+FOURTH AND MOST EXTREME INSTANCE OF THE MARGINAL TRAP. At dt 1.25 median path
+efficiency is 0.9455 against a human 0.9430, about as exact a marginal match as
+this workstream has produced, and that point is the second worst of the seven. At
+dt 1.50 it is 0.9542, still nearer human than the optimum's 0.9287, and it is the
+worst point ever measured on this checkpoint. Tuning to median path efficiency
+walks directly away from the target. The forest reads the joint across feature
+groups. Four for four now: DO NOT TUNE TO A MARGINAL.
+
+## Ridge check passed. The three head line closes, residue confirmed at 0.067, 2026-08-17
+
+Step 3 of the three head registration, the check that the coordinate descent did
+not land off a ridge. Six new runs, two paired seeds, speed pinned at its
+measured minimum 0.95 and timing at its confirmed 1.00, sweeping direction.
+Files `research/w4_3h_s0.95_th*_dt1.00_s*.json`.
+
+```
+   th     seed0    seed1     mean   path_eff  curv_std   n_ev
+  1.00   0.6095   0.6069   0.6082    0.9231    0.4331   41.0
+  0.90   0.5732   0.5852   0.5792    0.9402    0.3803   40.5   min, both seeds
+  0.85   0.5783   0.5927   0.5855    0.9408    0.3888   41.5
+  0.80   0.5944   0.5977   0.5961    0.9414    0.3812   42.0
+  human                                0.9430    0.3459
+```
+
+THE HEADS DO NOT INTERACT. The direction minimum sits at 0.90 with speed at 0.95,
+the same place the bracket put it with speed at 1.00, and both seeds agree
+independently, which is tighter than the bracket managed. The gain from neutral
+to the minimum is 0.0290 here against 0.0324 in the bracket, a difference of
+0.0034 inside the 0.0073 noise sd. The direction head carries the same amount
+wherever speed sits.
+
+Note the step 3 design differs from the one line description in the original
+registration, deliberately. That said "re sweep th at the new s and dt", but the
+descent moved nothing, dt landed at 1.00 and speed was pinned at 1.00, and the
+bracket already swept th at exactly `--temps 1.0 --dt-temp 1.0`. Repeating that
+would have tested no interaction at all. Speed 0.95 is the only configuration
+with an interaction in it, so that is what ran. Registered before the run.
+
+A REGISTRATION ERROR WORTH KNOWING ABOUT. P4 had two bars. The second required
+the paired mean at the minimum to land within 0.0073 of step 1's 0.5792, but
+th 0.90 at speed 0.95 IS step 1's measurement, reused by the runner's file
+check. That bar compared a number to itself, read 0.0000 and could not have
+failed. The first bar was real and carries the prediction on its own, so the
+conclusion stands, but P4 was half as strong a test as it was written to look.
+Recorded because a registration whose bars cannot fire is worse than none.
+
+```
+  combined optimum   s 0.95, th 0.90, dt 1.00     paired mean 0.5792
+  floor                                                       0.512
+  residue after removing ALL sampling breadth                 0.067
+```
+
+THE 0.067 IS CONFIRMED and is not an artefact of tuning three parameters one at
+a time. Every head is swept in both directions, shape claims got paired seeds,
+and the ridge check passed. No serving setting reaches it. It has to come from
+training or architecture.
+
+It is a FITTED SERVING CONFIGURATION, not a model improvement, exactly as the
+registration said it would be. The speed component is 0.0062 deep against a
+0.0073 noise sd and stays unresolved; serving speed 1.00 instead costs 0.006 and
+would be defensible. The protected eval sample was never touched.
+
+## The token history is COVERED. Same support, wrong density, 2026-08-17
+
+Registered in `/home/aaronadmin/w4_arms/texcover_prereg.md` with an addendum
+and a null arm, both fixed before any model number existed. `w4_texcover_gen.py`
+dumped two rollout seeds at the closed serving optimum s 0.95, th 0.90, dt 1.00;
+`w4_texcover.py` did the rest on CPU.
+
+**Why this ran.** "Which coordinate of the state carries the excess" measured
+the nearest human state to a model state in the six dimensional `prefix_state`,
+got 1.032, and concluded by ELIMINATION that the whole excess must be carried by
+the only other thing the trunk reads, the token history. It never put the token
+history into the distance. That is the gap this fills.
+
+Nearest human reference distance, whitened by the human reference covariance.
+R is the model median over the held out human median. P is the scale free
+overlap, 0.5 when the two are indistinguishable. NULL is a third disjoint set of
+human trajectories entered through the model code path.
+
+```
+   k  dim    human  nn/rand       NULL      R       P         s0      R       P         s1      R       P
+   0    6   0.1455    0.044     0.1466  1.008  0.5056     0.1574  1.082  0.5478     0.1543  1.060  0.5356
+   1   10   0.3606    0.089     0.3603  0.999  0.5003     0.3837  1.064  0.5402     0.3779  1.048  0.5298
+   2   14   0.5808    0.126     0.5785  0.996  0.4982     0.6047  1.041  0.5299     0.5977  1.029  0.5208
+   4   22   1.0392    0.184     1.0304  0.992  0.4965     1.0685  1.028  0.5133     1.0538  1.014  0.5079
+   8   38   2.0034    0.269     1.9761  0.986  0.4967     2.0028  1.000  0.4980     1.9861  0.991  0.4962
+```
+
+2,000,000 reference states against `w4_statecoord`'s 20,000. Reference, human
+control and null arm come from DISJOINT trajectory sets, so the leakage that
+made the first version of this measurement read 2.949 has no exclusion logic to
+get wrong. k = 0 reproduces the recorded 1.032 inside a window registered in
+advance, on a different checkpoint.
+
+**Both statistics FALL with history depth, on both seeds, at every step.**
+Twenty monotone decrements of twenty. The prediction, which the elimination
+above demands, was that they rise.
+
+**The finding is the value they fall TO, not the fall.** The fall is dilution:
+total distance grows 14x from k = 0 to k = 8, so a fixed geometric mismatch
+shrinks as a share of it. Working in squared distance, if the history
+coordinates contribute zero excess and the k = 0 absolute excess of 0.0036 is
+carried through, k = 8 should read sqrt((4.0136 + 0.0036) / 4.0136) = 1.0005.
+Observed 1.000.
+
+**The null arm is what makes any of this readable and `w4_statecoord` did not
+have one.** It runs 1.008 down to 0.986, about one percent of trajectory level
+sampling noise, which is expected on a corpus this file already records as
+ordered by session. Every model number is an excess over it:
+
+```
+  excess over null       k = 0                k = 8
+  R    seed 0            +0.074               +0.014
+  R    seed 1            +0.052               +0.005
+  P    seed 0            +0.042               +0.001
+  P    seed 1            +0.030               -0.001
+```
+
+Relative to each block's own scale: geometric +7.3 and +5.2 percent, history
+dominated +1.4 and +0.5 percent, null arm width about 1.1 percent.
+
+**Concentration never fires.** nn/rand runs 0.044 to 0.269 against a kill line
+of 0.90 registered before the run. A falling ratio in a rising dimension is
+exactly what concentration produces, so this had to be gated and it was.
+
+**No depth confound and no accumulation.** Pooled R is reproduced inside every
+fractional position quintile. At k = 8 the LOWEST quintile on both seeds is the
+FIRST, 0.952 and 0.956, rising toward 1.0 by the fifth, which runs the wrong way
+for compounding drift.
+
+### What this changes
+
+**`w4_histfeat` is not withdrawn and is not contradicted.** It measured
+DISTRIBUTION, NAMED jointly at 55.2 percent, the model emitting events 15
+percent further apart, 28 percent faster and 45 percent rougher between them.
+This measured SUPPORT. **The synthesis is a loaded die: every pattern the model
+emits is an ordinary human pattern, and it emits them at the wrong rates.**
+
+**The sentence needing correction is the elimination step.** "The geometric
+state is clean" came from a 1.032 with no calibration arm. With one, the
+geometric excess is the largest thing in the table and the only one clearing the
+null by more than a width. It is still small.
+
+**The lookup expert has no hole problem.** At k = 8 the 32nd nearest human
+reference sits at 2.67 for the model against 2.64 for a human. There is human
+data to query everywhere the model goes, which is the precondition this arm
+existed to price.
+
+**"Evaluated at the model's own visited states" is DOWNGRADED from a wall to a
+nuisance.** It is a covariate shift on shared support, not the missing support
+the constraint was written to describe. Every family closed on that constraint
+alone should be re read.
+
+**There is no exposure bias in this model in the sense that matters.** This is
+the support measurement of the sentence already in this file, that the excess
+appears after a single event and never grows, and it agrees with it.
+
+### Limits, stated rather than buried
+
+The history block dominates the distance scale, so the instrument at k = 8 is
+about seventy times less sensitive per unit of squared distance than at k = 0. A
+history support mismatch small relative to the history coordinates' own spread
+would be invisible. The claim supported is the RELATIVE one in the table above.
+
+This moved no score. The 0.067 residue is untouched. The open question is now a
+DENSITY question on shared support, which is a different measurement and needs
+its own registration before anything is run.
+
+## A retrieval expert is a WORSE teacher than the model on speed and timing, and that closure is structural, 2026-08-17
+
+Registered in `/home/aaronadmin/w4_arms/expertgap_prereg.md` with three
+amendments, all written before the full run. Arm is `research/w4_expertgap.py`,
+results in `research/w4_expertgap_results.json`, log in
+`/home/aaronadmin/w4_arms/expertgap.log`. rc=0, GPU peak 70C, protected
+checkpoint MD5 verified unchanged.
+
+### The question
+
+The previous arm established that the model visits ordinary human states, same
+support, wrong density. So at any state the model reaches there is real human
+data to look up. This arm prices the obvious consequence: if you built the best
+possible non parametric expert, nearest neighbours over the same 38 dimensional
+whitened history key, how much better than the model would it predict the next
+token at human states? That gap is the ceiling on every distillation, DAgger and
+retrieval augmentation family in one number, and it can be measured without
+building any of them.
+
+1,000,000 human reference states from 45,000 trajectories, a second disjoint
+1,000,000 from another 45,000, four query pools of 20,000 states each at 2,000
+trajectories, three history depths K = 16, 64, 256. Four disjoint trajectory sets
+with an all pairs assert, and a runtime leakage guard asserting no query's own
+trajectory appears among its own retrieved neighbours.
+
+### V0a. The expert is real
+
+Retrieval beats the global marginal on all three heads, and two independent human
+query arms agree to two decimals:
+
+    V0a edge, nats                                      s        th        dt
+    HUMAN                                          0.5715    0.2239    0.2585
+    HUMAN_NULL                                     0.5852    0.2433    0.2984
+
+### V0b. And it is WORSE than the model on two of the three heads
+
+Both scored on each query's own true next token at held out human states:
+
+    predictor                                           s        th        dt
+    the model                                      2.0084    4.5438    0.9940
+    retrieved expert, K = 256                      2.9718    2.8953    2.2744
+    V0b edge, positive means expert wins          -0.9634   +1.6484   -1.2804
+    the same, second human arm                    -0.9587   +2.1761   -1.2677
+
+**The speed head and the timing head are CLOSED to retrieval expertise.** There
+is nothing to distill on those channels because the teacher is a full nat worse
+than the student. Every DAgger, retrieval augmentation and nearest neighbour
+correction family is dead on speed and timing, without building one.
+
+### And that closure is STRUCTURAL, which is new
+
+The smoke ran the identical gate at 40,000 reference states. Twenty five times
+more reference data moved the speed head's V0b edge from -1.1925 to -0.9634, so
+25x bought 0.229 nats. At that rate the remaining 0.963 needs about `25^4.2`,
+roughly seven hundred thousand times more data, on the order of 1e14 events
+against a corpus of 2.1e8.
+
+The reason is dimension. Nearest neighbour distance in 38 whitened coordinates
+falls as `n^(-1/38)`, so 25x of data brings neighbours about 8 percent closer.
+**This is the first closure in this file backed by a scaling argument rather than
+a measured null, and it does not need re measuring at any corpus size.**
+
+### The direction head passes V0b and its primary is UNREADABLE
+
+Direction is the only head where the expert knows something the model does not,
+by 1.65 to 2.18 nats. Its primary, the excess in expert advantage at model
+states over human states:
+
+    arm            K=16     K=64    K=256      what it should read
+    HUMAN_NULL   0.3645   0.2800   0.2305      ZERO. It is the instrument width.
+    MODEL_s0     0.4961   0.4490   0.3894      above the null at every K
+    MODEL_s1     0.3168   0.2263   0.1972      BELOW the null at every K
+
+**The two rollout seeds bracket the instrument's own width at every K.** Per the
+registration, a model excess not exceeding the null is not read in either
+direction, so there is no verdict and the registered nat thresholds are not
+applied. The difference in differences estimator and the 10 percent trimmed mean
+both reproduce this exactly, so the registered tail refusal does not fire and the
+direction head's heavy tail is not the cause.
+
+The null width here is ONE realisation, a single pair of disjoint human query
+sets, and it reads +0.23 to +0.39 where the truth is exactly zero. One pair
+cannot separate systematic difficulty from fluctuation. **Any successor reading
+this statistic must build several disjoint human query sets first.** It does not
+change this verdict, because the model seeds bracket the null, which is the
+strongest available statement that effect and instrument are the same size.
+
+### The nats to AUC exchange rate does NOT apply to a single head, and this is the most portable finding here
+
+`w4_arcurve`'s 0.1904 AUC per nat converts the direction head's 1.6484 nat V0b
+edge to 0.314 AUC. The entire open residue is 0.067. A conversion that turns a
+routinely measurable per head likelihood gap into nearly five times the whole
+remaining problem is not measuring the same thing.
+
+That rate was fitted on TOTAL held out likelihood across training checkpoints,
+which moves all three heads together and in a correlated way. **`w4_price`'s 0.05
+nats MATERIAL family cannot be transported to a per head, occupancy weighted
+quantity.** Any future arm that prices one head in nats and multiplies by 0.1904
+will overstate itself by roughly the factor seen here. This invalidates the
+secondary of this arm and constrains every future one.
+
+### Three arms killed by the record before this one was built
+
+The record review that produced this arm killed three candidates, all of which
+looked new and were not:
+
+**A retrieval GENERATOR.** `w4_suffix` and the teacher forced head checks say the
+per step conditional already reproduces the human one to three or four decimals
+on every marginal tested, so a lookup policy would emit what the model emits.
+Whole trajectory retrieval plus warp is separately priced at 0.94.
+
+**A joint one step conditional test.** `w4_condtex` registered that exact chain
+rule argument on 2026-08-05, sliced the PIT by history texture and found nothing,
++0.0231 pooled at the boundary.
+
+**The model's own surprise as a defect locator.** `w4_selfsurprise` found it, a
+monotone ramp spanning 0.42 nats at 164 sd from zero, and `w4_price` converted it
+at 0.001 AUC, eight times too small to matter.
+
+The lesson those encode, and the reason this arm priced the expert instead of
+building it: **seven consecutive arms found a large, overwhelmingly significant
+per step defect and priced it at approximately zero.** Significance and nats are
+unrelated quantities here.
+
+### Coherence
+
+Direction is now the fourth independent method to localise there, after the three
+head temperature sweep, `w4_selfsurprise`'s 0.79 s to th coupling share and
+`w4_typicality`'s 0.2659 nats. Over dispersion in direction explains a high
+direction NLL and is the same finding as the 0.90 serving temperature from the
+other side.
+
+### A reporting bug in this run
+
+The position quintile table this run printed averages over the head axis, pooling
+three heads whose excesses have opposite signs. **It is uninterpretable and must
+not be read.** V3, the position confound gate, was NOT performed. The script is
+fixed to report per head. V3 is moot rather than outstanding because it exists to
+defend a pooled number and there is no pooled number to defend.
+
+### What this moved
+
+Nothing. The 0.067 residue is untouched and no training run is authorised, on any
+head. Two heads are permanently closed and the third produced no verdict.
+
+## CORRECTION to the section above. The direction result was an artefact, its sign is reversed, and ALL THREE heads close, 2026-08-17
+
+The section immediately above reports that a retrieval expert beats the model on
+the direction head by 1.65 nats. **That is wrong and the sign is backwards.**
+Corrected the same day, before anything was built on it. Full working in the
+CORRECTION section of `/home/aaronadmin/w4_arms/expertgap_prereg.md`.
+
+### The bug
+
+`w4_arfit`, the canonical teacher forced evaluator here, masks the direction loss
+to MOVING events, `motion = (s_cls > 0) & (s_cls < S_PAD_CLASS)`. Where there is
+no motion the direction target is `TH_NULL_CLASS` and the head is never trained
+to emit it. `w4_expertgap` scored direction over ALL valid positions. The expert,
+a plain histogram of neighbours' tokens, predicts the null class fine. The
+comparison handed it 8.3 percent of the mass on a domain the model's head does
+not serve.
+
+    positions 160,527   moving 91.7%   non moving 8.3%
+    th over ALL positions      4.1552   <- what the arm scored
+    th over MOVING only        0.8641   <- what the head is trained on
+    th at NON MOVING only     40.4234   <- never supervised
+    s 2.1329, dt 1.5154, total over the three heads 4.5123
+
+### The contradiction that was sitting in plain sight
+
+This file prices `event_ar_v2_s40000` at **4.4024 held out nats TOTAL across all
+three heads.** The arm reported the direction head ALONE at 4.5438. Masking
+correctly gives 4.5123 total, which agrees. **A per head likelihood exceeding the
+recorded total is a contradiction, and checking a new number against this file's
+existing totals costs nothing.** Do it before reading any verdict.
+
+### The corrected result, which is stronger than the one it replaces
+
+The expert's 2.8953 was also measured unmasked, but it can be bounded without a
+re run. A smoothed histogram at the sharpest rung, alpha 0.1 over K 256 and 257
+classes, cannot score worse than 7.943 nats anywhere, so its moving only value is
+at least `(2.8953 - 0.083 * 7.943) / 0.917` = 2.438.
+
+    head   model    expert         who wins       by
+    s     2.0084    2.9718         the model   0.9634    unchanged
+    th    0.8641   >= 2.438        the model   >= 1.574  SIGN REVERSED
+    dt    0.9940    2.2744         the model   1.2804    handout <= 0.2085
+
+**A retrieval expert built from a million human reference states is worse than
+the model on EVERY head. The DAgger, distillation and retrieval augmentation
+family closes outright**, not on two heads out of three.
+
+The timing head had a second, independent confound worth naming: the model was
+scored on dt given the true `s_cur` and `th_cur` while the expert was given
+neither. On the corpus that handout is `H(dt) - H(dt|s,th)` = 0.2085 nats, so the
+fair edge is still at least 1.07. Speed carries only 0.1340 nats about timing, so
+the "distance equals speed times time" intuition that motivated the check is
+wrong and the closure survives it.
+
+### Retracted, and what survives
+
+RETRACTED: that direction is where the expert knows something the model does not,
+and with it the reading of this as a fourth independent convergence on the
+direction head. RETRACTED: the primary EXCESS and the finding that the two
+rollout seeds bracket the null, both computed on the same contaminated column.
+Void rather than unreadable, and moot either way.
+
+SURVIVES: the speed closure and its `n^(-1/38)` scaling argument. The timing
+closure. V0a. And the refutation of the 0.1904 AUC per nat exchange rate for per
+head quantities, which is firmer now, because the 1.6484 it was applied to was
+not a real number.
+
+### The gate that was missing
+
+No registered gate would have caught this. **Every per head NLL must be compared
+against that head's marginal entropy and against this file's recorded held out
+totals before any verdict is read.** A model that loses to a static histogram on
+its own training distribution is a broken measurement, not a finding. `w4_headcap`
+and `w4_trunkcap` were checked and both mask correctly; `w4_expertgap` was the
+only contaminated arm.
+
+## w4_rowmap. The residue is spread across every trajectory, not concentrated in a bad tail, 2026-08-17
+
+Registered in full at /home/aaronadmin/w4_arms/rowmap_prereg.md before any code
+existed, including the prediction, the two branch thresholds, the mandatory null
+arm and the two sanity gates.
+
+**The question no arm had asked.** Every previous arm sliced the 0.067 residue by
+FEATURE, asking which of the 18 contract measurements separates model from human.
+None sliced it by ROW, asking which generated trajectories separate. An average
+over trajectories cannot see a concentrated tail, so thirty arms of diffuse
+findings were consistent with a small broken minority carrying the whole gap.
+
+**Instrument.** Score the contract, rank every row by the forest's own per row
+synthetic probability, delete the top q percent of generated rows and the bottom
+q percent of human rows, rescore. If the gap is a tail the curve collapses to the
+floor early. Peeling is circular, so the curve alone is not a result and the
+readout is the DIFFERENCE against a null in which both sides are real humans.
+
+    q                  0%        2%        5%       10%       25%
+    null, human      0.5230    0.5039    0.4646    0.4298    0.3619
+    model            0.5895    0.5687    0.5403    0.4806    0.4016
+    difference       0.0665    0.0648    0.0757    0.0508    0.0398
+
+Null is the mean of three seeds, model the mean of two rollout seeds, 2000
+trajectories each, one trajectory per spec, no selection.
+
+**The null earned its place.** Peeling alone drags AUC from 0.523 to 0.362 on
+pure human data. Without the null, the model curve falling from 0.590 to 0.402
+would have read as a dramatic tail finding. It is almost entirely the peel.
+
+**Gates, read before the primary.** G1 model q=0 0.5895 against the recorded
+optimum 0.5792, PASS. G2 null q=0 0.5230 against the floor 0.512, PASS. Gate is
+2 x the measured contract noise 0.0073.
+
+**VERDICT UNIFORM.** At q=10 the difference is +0.0508 against a TAIL line of
+0.0146, missing the tail branch by 3.5x. At q=25 it is +0.0398, above the
+UNIFORM line of 0.0300. Sixty percent of the gap survives deleting a quarter of
+the population from both sides. There is no subpopulation whose removal buys the
+floor.
+
+**Second readout.** 37.9 percent of generated trajectories look less synthetic
+than a typical real one, against a chance value of 50. A tail defect would leave
+the median generated trajectory indistinguishable. It is displaced.
+
+**Independent confirmation of the residue.** The q=0 difference reads 0.0665.
+The residue derived through the closed three head temperature optimum reads
+0.067. Different instrument, different quantity, agreement to 0.0005.
+
+**Noted tension, not buried.** The null q=0 of 0.5230 sits about 0.012 above
+w4_floor's c_vs_grpo of 0.5111 se 0.0040, roughly 3 se, while still inside the
+registered G2 gate. Most likely the corpus draw here reads the memmap in sorted
+order before permuting and so does not reproduce w4_floor's pairing. It cannot
+flip the verdict because any upward bias in the null shrinks the difference and
+makes UNIFORM the conservative call. Do not quote 0.5230 as a floor anywhere.
+
+**What this closes.** Do not build any arm premised on finding and fixing a bad
+subpopulation: outlier rejection, per trajectory rejection sampling, a "hard
+example" curriculum, mixture components for a failure mode, or any diagnostic
+that hunts for the broken 10 percent. There is no broken 10 percent. Combined
+with the feature axis arms, the residue is now measured as diffuse on BOTH axes
+that exist.
+
+**Scope.** event_ar_hm_mlp.pt at s 0.95, th 0.90, dt 1.00 only. Says nothing
+about defects that are uniform across trajectories but local within them.
+
+## w4_detcap. The contract is an honest target, and the defect is not mostly a token rate shift, 2026-08-17
+
+Registered in full at /home/aaronadmin/w4_arms/detcap_prereg.md with two
+amendments, both made after the null and before the primary was read, both
+recorded there with their reasoning.
+
+**The question.** The contract AUC is a LOWER BOUND on the divergence between
+the two distributions, read through 18 hand built summaries that `w4_hesit`
+priced at about EIGHT effective dimensions. Nobody had measured how loose that
+bound is. This has to be settled before any new architecture is judged, because
+if the bound is loose then the programme has been optimising a proxy.
+
+**Instrument.** A ladder of eight detectors over the SAME trajectories, model
+streams taken from `w4_texcover_streams_s{0,1}.npz` at the closed optimum and
+human rows drawn uniformly from the corpus, both decoded through
+`w4_views.decode_features` so every rung describes identical objects. No GPU,
+nothing generated. Every rung also run human against human, three seeds.
+
+    rung                        AUC      null    corrected
+    L1  logistic, 18 feats   0.5904    0.4960      +0.0944
+    L2  forest, 18 feats     0.6068    0.4973      +0.1095   THE CONTRACT
+    L3  boosting, 18 feats   0.6078    0.4954      +0.1124
+    L4  logistic, rates      0.5610    0.4970      +0.0640
+    L5  boosting, rates      0.5865    0.5004      +0.0861
+    L4b logistic, unigram    0.5647    0.5004      +0.0643
+    L5b boosting, unigram    0.5788    0.5031      +0.0757
+    L5c boosting, uni+joint  0.5761    0.4976      +0.0785
+
+Gates all pass. G1 L2 OOB 0.5982 against today's 0.5895. G2 every null within
+0.0146 of 0.500. G3 the two scoring protocols agree to 0.0086.
+
+**VERDICT NEGLIGIBLE.** The best rate rung's null corrected +0.0861 sits 0.0234
+BELOW the contract's +0.1095. A detector that uses none of the 18 features
+cannot beat them.
+
+**THE POWER CONTROL IS THE RESULT.** A low reading is worthless until you know
+the detector could have read high. Two human halves, one resampled by a tilt on
+mean dt sized so the CONTRACT rung lands at 0.6008, matched to the model arm's
+0.6068 so both columns are read at the same difficulty:
+
+    rung                     planted    model arm
+    L2  forest, 18 feats      0.6008       0.6068
+    L5  boosting, rates       0.6702       0.5865
+
+Same detector, same 1379 dimensions, same n. On a planted RATE difference it
+BEATS the contract by 0.069. On the model's actual defect it LOSES by 0.020.
+The rate detector is strictly the better instrument for rate shifts and still
+reads the model's defect worse. That is a property of the defect.
+
+**What it establishes.**
+
+1. **The target is honest.** 0.5792 is not badly understating the divergence.
+   Option 2 architectures can be judged on the contract alone. This was the
+   less likely outcome by the registered prediction and it is the good one.
+2. **My registered prediction of MATERIAL is refuted.** The error was assuming
+   the 18 features are a low resolution view of the TOKEN distribution. They are
+   a view of the TRAJECTORY, and the defect lives at the trajectory level.
+3. **The loaded die is priced, not refuted.** Token rates carry +0.0861 of the
+   +0.1095, about 79 percent. The residual 21 percent appears only once events
+   are composed into a path.
+4. **Bigrams add 0.008 over unigrams.** Nearly all the rate signal is in
+   MARGINAL token rates, not sequential structure. Sharper than the record had.
+5. **Classifier algorithm irrelevant, third confirmation.** 0.5904, 0.6068,
+   0.6078 on identical features.
+
+**Limits.** s was coarsened 131 to 16, th 257 to 16, dt 152 to 16, so a finer
+rate defect is invisible here. NEGLIGIBLE bounds the n gram rate family ONLY: a
+sequence model detector, a learned representation or a detector on the rendered
+path could still beat the contract and none were tested. The planted tilt was
+one shape of difference. Scope is `event_ar_hm_mlp.pt` at the closed optimum.
+
+**A registered readout was substituted, not dropped.** The prereg registered
+permutation importance over the rate features. It was not run. The low
+dimensional rungs answer the same question by block rather than by cell, and the
+unigram versus bigram split above is that answer.
+
+**The first launch died at 70s with SIGILL and no traceback and an identical
+rerun completed clean.** Known random fault. Recorded so the rc=132 in the log
+is not later read as a failure of this arm.
+
+## w4_poskl. The defect does not grow with sequence position, and compounding is not visible in it.
+
+The whole case for a non autoregressive architecture rests on one word,
+COMPOUNDING: the model samples event 1, then event 2 conditioned on what it
+already emitted, so a small per step bias accumulates over about 39 events.
+Every piece of evidence for that in this record is indirect. `w4_expertgap` says
+the per step conditionals are excellent, `w4_histfeat` and `w4_detcap` say the
+free running marginals are wrong, `w4_whatsees` says the histories stay on the
+human manifold. Nothing had ever measured the thing the word actually claims,
+which is that the discrepancy is SMALL EARLY IN A TRAJECTORY AND LARGER LATE IN
+IT.
+
+That is directly falsifiable on streams already on disk. Registered in
+`/home/aaronadmin/w4_arms/poskl_prereg.md` with the prediction FLAT written down
+in advance, chosen because it disfavours the diffusion arm that was training on
+the GPU at the same time.
+
+Rows of length 40 or more only, read at positions 0 to 39, so every position is
+computed on exactly the same rows and survivorship cannot manufacture a trend.
+Three token channels and their three cumulative counterparts, each coarsened to
+16 quantile bins with cut points taken from the human reference alone, compared
+by total variation position by position, and read as the SLOPE in position, so a
+constant offset from the condition mismatch cannot produce a reading.
+
+    channel      model     null mean   null sd   corrected      z    reading
+    s          +0.000022   +0.000031   0.000183   -0.000010   -0.05   flat
+    th         +0.000098   +0.000018   0.000190   +0.000080   +0.42   flat
+    dt         +0.000040   +0.000018   0.000144   +0.000022   +0.15   flat
+    cumhead    +0.000012   -0.000003   0.000197   +0.000014   +0.07   flat
+    pathlen    -0.000350   +0.000035   0.000150   -0.000386   -2.57   UNPOWERED
+    disp       -0.000490   +0.000135   0.000275   -0.000625   -2.27   UNPOWERED
+
+The power control is what makes this readable. A planted heading drift, sized so
+its TOTAL cumulative heading divergence 0.0672 sits just BELOW what the model
+itself carries on that channel 0.0738, reads z +5.40 GROWING. The negative
+control, human against human with nothing planted, reads z +0.07 and does not
+fire. So the instrument sees a compounding mechanism at more than five sigma
+while carrying LESS total divergence than the model does, and the model reads
++0.07.
+
+    THE DEFECT IS POSITION STATIONARY. Whatever the AR model is doing wrong, it
+    is not accumulating with sequence position.
+
+Two limits, both real. Power was demonstrated against ONE shape of compounding,
+a constant heading drift, so this is a bound and not a proof of absence. And the
+path length and displacement channels are UNPOWERED, the planted effect never
+moves them at any size, so their z of -2.57 and -2.27 mean nothing and are
+printed only so nobody later mistakes them for a finding.
+
+The arm found two bugs in itself, both through its own power control and neither
+visible from the primary. `corpus_tokens` sorts the ids it is handed, so slicing
+its output into halves compared low indexed corpus rows against high indexed
+ones: unperturbed human against human divergence read 0.311 instead of 0.0448,
+and the whole null band was an artefact of that. Then the path channel turned
+out to be cumulative displacement MAGNITUDE, which is close to blind to a
+heading drift because a drift rotates a trajectory far more than it lengthens
+it. Fixed by giving every token channel its cumulative counterpart. The first
+version of this arm produced a clean, confident, completely wrong table.
+
+One retraction is recorded in the prereg rather than quietly dropped. The
+amendment that introduced the null corrected statistic explained the nonzero
+null as a finite sample property of total variation. That explanation was
+invented. The cause was the sorting bug above. The statistic stands, the
+reasoning published for it does not.
+
+Consequence: this LOWERS the prior on `w4_nardiff`, whose entire rationale is
+that removing sequential generation removes compounding. That arm's registration
+already predicted LIVE rather than STRONG and already said the second readout is
+the deliverable. Both still hold, and it is still the cleanest way to measure
+what removing compounding buys. This arm says the honest expected answer is not
+much.
+
+Ledger `w4_poskl_2026-08-18T060227+0000_8fca7448`.
+
+## w4_detcap CORRECTED, and w4_margsurr, which found the bug. 2026-08-18
+
+### The bug
+
+`w4_detcap.ladder` balanced its two arms with `A18[:n]`, taking the FIRST n rows
+of each. `corpus_tokens` sorts the ids it is handed. detcap's human arm is 1.25
+times the model arm, so the human arm was the only one truncated, and it was
+truncated to its 4000 LOWEST ids out of a random 5000. That is a subpopulation
+and not a subsample. detcap's NULL arms are equal sized, so nothing was
+truncated there and the null correction could not cancel the bias.
+
+This is the same family as the `w4_poskl` bug from the day before, and the same
+family as the standing rule "shuffle before `score_features`, always". Third
+occurrence. The general form is: **any code path that takes the first n rows of
+something `corpus_tokens` produced is reading a sorted slice of the corpus.**
+
+Found by accident. While building the marginal probe I measured the L5b unigram
+rung on the same streams and got 0.5542, against detcap's recorded 0.5788. Three
+contract noise sds apart on what should have been the same measurement. Rather
+than assume a sample seed difference, I registered the possibility in
+`margfix_prereg.md` AMENDMENT 4 before measuring, then measured it directly:
+
+    human shuffled then truncated   0.5569
+    human truncated as w4_detcap    0.5783
+    difference                     +0.0215
+
+The truncated number reproduces detcap's 0.5788 to within 0.0005, which
+identifies the cause rather than merely showing a discrepancy.
+
+### The corrected ladder
+
+Both arms are now shuffled before the balancing truncation, in `ladder()` and
+also in the power control's own reference, which had the same shape of bug
+between its 2.6x reference arm and its picked planted arm. Re run, artifact
+`research/w4_detcap_results_shuffled.json`, ledger
+`w4_detcap_2026-08-18T062901+0000_5eea7fe2`.
+
+    rung                     recorded   corrected     null   corrected lift
+    L1  logistic, 18 feats     0.5904      0.5925   0.4979         +0.0946
+    L2  forest, 18 feats       0.6068      0.5926   0.5025         +0.0902
+    L3  boosting, 18 feats     0.6078      0.5911   0.5018         +0.0893
+    L4  logistic, rates        0.5610      0.5374   0.4958         +0.0416
+    L5  boosting, rates        0.5865      0.5570   0.4980         +0.0590
+    L4b logistic, unigram      0.5647      0.5515   0.4968         +0.0547
+    L5b boosting, unigram      0.5788      0.5660   0.5017         +0.0642
+    L5c boosting, unijoint     0.5761      0.5513   0.4994         +0.0519
+    L2 OOB                     0.5982      0.5881
+
+Three things move.
+
+**The token rate share falls from 79 percent to 71 percent.** +0.0642 of
++0.0902. The headline sentence in RESUME has been corrected in place.
+
+**The best rate rung changes identity, from the full 1379 vector to unigrams
+alone.** L5b now beats L5 and L5c outright. That STRENGTHENS the original claim.
+The unexplained residue is not hiding in bigrams or within step joints; the
+whole of the rate family's power is in per event marginal rates, and adding
+structure to the rate detector makes it worse.
+
+**The instrument got more accurate, not just smaller.** The ladder's contract
+equivalent rung, L2 OOB, now reads 0.5881 against the contract's own 0.5895, a
+gap of 0.0014. Before the fix it sat 0.0087 high. A ladder whose contract rung
+disagrees with the contract was quietly wrong in a way no gate caught, and G1 was
+passing on a biased number.
+
+**Nothing about the verdict changes.** NEGLIGIBLE stands and POWERED stands. On a
+planted rate difference the rate family beats the contract rung, 0.5895 against
+0.5448; on the model's real defect it loses, 0.5660 against 0.5926. The planted
+difference is now smaller than the model's rather than matched to it, which makes
+the power reading conservative. The contract remains an honest target.
+
+Every future comparison, including `w4_nardiff`'s registered second readout, runs
+against the corrected ladder. Comparing a new arm through the fixed instrument to
+the old arm's broken numbers would manufacture a difference out of the fix.
+
+### w4_margsurr, and a result worth keeping from a probe that did not work
+
+The probe existed to answer whether `w4_margfix`, a per class additive logit bias
+fitted to the corpus token marginals, is worth four GPU hours. A bias moves the
+pooled marginal and nothing else. The prefit had already measured that gap and
+found it small: total variation 0.0351 on speed, 0.0281 on direction, 0.0357 on
+timing, and a rate weighted mean absolute bias of 0.055 to 0.080 nats.
+
+Two constructions failed before one worked, and both failures were caught by a
+control rather than by the headline.
+
+**Attempt 1 leaked.** Shifting the model arm's feature columns onto the human
+column means. Per trajectory rate features are sparse: 48 of the 49 token columns
+are exactly zero in more than 1 percent of rows and several in more than 90
+percent. A constant shift moves every exact zero onto a single value the other
+arm never takes, and a tree separates on it in one split. Human against human
+read 1.0000. Retracted in full.
+
+**Attempt 2 was not leaky but the disturbance dominated.** Relabel human tokens
+independently per event until the pooled marginal matches the model's. The
+surrogate read 0.7097 against a null of 0.5010, but the randomisation control,
+the same per token replacement rate redrawing from the arm's own marginal, read
+0.6008 on its own. The script printed "share 195 percent, run the GPU half". A
+share above 100 percent is a broken statistic, not a large effect, and it was not
+taken.
+
+**What attempt 2 does establish, and it is the durable part.** An iid relabel at
+the model's own marginal gap size is TWICE as detectable as the model itself,
++0.2087 against +0.0558. The model's per trajectory token composition is far
+closer to human than a token level randomisation of the same magnitude is.
+Whatever the residue is, the model is not emitting compositionally scrambled
+trajectories.
+
+### w4_margtilt, the construction that does work, and a control that did not
+
+Reweight whole real human trajectories so their length weighted pooled marginal
+matches the model's. No token is touched, every row stays a real trajectory with
+its dependence structure intact, and only the frequency of each kind of
+trajectory moves. Weights are an exponential tilt on the coarse rate vector,
+fitted by damped Newton with a pseudoinverse, since the three channel blocks each
+sum to one and give the covariance three exact null directions.
+
+    seed      null     tilt   permuted   gap closed s/th/dt      ess
+    2001    0.4912   0.5269     0.5739     1.00  1.00  1.00    13513
+    2002    0.5172   0.5288     0.5644     1.00  1.00  1.00    12624
+    2003    0.5168   0.5365     0.5239     1.00  1.00  1.00    12811
+    mean    0.5084   0.5307     0.5540
+
+The reweighting closes 100 percent of the marginal gap on all three channels
+with an effective sample size of 12983 out of 16000, so the model's pooled
+marginal is comfortably inside the convex hull of real human trajectories.
+
+The registered direction control FAILED, and the failure is the control's. It was
+registered as "same L2 norm, different direction", and feasibility bound it: a
+permuted displacement had to be shrunk to 0.20 of the model's before the target
+stopped driving some class below a fifth of its human rate. So it compared a
+fifth sized displacement against a full sized one. What it says descriptively is
+still interesting, that a permuted displacement one fifth the size is twice as
+detectable, so the model's marginal error points in a direction roughly an order
+of magnitude more benign per unit than a rearrangement of itself. What it cannot
+do is gate the arm.
+
+Replacing a control that failed, with a replacement that would fund the arm, is
+the move to be most suspicious of. It is registered in full in
+`margtilt_prereg.md` AMENDMENT 2 before running, as a dose response along the
+model's own displacement at fractions 0, 0.25, 0.5, 0.75 and 1.0, which must be
+monotone and must at least double between 0.25 and 1.0, and which can fail.
+
+## w4_margtilt. The pooled token marginal, priced on the third try. 2026-08-18
+
+Three attempts at one question: how much of the detector's lift is the pooled
+token marginal gap, and only that gap? Two failed and are retracted in writing
+in `/home/aaronadmin/w4_arms/margfix_prereg.md`. This one returned a number.
+
+**Construction.** Do not touch a single token. Reweight whole unmodified human
+trajectories by an exponential tilt `w_i` proportional to `exp(theta . u_i)`,
+theta fitted by damped Newton so the length weighted pooled coarse marginal
+matches the model's. Draw without replacement. Every row in the surrogate arm is
+a real human trajectory with its dependence structure intact. That is the
+minimum disturbance route to a given marginal, and it brackets the iid relabel
+from the other side.
+
+    seed     null     tilt   randdir     ess
+    2001   0.4912   0.5269    0.5739   13513
+    2002   0.5172   0.5288    0.5644   12624
+    2003   0.5168   0.5365    0.5239   12811
+    mean   0.5084   0.5307    0.5540   12983
+
+    null corrected   model +0.0485   tilt +0.0224   share 46.1 percent
+    gap closed 1.00 / 1.00 / 1.00 on speed, direction, timing
+
+**The registered C1 was mis specified and had to be replaced, which is the part
+to read critically.** C1 permuted the model's displacement into a random
+direction of the same length. Feasibility bound the permuted target at 0.20 of
+the model's displacement, so C1 compared a fifth sized displacement against a
+full sized one, and the fifth sized one still read twice as high. Replacing a
+failed control with one that would fund the arm is the move to be most
+suspicious of, so AMENDMENT 2 states that in full, before the replacement ran,
+and makes the replacement a gate that can fail.
+
+    C1'  DOSE RESPONSE, tilt to fraction f of the model's own displacement
+
+     f      lift      auc
+    0.00  -0.0098   0.4986
+    0.25  -0.0024   0.5060
+    0.50  -0.0008   0.5075
+    0.75  +0.0122   0.5206
+    1.00  +0.0216   0.5300
+
+Strictly monotone across all five points. Each point is a three seed mean, so
+its standard error is about 0.0042 against a pooled contract noise sd of 0.0073,
+and the curve spans about seven standard errors. Five exchangeable noise draws
+land in strict order one time in 120.
+
+**The f = 0 point is the actual finding.** Reweighting the pool to the HUMAN
+marginal is a null by construction and reads -0.0098. Reweighting adds no
+detectability at all. So the whole +0.0224 is the displacement, not the
+mechanism, which is exactly what the dose response was registered to separate.
+
+The doubling half of the gate did not fire as written, and the outcome says so:
+the f = 0.25 lift is negative, so "at least twice" is meaningless there and the
+code took its pre registered fallback of "f = 1 lift above 0.01". Monotonicity
+is what carries this gate.
+
+**What is now known, all three attempts together**
+
+    iid token relabel to the model's marginal    +0.2087   4x the model's lift
+    reweight real trajectories to it             +0.0224   46 pct of the rate rung
+    the model's own unigram rate lift            +0.0485
+
+The two surrogates bracket the answer and the bracket is a factor of nine wide.
+That width IS the result. How detectable a pooled marginal gap is depends almost
+entirely on what else moves with it. A logit bias is a third mechanism and sits
+somewhere inside, unlocated.
+
+**Funded to measure, not to win.** The GPU half of `w4_margfix` runs when
+`w4_nardiff` releases the card. Declared in advance: 46 percent is a share of
+the unigram rate rung, which the CORRECTED `w4_detcap` prices at +0.0547 to
++0.0642 against the 18 feature rung's +0.0902. The rate rung is the smaller half
+of the detector. A correction taking 46 percent of the smaller half cannot close
+a 0.067 residue, and if it returns a contract gain above 0.02 the measurement
+should be suspected before it is believed.
+
+Ledger `w4_margtilt_2026-08-18T063442+0000_5ba494f4`.
+
+**Closed from the record, no run needed.** The proposed dt head coupling arm is
+dead. `research/w4_headcap.json` already priced the within step interactions:
+the direction head carries 0.2305 nats, se 0.0018, and the timing head carries
+0.0024 nats, se 0.00013. The MATERIAL verdict on within step factorisation was
+entirely direction, and `headmlp` already harvested it. There is nothing left
+there. This is the standing rule working: grep the record for the STATISTIC, not
+for the arm name.
+
+## w4_placebo. The measuring instrument reads low. 2026-08-18
+
+I put a fixed set of REAL human trajectories where the model's trajectories
+normally sit, so the correct answer was exactly zero difference. The instrument
+did not return zero. It returned a small NEGATIVE number, up to 0.013, meaning
+it slightly UNDER reports how different two sets are.
+
+I had written down beforehand that I expected a bias and that I expected it to
+be positive. It is negative. The prediction was wrong in direction and the
+prediction is left in the record next to the result.
+
+Correcting for it makes the first event result stronger, not weaker, and does
+not change the conclusion. The model's defect grows very slightly across a
+trajectory instead of staying exactly flat. It still does not grow anything like
+as fast as forty independent events would, so the reading stands: the defect is
+a property of the whole trajectory rather than something that accumulates event
+by event.
+
+One side finding matters more than it looks. An earlier control that appeared to
+show the detector was blind to movement DIRECTION was in fact testing a change
+too small to register at all: it moved only 18 percent of direction values far
+enough to be visible to the detector. That control was measuring the wrong
+thing. It is the fourth time in this workstream that a control has been sized on
+one scale and read on another, and the third of those happened after the rule
+against it was written down.
+
+Whether the correction should be applied at all is not yet settled. There are
+two possible causes and they point opposite ways: one is an artefact of using
+real trajectories on both sides that could never happen with generated ones, in
+which case the original numbers were right; the other is a flaw in how the
+comparison baseline is built, which would affect the real measurements too. A
+follow up is running now that separates them.
+
+## w4_placebo2. I could not find the fault, and finding that out was the point.
+## 2026-08-18
+
+The previous entry said the measuring instrument reads slightly low and that a
+follow up would separate two possible causes. It ran. Neither cause is it.
+
+I measured the first one directly rather than arguing about it. The concern was
+that some real trajectories were being used on both sides of the comparison at
+once. There are 11 of them out of 1,989, half of one percent, which is far too
+few to matter and is exactly the number my arithmetic predicted beforehand. The
+second cause, a flaw in how the comparison baseline is assembled, made things
+slightly worse rather than better when fixed.
+
+That is three predictions in a row about this instrument that the measurement
+contradicted. All three are still in the record next to their results.
+
+**What the failure actually revealed is more useful than either answer would
+have been.** The size of the correction is about the same as the size of the
+thing being corrected. Depending on which version of the correction you apply,
+the same underlying measurement says the model's defect grows anywhere between
+0.96 and 2.20 times across a trajectory. That range covers every answer worth
+telling apart, so the measurement cannot tell them apart.
+
+**I have withdrawn a claim I made a couple of hours earlier.** I had written
+that the defect is a single per trajectory offset rather than independent error
+at each event. Two of the four correction variants land squarely in the range
+where the opposite is true. That claim is now marked open, not settled.
+
+**One conclusion is unaffected and it is the load bearing one.** The defect is
+not something that happens only at the start of a trajectory. That result comes
+from a comparison where the bias cancels out by construction, and the margin is
+four to nine times, far wider than the correction can swing.
+
+**The fix is not more thinking, it is more data.** The comparison uses a single
+batch of about 2,000 generated trajectories, and that single batch carries an
+uncertainty as large as the effect being measured. Eight more batches are queued
+on the graphics card behind the two jobs already waiting, which takes it to
+about 8,000 and roughly halves the uncertainty.
+
+Separately, an earlier control that appeared to show the detector was blind to
+movement direction was itself faulty: it applied a change too small to be
+visible to the detector at all. That is the fourth time in this workstream a
+control has been sized on one scale and read on another, and the second time it
+happened after I wrote the rule against it down.
+
+## Overnight queue read, ten seed baseline, and the first event question answered.
+## 2026-08-19
+
+**The machine did not crash overnight.** The GPU queue ran start to finish,
+nardiff scoring, margfix, eight more generation seeds, done by 00:20, peaks 75
+to 78C. Uptime 21 hours when I checked in the morning.
+
+**w4_nardiff is dead.** The non autoregressive diffusion model, which rebuilt
+how the sequence is produced, scores 0.983 on the contract against the closed
+optimum's 0.591 and 0.991 on the detector ladder with a clean power control.
+The sequence mechanism was not the problem. Shortlist effect: this argues for
+coarse to fine ordering (entry D) and against continuous time (entry C).
+
+**w4_margfix is unreadable, and it is my registration error.** One of its gates
+was "no collapse flag". The collapse flag fires on the baseline itself, on all
+ten seeds, because of a known missing tails feature. A gate the baseline cannot
+pass is not a gate. The primary moved by 0.005, within noise, so the marginal
+fix would not have helped anyway, but the verdict line is not readable as
+written and the record says so.
+
+**The baseline is 0.591, not 0.579.** Ten seeds of the closed optimum,
+re scored from the stored token streams: mean 0.5910, standard error 0.0022.
+The 0.5792 in the record was two seeds, one of which was a low draw. Batch
+size and shuffling do not matter, I checked both. The residue above the floor
+is 0.079, and that is the open problem. `research/w4_tenseed.py`.
+
+**The first event question is answered, and the answer is the first event.**
+With ten generation seeds pooled, about 10,000 model rows, the detector that
+reads only the first m events of each trajectory gives: one event alone, 0.539;
+three events, 0.522; forty events, 0.535. The curve from one to three events
+follows exactly what you get if event 0 carries the signal and events 1 and 2
+add nothing and dilute it. Past five events the curve turns back up, so later
+events carry a smaller, roughly constant per event signal too. The single
+event the model emits with no history in front of it is about as detectable as
+the other thirty nine together. What is ruled out, each at seven standard
+errors or more: the defect building over the first few events; a flat per
+trajectory offset; the defect being confined to event 0 only; and independent
+identical error at every event. Full table and reasoning in
+`/home/aaronadmin/w4_arms/step0_prereg.md`, THE FIRST EVENT QUESTION, ANSWERED.
+
+**The "correction" from w4_placebo was an artifact, and I withdrew it.** The
+placebo control drew its human stand ins from the same pool as the human
+comparison set, so about 3 percent of rows appeared on both sides. A row that
+appears on both sides is a guaranteed misranking, and the penalty grows with the
+amount of data and with the number of events read. Removing the shared rows, or
+drawing from disjoint halves, takes the placebo to zero at every m. So the
+uncorrected curve stands, the "corrected" growth figure is gone, and OUTCOME 7
+is withdrawn. Rule written down: any human versus human control draws from
+disjoint pools or removes shared rows, and says which. `research/w4_placebo3.py`.
+
+**Predictions on record this round.** The ten seed rerun prediction, that the
+placebo would shrink, was wrong, it doubled. The overlap prediction was right.
+That is wrong, wrong, wrong, right over the last four.
+
+**Running now: w4_firstev, AMENDMENT 13.** The question that follows from
+shape A is whether the first event's defect actually carries the 0.079 contract
+residue, or is merely the most visible thing on the token streams. The arm
+forces the first one, two or four human events into the model on held out rows
+and scores the contract against the unforced run, paired on seed, four seeds.
+Forced trajectories are a diagnostic lever, not generated trajectories. My
+prediction, written before the run: the first event moves the contract by less
+than 0.01, visible but not load bearing. One old data point on a different
+checkpoint points that way. If the prediction is wrong the first event
+conditional is the next build target.
+
+## w4_firstev and w4_firsthead. The first event is load bearing, and a small
+## dedicated model recovers most of it. 2026-08-19
+
+**The question from this morning's answer.** The token detector said the first
+event is the most visible defect. That left open whether it carries the goal
+metric. Two arms, both registered before running, answered it the same day.
+
+**First: force the truth in and see what the score does.** On held out human
+movements, replacing just the model's first event with the human's own first
+event, and letting the model continue, moved the classifier score from 0.5805
+to 0.5573, a drop of 0.023 at 3.7 standard errors, from touching one event in
+about forty. If the model's first event were drawn from the right
+distribution, swapping in a human draw could not move the score. So the
+model's opening move is wrong as a distribution, not merely visible. My
+registered prediction said under 0.01, and it was wrong. Forcing a second
+event adds nothing beyond the first, which matches the morning's curve.
+
+**Then: fit the opening move properly and serve it.** A tiny dedicated model,
+one million parameters against the big model's twenty one, was trained to do
+exactly one job, pick the first event given the four task numbers (distance,
+duration, direction). On held out data it fits that conditional better by 0.88
+nats, and 0.80 of that is the DIRECTION of the first movement: the big model
+is effectively choosing among 29 directions where the data supports 13. The
+big model's opening direction head has no history to lean on and gets one
+fortieth of the training signal, and it simply never learned the conditional.
+
+**Serving the small model's first event and letting the big model continue
+recovers half to three quarters of the ceiling.** At the small model's own
+calibration, the score drops 0.0125 at 3.4 se (the registered primary, bar
+met, prediction RIGHT, the first two in a row this workstream has gotten
+right). At the big model's serving temperatures it drops 0.0184 at 7.8 se.
+This is a complete configuration, one trajectory per task, no selection,
+nothing forced from human data.
+
+**A confirm on the standard evaluation population is running now** (five
+fresh seeds, registered as AMENDMENT 15 with the serve decision rule written
+in advance). If it transfers, the headline number moves from 0.591 toward
+0.573 to 0.578, the first material headline move since the temperature
+optimum closed, and it comes from the direction the frontier arms (nardiff,
+poskl, prefix ladder) collectively pointed at: not the sequence mechanism,
+not compounding, the conditional the sequence starts from.
+
+Ledger w4_firstev_2026-08-19T202352+0000_46349267 and
+w4_firsthead_2026-08-19T220329+0000_c020f298. Registrations and outcomes in
+step0_prereg.md, AMENDMENTS 13 to 15, OUTCOME 11 and the two stage outcomes.
+
+## 2026-08-20 late night: the confirm did not transfer, and the baseline moved
+
+**The confirm came back flat.** On the standard evaluation population (five
+fresh seeds, 10 to 14), serving the small model's first event moved the score
+by +0.0012 at its own calibration and by -0.0020 at the big model's
+temperatures, both within noise. The held out result was real; it does not
+carry to the headline population. My registered prediction said it would, and
+it was wrong.
+
+**The gate failure was seeds, not a bug.** The confirm's baseline arm read
+0.5820 against the recorded 0.5910, which tripped the registered stop rule.
+The registered diagnostic regenerated the same five seeds through the exact
+published baseline protocol, nothing from the confirm pipeline, and got
+0.5821. Identical. The confirm pipeline is unbiased; seeds 10 to 14 are
+simply a low draw, and the first ten seeds were a high-ish one.
+
+**The honest baseline is now the fifteen seed mean: 0.5881, se 0.0022,
+residue 0.076 above the floor.** Per seed spread is 0.0087, larger than the
+ten seed run suggested. Every future arm gets compared against this number.
+
+**What the split result means.** The first event conditional is load bearing
+and fixable when the four conditioning numbers come from real human rows. On
+the headline population those numbers are synthetic: the task generator draws
+duration from a fitted curve given distance, so the joint of duration and
+distance there is the fit, not the data. The small model leans entirely on
+those four numbers; the big model partly ignores them by construction. That
+is the named suspect, stated as fact about the two populations, not as a
+confirmed cause. A second fact: the forcing ceiling (swap in a real human
+first event) cannot be measured on the headline population, because a
+synthetic task has no human continuation.
+
+**Next registration, not tonight's improvisation:** either train or evaluate
+the small model with the duration handled honestly (for example, condition on
+distance and direction only, or draw duration the same way the task generator
+does during training), or score a headline style protocol at real conditions.
+That measurement separates the two live explanations: the synthetic duration
+joint breaks the small model, versus the first event's share of the headline
+gap being small.
+
+Ledger w4_firsthead_2026-08-20T000653+0000_2475134b (confirm, tier 2) and
+w4_firsthead_2026-08-20T005203+0000_2d03bf9c (diagnostic, tier 2). Full
+numbers and the ordered reads in step0_prereg.md, AMENDMENT 15, its outcome,
+and the diagnostic outcome.
+
+## 2026-08-20 night: the duration thread, two more registered arms, and a correction
+
+**First arm (w4_durmatch): give the benchmark tasks real durations and the
+first event fix reappears, bigger.** Same benchmark protocol, one change:
+each task's duration was borrowed from a real human movement of similar
+distance instead of the protocol's own draw. The small model's first event
+then moved the score by -0.0215 at 3.6 standard errors, paired, every seed
+negative. Registered read met; my registered magnitude band undershot.
+Ledger w4_durmatch_2026-08-20T030533+0000_1a9bcf9c.
+
+**Second arm (w4_nodur): make the first event ignore duration entirely, and
+it backfires hard.** A retrained small model conditioned only on distance
+and direction fits held out data nearly as well (retained 0.776 of the 0.88
+nat advantage; the direction head actually improved). But served on the
+benchmark it made trajectories MORE detectable by +0.0303 at 5.9 standard
+errors, the strongest paired effect this workstream has measured. The
+lesson: the first event must agree with the duration the trajectory is
+served with; the detector punishes the inconsistency. This doubles as a
+power check: the pipeline sees a first event mismatch at 6 se when one
+exists. My registered prediction was wrong. Ledger
+w4_nodur_2026-08-20T051756+0000_dae32f03.
+
+**The correction.** The story I wrote for durmatch ("the protocol's
+duration is a fit, not the data") is wrong, found by reading the source and
+then measuring: the protocol draws actual recorded durations from
+distance bins, and its duration-given-distance matches the corpus the small
+model trained on to a couple of percent everywhere. Both sources are the
+data. With the mechanism gone, the durmatch-vs-confirm contrast is a
+cross-run comparison worth 2.9 se on a population where durations are
+process-random (the duration sampler's rng is unseeded, verified; per-seed
+numbers never reproduce across runs there, only means). Chance is not
+excluded, and I say so in the prereg rather than inventing a new story.
+
+**Registered next (AMENDMENT 18, w4_dursrc, runs tomorrow): both duration
+sources inside ONE run,** four arms per seed on identical tasks (protocol
+vs matched durations, each with and without the small model's first event),
+seeds 15 to 19. The primary read is the interaction: does the duration
+source change what the first event fix is worth? If it does at 2 se, the
+modulation is real and needs a mechanism; if it lands within noise, the
+durmatch verdict gets retracted in substance and this population closes at
+"neutral". Predictions on record, confidence low, stated so.
+
+Registrations and outcomes: step0_prereg.md AMENDMENTS 16, 17 (stage A and
+B outcomes, design note), 18. Nothing running overnight; the GPU is idle.

@@ -1,0 +1,22 @@
+{
+  "checkpoint": "research/w4_rollout_pilot_zbuf_step100.pt",
+  "seq_len": 256,
+  "rows": [
+    {
+      "torch_seed": 17,
+      "auc": 0.61807775,
+      "n": 2378
+    },
+    {
+      "torch_seed": 23,
+      "auc": 0.605213,
+      "n": 2351
+    },
+    {
+      "torch_seed": 31,
+      "auc": 0.590036625,
+      "n": 2361
+    }
+  ],
+  "complete": false
+}

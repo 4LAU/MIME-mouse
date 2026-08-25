@@ -1,0 +1,124 @@
+{
+ "rows": [
+  {
+   "seed": 0,
+   "n": 2000,
+   "as_stored": 0.5942382500000001,
+   "shuffled": 0.584178375,
+   "collapse": true,
+   "collapse_features": [
+    "mean_acceleration",
+    "std_acceleration",
+    "max_acceleration",
+    "mean_jerk"
+   ]
+  },
+  {
+   "seed": 1,
+   "n": 2000,
+   "as_stored": 0.592707125,
+   "shuffled": 0.5859701250000001,
+   "collapse": true,
+   "collapse_features": [
+    "mean_acceleration",
+    "max_acceleration",
+    "mean_jerk"
+   ]
+  },
+  {
+   "seed": 2,
+   "n": 1999,
+   "as_stored": 0.5899340365530439,
+   "shuffled": 0.5980646651489827,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "mean_jerk"
+   ]
+  },
+  {
+   "seed": 3,
+   "n": 2000,
+   "as_stored": 0.5885564999999999,
+   "shuffled": 0.57941975,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "mean_jerk"
+   ]
+  },
+  {
+   "seed": 4,
+   "n": 2000,
+   "as_stored": 0.6019622499999999,
+   "shuffled": 0.592374625,
+   "collapse": true,
+   "collapse_features": [
+    "mean_jerk"
+   ]
+  },
+  {
+   "seed": 5,
+   "n": 2000,
+   "as_stored": 0.5849031250000001,
+   "shuffled": 0.58639975,
+   "collapse": true,
+   "collapse_features": [
+    "max_velocity",
+    "mean_acceleration",
+    "std_acceleration",
+    "max_acceleration",
+    "mean_jerk"
+   ]
+  },
+  {
+   "seed": 6,
+   "n": 2000,
+   "as_stored": 0.5919048750000001,
+   "shuffled": 0.59954425,
+   "collapse": true,
+   "collapse_features": [
+    "mean_acceleration",
+    "mean_jerk"
+   ]
+  },
+  {
+   "seed": 7,
+   "n": 1999,
+   "as_stored": 0.5881814093640116,
+   "shuffled": 0.5895587863967001,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "mean_jerk"
+   ]
+  },
+  {
+   "seed": 8,
+   "n": 2000,
+   "as_stored": 0.587422125,
+   "shuffled": 0.6000075,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "mean_jerk"
+   ]
+  },
+  {
+   "seed": 9,
+   "n": 2000,
+   "as_stored": 0.60008625,
+   "shuffled": 0.5949450000000001,
+   "collapse": true,
+   "collapse_features": [
+    "mean_acceleration",
+    "max_acceleration",
+    "mean_jerk"
+   ]
+  }
+ ],
+ "mean_as_stored": 0.5919895945917055,
+ "mean_shuffled": 0.5910462826545684,
+ "sd_shuffled": 0.007076218018128853,
+ "se_shuffled": 0.0022376966157209833
+}

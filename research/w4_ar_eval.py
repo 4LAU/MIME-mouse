@@ -83,6 +83,13 @@ def main():
     ap.add_argument("--th-temp", type=float, default=None)
     ap.add_argument("--dt-temp", type=float, default=None)
     ap.add_argument("--out", default="research/w4_ar_eval.json")
+    ap.add_argument("--save-feats", default=None,
+                    help="npz path for the generated feature matrix, keyed F, "
+                         "so research/w4_featmap.py can attribute this run per "
+                         "feature group without regenerating. Written after "
+                         "scoring and read by nothing here, so it cannot "
+                         "affect the contract number. One file per temp when "
+                         "several are swept, suffixed _t<temp>.")
     ap.add_argument("--th-beta-table", default=None,
                     help="research/w4_price.json. applies the fitted confidence "
                          "correction to the direction head at generation, "
@@ -213,6 +220,12 @@ def main():
         print(f"  {temp:>7.2f}{auc:>10.4f}{dur:>10.4f}{pe:>10.4f}{cs:>10.4f}"
               f"{ac[0]:>9.4f}{ac[1]:>9.4f}{mp:>10.1f}"
               f"{np.median(n_ev):>10.0f}{len(F):>6}", flush=True)
+        if args.save_feats:
+            fp = args.save_feats
+            if len(args.temps.split(",")) > 1:
+                fp = fp.replace(".npz", f"_t{temp}.npz")
+            np.savez_compressed(fp, F=F)
+            print(f"    feats -> {fp}  {F.shape}", flush=True)
 
     json.dump(out, open(args.out, "w"), indent=2)
     print("\n  one trajectory per spec, no selection")

@@ -1,0 +1,97 @@
+{
+  "ckpt": "event_ar_v2_s40000.pt",
+  "config": {
+    "ckpt": "event_ar_v2_s40000.pt",
+    "n": 60000,
+    "batch": 64,
+    "hidden": 512,
+    "epochs": 10,
+    "lr": 0.001,
+    "fit_batch": 4096,
+    "seed": 0,
+    "out": "research/w4_headcap.json"
+  },
+  "n_tokens": 3195861,
+  "n_trajectories": 60000,
+  "channels": {
+    "s": {
+      "frozen": 2.04680071441351,
+      "eval_loss": {
+        "R_depth": 2.04680071441351
+      },
+      "gain": {
+        "R_depth": 0.0
+      },
+      "contrasts": {},
+      "n_eval_tokens": 808351
+    },
+    "th": {
+      "frozen": 1.1326194097570936,
+      "eval_loss": {
+        "R_depth": 1.1288899884628925,
+        "R_same": 1.1326194097570936,
+        "R_full": 0.8983839972142544,
+        "R_shuf": 1.1315378708507533
+      },
+      "gain": {
+        "R_depth": 0.003729421294201174,
+        "R_same": 0.0,
+        "R_full": 0.2342354125428392,
+        "R_shuf": 0.0010815389063403291
+      },
+      "contrasts": {
+        "interaction": {
+          "mean": 0.23050599637416802,
+          "se": 0.0017969863269048615,
+          "clusters": 15101
+        },
+        "width_matched": {
+          "mean": 0.23315388047316207,
+          "se": 0.0017983097835166854,
+          "clusters": 15101
+        }
+      },
+      "n_eval_tokens": 718165
+    },
+    "dt": {
+      "frozen": 1.0643448603115904,
+      "eval_loss": {
+        "R_depth": 1.0639233639059256,
+        "R_same": 1.0643448603115904,
+        "R_full": 1.0615105130281237,
+        "R_shuf": 1.0643448603115904
+      },
+      "gain": {
+        "R_depth": 0.00042149640566480073,
+        "R_same": 0.0,
+        "R_full": 0.002834347283466654,
+        "R_shuf": 0.0
+      },
+      "contrasts": {
+        "interaction": {
+          "mean": 0.0024128470205288235,
+          "se": 0.00012909272178769778,
+          "clusters": 15101
+        },
+        "width_matched": {
+          "mean": 0.0028343415656893064,
+          "se": 0.00012526426107301603,
+          "clusters": 15101
+        }
+      },
+      "n_eval_tokens": 808351
+    }
+  },
+  "interaction_total": 0.23291884339469685,
+  "interaction_total_se": 0.0018016172706492302,
+  "interaction_vs_depth": 0.23291884339469685,
+  "interaction_vs_depth_se": 0.0018016172706492302,
+  "interaction_vs_shuf": 0.2359882220388514,
+  "interaction_vs_shuf_se": 0.0018026672495482898,
+  "predicted_auc": 0.04434774778235028,
+  "depth_control": 0.0,
+  "slack": 0.0,
+  "verdict": "MATERIAL. The additive within step restriction costs at 0.2329 nats net of head depth, at or above the 0.05 bar. The interleaved factorisation is worth its training run.",
+  "peak_c": 78,
+  "elapsed_s": 232.5
+}

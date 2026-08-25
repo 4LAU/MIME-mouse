@@ -1,0 +1,194 @@
+{
+  "config": {
+    "steps": 12,
+    "batch": 96,
+    "lr": 1e-05,
+    "tau": 4.0,
+    "chunk": 24,
+    "lam": 1.0,
+    "clip_g": 1.0,
+    "critic_hid": 128,
+    "critic_lr": 0.001,
+    "critic_steps": 40,
+    "critic_buf": 16,
+    "eval_every": 1000,
+    "eval_n": 200,
+    "eval_draws": 1,
+    "seed": 17,
+    "init": null,
+    "tag": "smoke",
+    "cap": 256
+  },
+  "held_out": [
+    "max_acceleration",
+    "velocity_skewness",
+    "curvature_std",
+    "num_direction_changes",
+    "time_to_peak_velocity",
+    "angular_velocity_std"
+  ],
+  "evals": [
+    {
+      "tag": "base",
+      "auc_rf": 0.518392542202066,
+      "auc_rf_draws": [
+        0.518392542202066
+      ],
+      "auc_rf_range": 0.0,
+      "collapse": false,
+      "n": 189,
+      "spread_err_trained": 2.2957443723025635,
+      "spread_err_held": 0.8870201854412194,
+      "loc_err_trained": 0.0648195277299029,
+      "loc_err_held": 0.07675333077003904
+    },
+    {
+      "tag": "end",
+      "auc_rf": 0.5778533635676493,
+      "auc_rf_draws": [
+        0.5778533635676493
+      ],
+      "auc_rf_range": 0.0,
+      "collapse": false,
+      "n": 189,
+      "spread_err_trained": 1.705399352564698,
+      "spread_err_held": 0.6893800298493393,
+      "loc_err_trained": 0.08653882629658394,
+      "loc_err_held": 0.0914739648927881
+    }
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "n": 90,
+      "critic_auc": NaN,
+      "loss": NaN,
+      "nll": 0.0,
+      "grad_norm": NaN,
+      "gn_gen": NaN,
+      "gn_total": NaN
+    },
+    {
+      "step": 2,
+      "n": 93,
+      "critic_auc": NaN,
+      "loss": NaN,
+      "nll": 0.0,
+      "grad_norm": NaN,
+      "gn_gen": NaN,
+      "gn_total": NaN
+    },
+    {
+      "step": 3,
+      "n": 93,
+      "critic_auc": NaN,
+      "loss": NaN,
+      "nll": 0.0,
+      "grad_norm": NaN,
+      "gn_gen": NaN,
+      "gn_total": NaN
+    },
+    {
+      "step": 4,
+      "n": 94,
+      "critic_auc": 0.5501357913017273,
+      "loss": 0.7305881977081299,
+      "nll": 1.5070445589397266,
+      "grad_norm": 18.394309997558594,
+      "gn_gen": 17.860975445803145,
+      "gn_total": 18.394311069486545
+    },
+    {
+      "step": 5,
+      "n": 93,
+      "critic_auc": 0.6129032373428345,
+      "loss": 0.7304503321647644,
+      "nll": 1.5791867342624035,
+      "grad_norm": 14.402358055114746,
+      "gn_gen": 14.158495919293452,
+      "gn_total": 14.402358341903957
+    },
+    {
+      "step": 6,
+      "n": 93,
+      "critic_auc": 0.6152155995368958,
+      "loss": 0.7380266785621643,
+      "nll": 1.5771413405736288,
+      "grad_norm": 82.60346221923828,
+      "gn_gen": 84.0834315743899,
+      "gn_total": 82.60346051656755
+    },
+    {
+      "step": 7,
+      "n": 92,
+      "critic_auc": 0.615193784236908,
+      "loss": 0.7951166033744812,
+      "nll": 1.5463394393091616,
+      "grad_norm": 23.121498107910156,
+      "gn_gen": 23.353169719720437,
+      "gn_total": 23.12149934026799
+    },
+    {
+      "step": 8,
+      "n": 95,
+      "critic_auc": 0.5694183111190796,
+      "loss": 0.7501696348190308,
+      "nll": 1.484879213830699,
+      "grad_norm": 60.17612838745117,
+      "gn_gen": 60.37613422897459,
+      "gn_total": 60.176129482421274
+    },
+    {
+      "step": 9,
+      "n": 94,
+      "critic_auc": 0.5615662932395935,
+      "loss": 0.7496939897537231,
+      "nll": 1.5902430203653148,
+      "grad_norm": 12.601563453674316,
+      "gn_gen": 12.18773134080361,
+      "gn_total": 12.601563534304608
+    },
+    {
+      "step": 10,
+      "n": 92,
+      "critic_auc": 0.5995982885360718,
+      "loss": 0.7491441965103149,
+      "nll": 1.5208814144134521,
+      "grad_norm": 78.07330322265625,
+      "gn_gen": 77.69210295953555,
+      "gn_total": 78.07330143547811
+    },
+    {
+      "step": 11,
+      "n": 95,
+      "critic_auc": 0.551800549030304,
+      "loss": 0.760468602180481,
+      "nll": 1.4901224454243978,
+      "grad_norm": 21.541040420532227,
+      "gn_gen": 21.327681802796867,
+      "gn_total": 21.541041037804796
+    },
+    {
+      "step": 12,
+      "n": 94,
+      "critic_auc": 0.6430511474609375,
+      "loss": 0.8206081390380859,
+      "nll": 1.569733738899231,
+      "grad_norm": 14.616300582885742,
+      "gn_gen": 14.065104937607055,
+      "gn_total": 14.616299841610724
+    }
+  ],
+  "verdict": {
+    "base": 0.518392542202066,
+    "end": 0.5778533635676493,
+    "diff": 0.05946082136558328,
+    "se": 0.018809040379562166,
+    "met": false,
+    "falsified": true
+  },
+  "thermal": {
+    "peak": 76,
+    "cooled_s": 90.50273728370667
+  }
+}

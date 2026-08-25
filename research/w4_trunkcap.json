@@ -1,0 +1,232 @@
+{
+  "ckpt": "event_ar_v2_s40000.pt",
+  "config": {
+    "ckpt": "event_ar_v2_s40000.pt",
+    "n": 60000,
+    "batch": 64,
+    "hidden": 512,
+    "epochs": 10,
+    "lr": 0.001,
+    "fit_batch": 4096,
+    "seed": 0,
+    "out": "research/w4_trunkcap.json",
+    "channels": "s,th,dt",
+    "families": "A,B"
+  },
+  "n_bins": 8,
+  "families": {
+    "A": [
+      "s_prev",
+      "th_prev",
+      "dt_prev"
+    ],
+    "B": [
+      "s_prev",
+      "s_prev2"
+    ]
+  },
+  "n_tokens": 3195861,
+  "n_trajectories": 60000,
+  "channels": {
+    "s": {
+      "frozen": 2.04680071441351,
+      "eval_loss": {
+        "R_depth": 2.04680071441351,
+        "A_add": 2.04680071441351,
+        "A_joint": 2.04680071441351,
+        "A_shuf": 2.04680071441351,
+        "B_add": 2.04680071441351,
+        "B_joint": 2.04680071441351,
+        "B_shuf": 2.04680071441351
+      },
+      "gain": {
+        "R_depth": 0.0,
+        "A_add": 0.0,
+        "A_joint": 0.0,
+        "A_shuf": 0.0,
+        "B_add": 0.0,
+        "B_joint": 0.0,
+        "B_shuf": 0.0
+      },
+      "contrasts": {
+        "A_joint_residue": {
+          "mean": 0.0,
+          "se": 0.0,
+          "clusters": 15101
+        },
+        "A_joint_vs_shuf": {
+          "mean": 0.0,
+          "se": 0.0,
+          "clusters": 15101
+        },
+        "A_marginal_residue": {
+          "mean": 0.0,
+          "se": 0.0,
+          "clusters": 15101
+        },
+        "B_joint_residue": {
+          "mean": 0.0,
+          "se": 0.0,
+          "clusters": 15101
+        },
+        "B_joint_vs_shuf": {
+          "mean": 0.0,
+          "se": 0.0,
+          "clusters": 15101
+        },
+        "B_marginal_residue": {
+          "mean": 0.0,
+          "se": 0.0,
+          "clusters": 15101
+        }
+      },
+      "n_eval_tokens": 808351
+    },
+    "th": {
+      "frozen": 1.1326194097570936,
+      "eval_loss": {
+        "R_depth": 1.1287598594513666,
+        "P_full": 0.8989467551823702,
+        "P_ctl": 1.0867443292431926,
+        "A_add": 1.1314424310786866,
+        "A_joint": 1.1315615878445413,
+        "A_shuf": 1.1317728440278347,
+        "B_add": 1.1313794814056266,
+        "B_joint": 1.1314688965731021,
+        "B_shuf": 1.1316499073512223
+      },
+      "gain": {
+        "R_depth": 0.003859550305727044,
+        "P_full": 0.23367265457472342,
+        "P_ctl": 0.04587508051390099,
+        "A_add": 0.001176978678407048,
+        "A_joint": 0.0010578219125523258,
+        "A_shuf": 0.0008465657292588968,
+        "B_add": 0.0012399283514670234,
+        "B_joint": 0.0011505131839915084,
+        "B_shuf": 0.0009695024058713475
+      },
+      "contrasts": {
+        "A_joint_residue": {
+          "mean": -0.00011916114287983418,
+          "se": 3.413389182402158e-05,
+          "clusters": 15101
+        },
+        "A_joint_vs_shuf": {
+          "mean": 0.00021126154770386284,
+          "se": 4.8379648483459164e-05,
+          "clusters": 15101
+        },
+        "A_marginal_residue": {
+          "mean": -0.0026825652668317646,
+          "se": 0.00015127433888541004,
+          "clusters": 15101
+        },
+        "B_joint_residue": {
+          "mean": -8.94109897177543e-05,
+          "se": 3.169329101946427e-05,
+          "clusters": 15101
+        },
+        "B_joint_vs_shuf": {
+          "mean": 0.00018101404859148095,
+          "se": 4.1030910810965296e-05,
+          "clusters": 15101
+        },
+        "B_marginal_residue": {
+          "mean": -0.0026196240154335673,
+          "se": 0.0001518580687386043,
+          "clusters": 15101
+        }
+      },
+      "n_eval_tokens": 718165
+    },
+    "dt": {
+      "frozen": 1.0643448603115904,
+      "eval_loss": {
+        "R_depth": 1.0639533729150068,
+        "A_add": 1.0643423480839582,
+        "A_joint": 1.0643448603115904,
+        "A_shuf": 1.0643448603115904,
+        "B_add": 1.0643447878260612,
+        "B_joint": 1.0643448603115904,
+        "B_shuf": 1.0643448603115904
+      },
+      "gain": {
+        "R_depth": 0.00039148739658356746,
+        "A_add": 2.512227632145425e-06,
+        "A_joint": 0.0,
+        "A_shuf": 0.0,
+        "B_add": 7.2485529134525e-08,
+        "B_joint": 0.0,
+        "B_shuf": 0.0
+      },
+      "contrasts": {
+        "A_joint_residue": {
+          "mean": -2.5110998010553773e-06,
+          "se": 1.0293065572500988e-05,
+          "clusters": 15101
+        },
+        "A_joint_vs_shuf": {
+          "mean": 0.0,
+          "se": 0.0,
+          "clusters": 15101
+        },
+        "A_marginal_residue": {
+          "mean": -0.00038897818255787843,
+          "se": 6.73802875901949e-05,
+          "clusters": 15101
+        },
+        "B_joint_residue": {
+          "mean": -6.160844262911032e-08,
+          "se": 1.1062708994191234e-05,
+          "clusters": 15101
+        },
+        "B_joint_vs_shuf": {
+          "mean": 0.0,
+          "se": 0.0,
+          "clusters": 15101
+        },
+        "B_marginal_residue": {
+          "mean": -0.0003914276755932159,
+          "se": 6.7480353099934e-05,
+          "clusters": 15101
+        }
+      },
+      "n_eval_tokens": 808351
+    }
+  },
+  "summary": {
+    "A": {
+      "joint_residue": -0.00012167224268088955,
+      "joint_residue_se": 3.565206543713579e-05,
+      "joint_vs_shuf": 0.00021126154770386284,
+      "joint_vs_shuf_se": 4.8379648483459164e-05,
+      "marginal_residue": -0.003071543449389643,
+      "marginal_residue_se": 0.00016560201919347257,
+      "taken": -0.00012167224268088955,
+      "taken_se": 3.565206543713579e-05,
+      "shuf_gain": 0.0008465657292588968
+    },
+    "B": {
+      "joint_residue": -8.947259816038341e-05,
+      "joint_residue_se": 3.3568560081341204e-05,
+      "joint_vs_shuf": 0.00018101404859148095,
+      "joint_vs_shuf_se": 4.1030910810965296e-05,
+      "marginal_residue": -0.0030110516910267834,
+      "marginal_residue_se": 0.00016617602443045278,
+      "taken": -8.947259816038341e-05,
+      "taken_se": 3.3568560081341204e-05,
+      "shuf_gain": 0.0009695024058713475
+    }
+  },
+  "best_family": "B",
+  "positive_control": 0.23367265457472342,
+  "positive_control_binned": 0.04587508051390099,
+  "coarsening_keep_fraction": 0.19632198982543395,
+  "taken_nats_full_res_equivalent": -0.00045574414888490517,
+  "taken_nats": -8.947259816038341e-05,
+  "predicted_auc": -6.021505856193804e-06,
+  "verdict": "NOT THE BOTTLENECK at -0.0001 nats. The frozen trunk already carries the cross step joint structure these corrections could add. Read the registered limitation: x comes from a trunk trained WITH this input structure, so it had every incentive to precompute what it needed, which biases this against finding a residue. The residue is small GIVEN a trunk fitted to this input; that does not exclude a jointly trained model with a different input structure doing better. This is a null about the trunk, not a null about cross step dependence.",
+  "peak_c": 76,
+  "elapsed_s": 611.1
+}
