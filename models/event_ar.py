@@ -192,6 +192,8 @@ class EventARModel(nn.Module):
         dropout: float = 0.1,
         cond_dropout: float = 0.1,
         emit_order: str = "s_th_dt",
+        head_coupling: str = "add",
+        mix_hidden: int = 512,
     ):
         super().__init__()
         self.d_model = d_model
@@ -248,6 +250,41 @@ class EventARModel(nn.Module):
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
+        # Within-step COUPLING, separate from the within-step ORDER above.
+        #
+        # With "add", the default and what every checkpoint on disk was trained
+        # with, the emitted speed reaches the direction logits only through the
+        # additive term inside th_norm. th_head is linear, so that term is a
+        # fixed logit offset per speed class, rescaled by the one scalar the
+        # LayerNorm contributes. x is causal and cannot see s(t), so the head
+        # cannot let the speed change the SHAPE of the direction distribution.
+        #
+        # `research/w4_headcap.py` priced that restriction at 0.2311 nats se
+        # 0.0018 on 60,000 held out trajectories, with three controls clean: an
+        # arm in the head's own function class bought +0.0000, a deeper arm
+        # with no speed input bought +0.0037, and a parameter matched arm fed a
+        # permuted speed stream bought +0.0011. The gain is the information,
+        # not the depth and not the width.
+        #
+        # "mlp" adds back exactly the arm that bought it, output layer zero
+        # initialised so the model is bit identical to "add" until trained.
+        # dt is deliberately left alone: its measured interaction was 0.0024.
+        self.head_coupling = head_coupling
+        assert head_coupling in ("add", "mlp", "mlp_nos"), head_coupling
+        if head_coupling != "add":
+            n_in = d_model * (2 if head_coupling == "mlp" else 1)
+            self.mix_norm = nn.LayerNorm(d_model)
+            if head_coupling == "mlp":
+                self.mix_emb = nn.Embedding(N_S_CLASSES, d_model)
+                nn.init.xavier_uniform_(self.mix_emb.weight)
+            self.th_mix = nn.Sequential(
+                nn.Linear(n_in, mix_hidden), nn.GELU(),
+                nn.Linear(mix_hidden, N_TH_CLASSES))
+            nn.init.xavier_uniform_(self.th_mix[0].weight)
+            nn.init.zeros_(self.th_mix[0].bias)
+            nn.init.zeros_(self.th_mix[-1].weight)
+            nn.init.zeros_(self.th_mix[-1].bias)
+
     def trunk(self, s_prev, th_prev, dt_prev, state, cond):
         """s_prev/th_prev/dt_prev are the tokens SHIFTED RIGHT by one, with BOS
         at position 0. state is prefix_state, already exclusive of position i."""
@@ -278,7 +315,14 @@ class EventARModel(nn.Module):
 
     # --- s_th_dt heads -----------------------------------------------------
     def th_logits(self, x, s_cur):
-        return self.th_head(self.th_norm(x + self._s_emb(s_cur)))
+        z = self.th_head(self.th_norm(x + self._s_emb(s_cur)))
+        if self.head_coupling == "add":
+            return z
+        h = self.mix_norm(x)
+        if self.head_coupling == "mlp":
+            h = torch.cat([h, self.mix_emb(s_cur.clamp(max=N_S_CLASSES - 1))],
+                          dim=-1)
+        return z + self.th_mix(h)
 
     def dt_logits(self, x, s_cur, th_cur):
         return self.dt_head(self.dt_norm(
@@ -323,7 +367,7 @@ class EventARModel(nn.Module):
     def sample(self, cond, seq_len=None, temperature=1.0,
                th_temperature=None, dt_temperature=None, force=None,
                th_beta=None, dt_tilt=None, th_tilt=None, s_tilt=None,
-               tick_th_null=True):
+               tick_th_null=True, s_bias=None, th_bias=None, dt_bias=None):
         """One trajectory per row of cond, generated strictly left to right.
 
         No KV cache: each step re-runs the trunk over the prefix, which is
@@ -346,6 +390,13 @@ class EventARModel(nn.Module):
         still chooses its own speeds, which is what separates a timing defect
         from a speed defect. A (B, T) mask is broadcast to all three channels,
         so every earlier caller keeps its exact previous behaviour.
+
+        Each of `temperature`, `th_temperature`, `dt_temperature` may be a
+        scalar (exact previous behaviour) or a list/tuple indexed at step i,
+        a per position schedule. The schedule form exists so `w4_warmtemp`
+        can serve the opening at temperature 1 and the tail at the served
+        temps. Temps are logit divisors only, so the schedule form cannot
+        change the number or order of rng draws.
 
         `th_beta` is a callable taking the model's own surprise at the speed it
         just emitted, shape (B,), and returning an inverse temperature of the
@@ -387,6 +438,17 @@ class EventARModel(nn.Module):
         now defaults to True and this is the served path. Pass False to
         reproduce any measurement recorded before 2026-08-10.
 
+        `s_bias`, `th_bias` and `dt_bias` are (C,) tensors, one entry per
+        class of that head, added to the head's logits after the temperature
+        division. Unlike the three tilts they are not a one parameter family:
+        they can move mass between specific classes rather than only tilting
+        the distribution. `w4_margfix` fits them to the gap between the corpus
+        token marginal and this model's own free running marginal. The PAD
+        entry of `s_bias` and the NULL entry of `th_bias` must be zero, since
+        those classes control event count and the no-motion marker rather than
+        a rate, and the fitting code centres each vector so the correction does
+        not move the length distribution to first order.
+
         With force=None and every tilt None the only line below that differs
         from the pre 2026-08-10 sampler is the tick_th_null substitution.
         """
@@ -402,6 +464,9 @@ class EventARModel(nn.Module):
         done = torch.zeros(B, dtype=torch.bool, device=dev)
 
         for i in range(T):
+            s_T = temperature[i] if isinstance(temperature, (list, tuple)) else temperature
+            th_T = th_temp[i] if isinstance(th_temp, (list, tuple)) else th_temp
+            dt_T = dt_temp[i] if isinstance(dt_temp, (list, tuple)) else dt_temp
             s_prev, th_prev, dt_prev = self.shift_inputs(s_cls, th_cls, dt_cls)
             state = prefix_state(s_cls, th_cls, dt_cls, cond)
             x = self.trunk(s_prev[:, :i + 1], th_prev[:, :i + 1],
@@ -410,18 +475,18 @@ class EventARModel(nn.Module):
             x1 = x.unsqueeze(1)
             if self.emit_order == "dt_s_th":
                 dtp = torch.softmax(
-                    self.dt_logits_first(x1).squeeze(1) / dt_temp, dim=-1)
+                    self.dt_logits_first(x1).squeeze(1) / dt_T, dim=-1)
                 dt_i = torch.multinomial(dtp, 1).squeeze(-1).clamp(max=DT_MAX_MS)
 
                 sp = torch.softmax(
                     self.s_logits_given_dt(x1, dt_i.unsqueeze(1))
-                    .squeeze(1) / temperature, dim=-1)
+                    .squeeze(1) / s_T, dim=-1)
                 s_i = torch.multinomial(sp, 1).squeeze(-1)
 
                 thp = torch.softmax(
                     self.th_logits_given_s_dt(x1, s_i.unsqueeze(1),
                                               dt_i.unsqueeze(1))
-                    .squeeze(1) / th_temp, dim=-1)
+                    .squeeze(1) / th_T, dim=-1)
                 th_i = torch.multinomial(thp, 1).squeeze(-1)
             else:
                 s_z = self.s_head(x)
@@ -440,7 +505,14 @@ class EventARModel(nn.Module):
                     k[TICK_CLASS] = 0.0
                     k[S_PAD_CLASS:] = 0.0
                     s_z = s_z + s_tilt.unsqueeze(-1) * k
-                sp = torch.softmax(s_z / temperature, dim=-1)
+                s_lz = s_z / s_T
+                if s_bias is not None:
+                    # w4_margfix. A full PER CLASS additive bias, unlike the
+                    # tilts above which are one scalar times a linear function
+                    # of the class index. Added AFTER the temperature division
+                    # so its size means the same thing at any temperature.
+                    s_lz = s_lz + s_bias
+                sp = torch.softmax(s_lz, dim=-1)
                 s_i = torch.multinomial(sp, 1).squeeze(-1)
 
                 th_z = self.th_logits(x1, s_i.unsqueeze(1)).squeeze(1)
@@ -481,7 +553,10 @@ class EventARModel(nn.Module):
                     m = m - m[:TH_BINS].mean()
                     m[TH_NULL_CLASS:] = 0.0
                     th_z = th_z + th_tilt.unsqueeze(-1) * m
-                thp = torch.softmax(th_z / th_temp, dim=-1)
+                th_lz = th_z / th_T
+                if th_bias is not None:
+                    th_lz = th_lz + th_bias          # w4_margfix
+                thp = torch.softmax(th_lz, dim=-1)
                 th_i = torch.multinomial(thp, 1).squeeze(-1)
                 if tick_th_null:
                     # w4_ticknull. Training sets the turn token to NULL wherever
@@ -519,7 +594,10 @@ class EventARModel(nn.Module):
                                      dtype=dt_z.dtype)
                     k = k / max(dt_z.shape[-1] - 1, 1) - 0.5
                     dt_z = dt_z + dt_tilt.unsqueeze(-1) * k
-                dtp = torch.softmax(dt_z / dt_temp, dim=-1)
+                dt_lz = dt_z / dt_T
+                if dt_bias is not None:
+                    dt_lz = dt_lz + dt_bias          # w4_margfix
+                dtp = torch.softmax(dt_lz, dim=-1)
                 dt_i = torch.multinomial(dtp, 1).squeeze(-1).clamp(max=DT_MAX_MS)
 
             motion = (s_i > TICK_CLASS) & (s_i < S_PAD_CLASS)

@@ -1,0 +1,41 @@
+{
+ "ckpt": "event_ar_hm_mlp.pt",
+ "seed": 42,
+ "n_rows": 2000,
+ "temps": [
+  0.95,
+  0.9,
+  1.0
+ ],
+ "arms": {
+  "k0": {
+   "contract": 0.56383625,
+   "n": 2000,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration"
+   ]
+  },
+  "q0": {
+   "contract": 0.5615325171340046,
+   "n": 1999,
+   "collapse": false,
+   "collapse_features": []
+  },
+  "q0h13": {
+   "contract": 0.691002625,
+   "n": 2000,
+   "collapse": false,
+   "collapse_features": []
+  },
+  "h04": {
+   "contract": 0.5464975,
+   "n": 2000,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "mean_jerk"
+   ]
+  }
+ }
+}
