@@ -1,6 +1,6 @@
 # Autoloop Leaderboard
 
-_Regenerated 2026-08-25T20:39:27+00:00_
+_Regenerated 2026-08-26T01:20:44+00:00_
 
 **Best-of-N tier1 scores are selection-biased; only tier2 confirmations are quotable.**
 
@@ -305,6 +305,12 @@ n_trials (tier1, status=ok): 0
 
 _(no completed tier1 runs)_
 
+## w4_e1atfloor2
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
 ## w4_e1chan
 
 n_trials (tier1, status=ok): 0
@@ -330,6 +336,12 @@ n_trials (tier1, status=ok): 0
 _(no completed tier1 runs)_
 
 ## w4_e1recon
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_e1repro
 
 n_trials (tier1, status=ok): 0
 
