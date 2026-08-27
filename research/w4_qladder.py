@@ -47,7 +47,7 @@ from models.event_ar import (DT_MAX_MS, EventARModel,             # noqa: E402
 from models.event_stream_polar import (S_PAD_CLASS, TH_NULL_CLASS,  # noqa: E402
                                        dth_lattice_to_class, s2_to_class)
 from w4_firsthead import FirstHead, Q_PATH                        # noqa: E402
-from w4_pairq import Pair1, P1_PATH                               # noqa: E402
+from w4_pairq import Pair1, P1_PATH, pair_tokens, splits         # noqa: E402
 
 TRAIN_PICK_SEED = 123
 N_TRAIN_DEFAULT = 1_500_000
@@ -148,6 +148,7 @@ def main():
                 ("h0p1", "hpair", ()),
                 ("h0s1p", "hchan_s", ()),
                 ("h0st1p", "hchan_st", ()),
+                ("h0np1", "npair", ()),
                 ("r01", "rpair", ()))
     want = a.arms.split(",")
     assert all(w in {x[0] for x in ALL_ARMS} for w in want), want
@@ -160,6 +161,41 @@ def main():
         pair = Pair1(**pk["config"]).to(dev).eval()
         pair.load_state_dict(pk["model_state_dict"])
         print(f"  q1g0 best epoch {pk['best']['epoch']}", flush=True)
+    np_e1 = None
+    if any(x[1] == "npair" for x in ARMS):
+        # AMENDMENT 44. One draw from the empirical p(e1 | e0, cond): match the
+        # s0 class exactly, take the 64 nearest donors in standardized
+        # (th0, dt0, cond) and copy one donor's real (s1, th1, dt1).
+        K_NN = 64
+        d_s0, d_th0, d_dt0, d_s1, d_th1, d_dt1 = pair_tokens()
+        d_len, d_trained, d_held = splits()
+        donors = d_trained[d_len[d_trained] >= 2]
+        assert not (set(donors.tolist()) & set(pick.tolist())), \
+            "AMENDMENT 44 donors must be disjoint from the target rows"
+        cond_full = np.load("training/events_cond.npy")[:, :4].astype(np.float64)
+        feat = lambda ix: np.column_stack(
+            [d_th0[ix].astype(np.float64), d_dt0[ix].astype(np.float64),
+             cond_full[ix]])
+        DF = feat(donors)
+        scale = DF.std(0)
+        scale[scale == 0] = 1.0
+        DF /= scale
+        TF = feat(pick) / scale
+        by_s0 = {}
+        for c in np.unique(real_s[:, 0]):
+            by_s0[int(c)] = donors[d_s0[donors] == c]
+        rng_nn = np.random.default_rng(a.seed * 100003 + 44)
+        np_e1 = np.zeros((B, 3), dtype=np.int64)
+        for i in range(B):
+            cand = by_s0[int(real_s[i, 0])]
+            ci = np.searchsorted(donors, cand)
+            dist = ((DF[ci] - TF[i]) ** 2).sum(1)
+            near = cand[np.argpartition(dist, K_NN - 1)[:K_NN]]
+            j = int(rng_nn.choice(near))
+            np_e1[i] = (d_s1[j], d_th1[j], d_dt1[j])
+        print(f"  h0np1 donors {len(donors):,} from the trained split,"
+              f" {K_NN} nearest, disjoint from the {B} target rows", flush=True)
+
     rpair = None
     if any(x[1] == "rpair" for x in ARMS):
         rk = torch.load("training/w4_pairadv.pt", map_location=dev, weights_only=False)
@@ -178,7 +214,7 @@ def main():
             nb = cb.shape[0]
             f = None
             if e0src in ("q", "qwarm", "wrong", "pair", "rpair", "hpair",
-                         "hchan_s", "hchan_st") or hpos:
+                         "hchan_s", "hchan_st", "npair") or hpos:
                 fs = torch.from_numpy(real_s[sl]).to(dev).clone()
                 fth = torch.from_numpy(real_th[sl]).to(dev).clone()
                 fdt = torch.from_numpy(real_dt[sl]).to(dev).clone()
@@ -220,6 +256,12 @@ def main():
                         cb, fs[:, 0], fth[:, 0], fdt[:, 0], **kw)
                     fs[:, 1], fth[:, 1] = ps1, pth1
                     fdt[:, 1] = pdt1.clamp(max=DT_MAX_MS)
+                    mask[:, 1] = True
+                elif e0src == "npair":
+                    mask[:, 0] = True
+                    e1 = torch.from_numpy(np_e1[sl]).to(dev)
+                    fs[:, 1], fth[:, 1] = e1[:, 0], e1[:, 1]
+                    fdt[:, 1] = e1[:, 2].clamp(max=DT_MAX_MS)
                     mask[:, 1] = True
                 elif e0src == "wrong":
                     d_idx = donor[np.arange(c0, min(c0 + a.batch, B))]
