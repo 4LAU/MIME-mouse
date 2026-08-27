@@ -149,6 +149,9 @@ def main():
                 ("h0s1p", "hchan_s", ()),
                 ("h0st1p", "hchan_st", ()),
                 ("h0np1", "npair", ()),
+                ("h0np1k1", "npair1", ()),
+                ("h0np1k8", "npair8", ()),
+                ("h0np1m", "npairm", ()),
                 ("r01", "rpair", ()))
     want = a.arms.split(",")
     assert all(w in {x[0] for x in ALL_ARMS} for w in want), want
@@ -161,17 +164,22 @@ def main():
         pair = Pair1(**pk["config"]).to(dev).eval()
         pair.load_state_dict(pk["model_state_dict"])
         print(f"  q1g0 best epoch {pk['best']['epoch']}", flush=True)
-    np_e1 = None
-    if any(x[1] == "npair" for x in ARMS):
-        # AMENDMENT 44. One draw from the empirical p(e1 | e0, cond): match the
-        # s0 class exactly, take the 64 nearest donors in standardized
-        # (th0, dt0, cond) and copy one donor's real (s1, th1, dt1).
-        K_NN = 64
+    # AMENDMENT 44 and 45. One draw from the empirical p(e1 | e0, cond):
+    # match the s0 class exactly, take the K nearest donors in standardized
+    # (th0, dt0, cond) and copy one donor's real (s1, th1, dt1). K None means
+    # marginal, any donor in the s0 class. The h0np1 numbers on record come
+    # from the A44 feature cache, so a rerun of that arm draws afresh from
+    # the same distribution rather than reproducing those rows exactly.
+    NP_K = {"npair": 64, "npair1": 1, "npair8": 8, "npairm": None}
+    NP_OFF = {"npair": 0, "npair1": 1, "npair8": 2, "npairm": 3}
+    np_e1 = {}
+    np_srcs = tuple(dict.fromkeys(x[1] for x in ARMS if x[1] in NP_K))
+    if np_srcs:
         d_s0, d_th0, d_dt0, d_s1, d_th1, d_dt1 = pair_tokens()
         d_len, d_trained, d_held = splits()
         donors = d_trained[d_len[d_trained] >= 2]
         assert not (set(donors.tolist()) & set(pick.tolist())), \
-            "AMENDMENT 44 donors must be disjoint from the target rows"
+            "AMENDMENT 45 donors must be disjoint from the target rows"
         cond_full = np.load("training/events_cond.npy")[:, :4].astype(np.float64)
         feat = lambda ix: np.column_stack(
             [d_th0[ix].astype(np.float64), d_dt0[ix].astype(np.float64),
@@ -184,17 +192,26 @@ def main():
         by_s0 = {}
         for c in np.unique(real_s[:, 0]):
             by_s0[int(c)] = donors[d_s0[donors] == c]
-        rng_nn = np.random.default_rng(a.seed * 100003 + 44)
-        np_e1 = np.zeros((B, 3), dtype=np.int64)
-        for i in range(B):
-            cand = by_s0[int(real_s[i, 0])]
-            ci = np.searchsorted(donors, cand)
-            dist = ((DF[ci] - TF[i]) ** 2).sum(1)
-            near = cand[np.argpartition(dist, K_NN - 1)[:K_NN]]
-            j = int(rng_nn.choice(near))
-            np_e1[i] = (d_s1[j], d_th1[j], d_dt1[j])
-        print(f"  h0np1 donors {len(donors):,} from the trained split,"
-              f" {K_NN} nearest, disjoint from the {B} target rows", flush=True)
+        print(f"  donor pool {len(donors):,} from the trained split,"
+              f" disjoint from the {B} target rows", flush=True)
+        for src in np_srcs:
+            K = NP_K[src]
+            rng_nn = np.random.default_rng(a.seed * 100003 + 44 + NP_OFF[src])
+            e1s = np.zeros((B, 3), dtype=np.int64)
+            dsel = np.zeros(B)
+            for i in range(B):
+                cand = by_s0[int(real_s[i, 0])]
+                ci = np.searchsorted(donors, cand)
+                dist = ((DF[ci] - TF[i]) ** 2).sum(1)
+                sel = (np.argpartition(dist, K - 1)[:K] if K
+                       else np.arange(len(cand)))
+                q = int(rng_nn.integers(len(sel)))
+                j = int(cand[sel[q]])
+                e1s[i] = (d_s1[j], d_th1[j], d_dt1[j])
+                dsel[i] = dist[sel[q]]
+            np_e1[src] = e1s
+            print(f"  {src} K {K}, median drawn donor distance"
+                  f" {np.median(np.sqrt(dsel)):.3f} sd", flush=True)
 
     rpair = None
     if any(x[1] == "rpair" for x in ARMS):
@@ -214,7 +231,7 @@ def main():
             nb = cb.shape[0]
             f = None
             if e0src in ("q", "qwarm", "wrong", "pair", "rpair", "hpair",
-                         "hchan_s", "hchan_st", "npair") or hpos:
+                         "hchan_s", "hchan_st") or e0src in NP_K or hpos:
                 fs = torch.from_numpy(real_s[sl]).to(dev).clone()
                 fth = torch.from_numpy(real_th[sl]).to(dev).clone()
                 fdt = torch.from_numpy(real_dt[sl]).to(dev).clone()
@@ -257,9 +274,9 @@ def main():
                     fs[:, 1], fth[:, 1] = ps1, pth1
                     fdt[:, 1] = pdt1.clamp(max=DT_MAX_MS)
                     mask[:, 1] = True
-                elif e0src == "npair":
+                elif e0src in NP_K:
                     mask[:, 0] = True
-                    e1 = torch.from_numpy(np_e1[sl]).to(dev)
+                    e1 = torch.from_numpy(np_e1[e0src][sl]).to(dev)
                     fs[:, 1], fth[:, 1] = e1[:, 0], e1[:, 1]
                     fdt[:, 1] = e1[:, 2].clamp(max=DT_MAX_MS)
                     mask[:, 1] = True
