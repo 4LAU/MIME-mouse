@@ -142,6 +142,12 @@ def main():
                 ("warm4", "warm", ()),
                 ("h02", None, (0, 1)),
                 ("h03", None, (0, 1, 2)),
+                # AMENDMENT 47 deep continuation ladder. A row shorter
+                # than the prefix has its trailing forced positions set
+                # to the pad class, so it renders the full human token
+                # round trip and carries no model continuation.
+                ("h08", None, tuple(range(8))),
+                ("h016", None, tuple(range(16))),
                 ("q0w1", "qwarm", ()),
                 ("p01", "pair", ()),
                 ("h01", None, (0,)),
