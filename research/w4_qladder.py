@@ -148,6 +148,14 @@ def main():
                 # round trip and carries no model continuation.
                 ("h08", None, tuple(range(8))),
                 ("h016", None, tuple(range(16))),
+                # AMENDMENT 48. A float third element forces the first
+                # ceil(f L) events of EACH row, a fixed fraction of that
+                # row rather than a fixed count, so the share the model
+                # still generates is 1 minus f for every row and no row
+                # can saturate (ceil(f L) < L for f < 1 at L >= 5).
+                ("hf25", None, 0.25),
+                ("hf50", None, 0.50),
+                ("hf75", None, 0.75),
                 ("q0w1", "qwarm", ()),
                 ("p01", "pair", ()),
                 ("h01", None, (0,)),
@@ -242,8 +250,15 @@ def main():
                 fth = torch.from_numpy(real_th[sl]).to(dev).clone()
                 fdt = torch.from_numpy(real_dt[sl]).to(dev).clone()
                 mask = torch.zeros((nb, MAX_T), device=dev, dtype=torch.bool)
-                for p in hpos:
-                    mask[:, p] = True
+                if isinstance(hpos, float):
+                    nf = np.ceil(hpos * L[sl]).astype(np.int64)
+                    assert (nf < L[sl]).all(), \
+                        "AMENDMENT 48 must never force a whole row"
+                    ar = torch.arange(MAX_T, device=dev)[None, :]
+                    mask |= ar < torch.from_numpy(nf).to(dev)[:, None]
+                else:
+                    for p in hpos:
+                        mask[:, p] = True
                 if e0src in ("q", "qwarm"):
                     torch.manual_seed(a.seed * 100003 + c0 + 7)
                     qs, qth, qdt = q.sample(cb, 1.0, 1.0, 1.0)
