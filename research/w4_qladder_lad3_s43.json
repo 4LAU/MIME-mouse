@@ -1,0 +1,24 @@
+{
+ "ckpt": "event_ar_hm_mlp.pt",
+ "seed": 43,
+ "n_rows": 2000,
+ "temps": [
+  0.95,
+  0.9,
+  1.0
+ ],
+ "arms": {
+  "h032": {
+   "contract": 0.528807875,
+   "n": 2000,
+   "collapse": true,
+   "collapse_features": [
+    "max_velocity",
+    "mean_acceleration",
+    "std_acceleration",
+    "max_acceleration",
+    "mean_jerk"
+   ]
+  }
+ }
+}

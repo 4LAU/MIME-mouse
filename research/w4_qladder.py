@@ -148,6 +148,10 @@ def main():
                 # round trip and carries no model continuation.
                 ("h08", None, tuple(range(8))),
                 ("h016", None, tuple(range(16))),
+                # AMENDMENT 54. Same construction as h016, one prefix
+                # step deeper, so the residual can be read against the
+                # count of events the model still generates.
+                ("h032", None, tuple(range(32))),
                 # AMENDMENT 48. A float third element forces the first
                 # ceil(f L) events of EACH row, a fixed fraction of that
                 # row rather than a fixed count, so the share the model
