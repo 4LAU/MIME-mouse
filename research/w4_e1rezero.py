@@ -25,7 +25,7 @@ for p in (".", "research", "research/autoloop"):
 import scoring   # noqa: E402
 import ledger    # noqa: E402
 
-SEEDS6 = list(range(40, 46))     # what the k0, h01 and h03 caches hold
+SEEDS6 = list(range(40, 52))     # A53 EXTENSION: caches for k0, h01, h03 now exist to 51
 SEEDS12 = list(range(40, 52))
 K = 20
 PERM_SEED = 3208
