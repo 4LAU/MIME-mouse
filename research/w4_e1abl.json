@@ -1,0 +1,292 @@
+{
+ "k": 20,
+ "seeds": [
+  64,
+  65,
+  66,
+  67,
+  68,
+  69,
+  70,
+  71,
+  72,
+  73,
+  74,
+  75
+ ],
+ "target": "num_direction_changes",
+ "seed_bar": 10,
+ "calibration_worst": 0.0,
+ "results": {
+  "17 to 32": {
+   "baseline": {
+    "mean": -0.02303436905792632,
+    "se": 0.003845744714672467,
+    "t": -5.9895730910178475
+   },
+   "shrink": {
+    "mean_velocity": {
+     "mean": 0.0013144259538624126,
+     "se": 0.0011627729725439554,
+     "t": 1.1304235520599224
+    },
+    "std_velocity": {
+     "mean": 7.668733510903909e-05,
+     "se": 0.0007169649870153795,
+     "t": 0.10696106016038141
+    },
+    "max_velocity": {
+     "mean": -0.00025607692512825796,
+     "se": 0.0007623407422979832,
+     "t": -0.335908749093411
+    },
+    "velocity_skewness": {
+     "mean": 0.000497086668567993,
+     "se": 0.0014378376721862387,
+     "t": 0.345718211578203
+    },
+    "mean_acceleration": {
+     "mean": 0.0012453731334920286,
+     "se": 0.0011084637831128869,
+     "t": 1.123512696097892
+    },
+    "std_acceleration": {
+     "mean": 0.0005841214274182122,
+     "se": 0.0008987487224926456,
+     "t": 0.64992740773881
+    },
+    "max_acceleration": {
+     "mean": 0.0010119816182729998,
+     "se": 0.0008380442576420117,
+     "t": 1.207551521348517
+    },
+    "mean_jerk": {
+     "mean": 0.0025700304172635133,
+     "se": 0.0010664487248435235,
+     "t": 2.4098959072229236
+    },
+    "std_jerk": {
+     "mean": 0.001069331269307956,
+     "se": 0.000758062258489585,
+     "t": 1.4106114073513758
+    },
+    "path_efficiency": {
+     "mean": 0.0009380725489713674,
+     "se": 0.000827718038272024,
+     "t": 1.1333237957816211
+    },
+    "max_deviation": {
+     "mean": 0.00012028161645073147,
+     "se": 0.0016483837084738137,
+     "t": 0.07296942807211824
+    },
+    "curvature_mean": {
+     "mean": -0.0007627098171922327,
+     "se": 0.0006732804241969598,
+     "t": -1.1328263674113765
+    },
+    "curvature_std": {
+     "mean": 0.0003957702614154252,
+     "se": 0.0005772983268268407,
+     "t": 0.6855558781727347
+    },
+    "num_direction_changes": {
+     "mean": 0.009466679319155865,
+     "se": 0.0012500397047466672,
+     "t": 7.573102904818836
+    },
+    "movement_duration": {
+     "mean": -0.009426441072071958,
+     "se": 0.0021072865913651087,
+     "t": -4.473260120715461
+    },
+    "time_to_peak_velocity": {
+     "mean": 0.0009299274324439506,
+     "se": 0.001040210791892733,
+     "t": 0.8939797968754829
+    },
+    "angular_velocity_mean": {
+     "mean": 0.00017971228893719554,
+     "se": 0.0009950661870182904,
+     "t": 0.18060335210032843
+    },
+    "angular_velocity_std": {
+     "mean": 0.0012364118860097356,
+     "se": 0.0009289026492319962,
+     "t": 1.3310457097220938
+    }
+   },
+   "winner_per_seed": [
+    "num_direction_changes",
+    "num_direction_changes",
+    "num_direction_changes",
+    "num_direction_changes",
+    "num_direction_changes",
+    "num_direction_changes",
+    "num_direction_changes",
+    "num_direction_changes",
+    "num_direction_changes",
+    "num_direction_changes",
+    "max_velocity",
+    "path_efficiency"
+   ],
+   "n_first_target": 10,
+   "order": [
+    "num_direction_changes",
+    "mean_jerk",
+    "mean_velocity",
+    "mean_acceleration",
+    "angular_velocity_std",
+    "std_jerk",
+    "max_acceleration",
+    "path_efficiency",
+    "time_to_peak_velocity",
+    "std_acceleration",
+    "velocity_skewness",
+    "curvature_std",
+    "angular_velocity_mean",
+    "max_deviation",
+    "std_velocity",
+    "max_velocity",
+    "curvature_mean",
+    "movement_duration"
+   ]
+  },
+  "full": {
+   "baseline": {
+    "mean": 0.05073525231455148,
+    "se": 0.0026347894867484994,
+    "t": 19.25590358156547
+   },
+   "shrink": {
+    "mean_velocity": {
+     "mean": -0.001381551681328574,
+     "se": 0.000957894772979552,
+     "t": -1.4422791733493108
+    },
+    "std_velocity": {
+     "mean": -0.0014327746000678786,
+     "se": 0.0006944712985223418,
+     "t": -2.0631156436795277
+    },
+    "max_velocity": {
+     "mean": -0.0006410740228178502,
+     "se": 0.0008847042086344832,
+     "t": -0.7246196147380495
+    },
+    "velocity_skewness": {
+     "mean": -0.0019618604739756497,
+     "se": 0.0008450341477174527,
+     "t": -2.321634550834295
+    },
+    "mean_acceleration": {
+     "mean": 0.011643057604975207,
+     "se": 0.0016372029308310604,
+     "t": 7.111554338022762
+    },
+    "std_acceleration": {
+     "mean": -0.0009495146839462847,
+     "se": 0.0008756318613239946,
+     "t": -1.0843765809418766
+    },
+    "max_acceleration": {
+     "mean": -0.0011866579219478371,
+     "se": 0.0009648816242224866,
+     "t": -1.2298481929366833
+    },
+    "mean_jerk": {
+     "mean": 0.0005460149446852263,
+     "se": 0.0014441464477608103,
+     "t": 0.3780883479870326
+    },
+    "std_jerk": {
+     "mean": -0.0019608205255544093,
+     "se": 0.0010755408690883402,
+     "t": -1.8231018289583527
+    },
+    "path_efficiency": {
+     "mean": 0.0003929861052346176,
+     "se": 0.0012003981227933416,
+     "t": 0.327379806559622
+    },
+    "max_deviation": {
+     "mean": 0.0007730731936938842,
+     "se": 0.001056780246080089,
+     "t": 0.7315363781272801
+    },
+    "curvature_mean": {
+     "mean": 0.0007375424401636707,
+     "se": 0.0006612381316184924,
+     "t": 1.1153961105636945
+    },
+    "curvature_std": {
+     "mean": -0.00022943607927103891,
+     "se": 0.0009737297421952538,
+     "t": -0.23562603598179097
+    },
+    "num_direction_changes": {
+     "mean": 0.005816539897884387,
+     "se": 0.0009721778131458966,
+     "t": 5.9830000430296675
+    },
+    "movement_duration": {
+     "mean": 0.0024001022967895694,
+     "se": 0.0008360218837060116,
+     "t": 2.870860612105184
+    },
+    "time_to_peak_velocity": {
+     "mean": 0.0037476556590819022,
+     "se": 0.0012537978037555231,
+     "t": 2.9890430880134593
+    },
+    "angular_velocity_mean": {
+     "mean": 0.0020105869752423,
+     "se": 0.0010710271867618397,
+     "t": 1.8772511100499139
+    },
+    "angular_velocity_std": {
+     "mean": 0.00445420980017846,
+     "se": 0.0008410525708631729,
+     "t": 5.295994512693898
+    }
+   },
+   "winner_per_seed": [
+    "mean_acceleration",
+    "num_direction_changes",
+    "mean_acceleration",
+    "mean_acceleration",
+    "num_direction_changes",
+    "num_direction_changes",
+    "mean_acceleration",
+    "mean_acceleration",
+    "mean_acceleration",
+    "mean_acceleration",
+    "mean_acceleration",
+    "mean_acceleration"
+   ],
+   "n_first_target": 3,
+   "order": [
+    "mean_acceleration",
+    "num_direction_changes",
+    "angular_velocity_std",
+    "time_to_peak_velocity",
+    "movement_duration",
+    "angular_velocity_mean",
+    "max_deviation",
+    "curvature_mean",
+    "mean_jerk",
+    "path_efficiency",
+    "curvature_std",
+    "max_velocity",
+    "std_acceleration",
+    "max_acceleration",
+    "mean_velocity",
+    "std_velocity",
+    "std_jerk",
+    "velocity_skewness"
+   ]
+  }
+ },
+ "call": "SUPPORTED, num_direction_changes shrinks the band gap more than any other single feature in 10 of 12 seeds",
+ "non_contract_auc": true
+}
