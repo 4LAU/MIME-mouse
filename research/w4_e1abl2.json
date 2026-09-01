@@ -1,0 +1,297 @@
+{
+ "k": 20,
+ "seeds": [
+  76,
+  77,
+  78,
+  79,
+  80,
+  81,
+  82,
+  83,
+  84,
+  85,
+  86,
+  87
+ ],
+ "target": "num_direction_changes",
+ "gate_b": true,
+ "sanity_gate": true,
+ "ordering_ok": true,
+ "calibration_worst": 0.0,
+ "results": {
+  "17 to 32": {
+   "baseline": {
+    "mean": -0.020558143564370003,
+    "se": 0.002986403029424873,
+    "t": -6.883914649768196
+   },
+   "shrink": {
+    "mean_velocity": {
+     "mean": 0.00016325114713793289,
+     "se": 0.0009544453157925013,
+     "t": 0.1710429549359579
+    },
+    "std_velocity": {
+     "mean": 0.00024840761963092445,
+     "se": 0.0007711018945757192,
+     "t": 0.3221462965897716
+    },
+    "max_velocity": {
+     "mean": -0.0003234723859067429,
+     "se": 0.0008462839220311521,
+     "t": -0.3822267887712934
+    },
+    "velocity_skewness": {
+     "mean": 0.0008250611998602432,
+     "se": 0.0013148940909750802,
+     "t": 0.627473501876038
+    },
+    "mean_acceleration": {
+     "mean": -0.0008973851710435731,
+     "se": 0.0011680581585959175,
+     "t": -0.7682709670229854
+    },
+    "std_acceleration": {
+     "mean": 0.0006068906299081643,
+     "se": 0.0007068510957757727,
+     "t": 0.8585834181131157
+    },
+    "max_acceleration": {
+     "mean": 0.0007252261223152156,
+     "se": 0.0008567388773182739,
+     "t": 0.8464961046069093
+    },
+    "mean_jerk": {
+     "mean": 0.0024316338177964194,
+     "se": 0.0010999966823408004,
+     "t": 2.2105828652336355
+    },
+    "std_jerk": {
+     "mean": 0.0002723516472061512,
+     "se": 0.0011225354764890071,
+     "t": 0.24262186176778555
+    },
+    "path_efficiency": {
+     "mean": -0.0014701075235145436,
+     "se": 0.0007106398094472761,
+     "t": -2.06870977951259
+    },
+    "max_deviation": {
+     "mean": 0.00038589359851545985,
+     "se": 0.0010818142052826927,
+     "t": 0.3567096795651899
+    },
+    "curvature_mean": {
+     "mean": -0.0009645317337408889,
+     "se": 0.001095372919149065,
+     "t": -0.8805510131564879
+    },
+    "curvature_std": {
+     "mean": -0.0020377287047265644,
+     "se": 0.0009708410807145681,
+     "t": -2.098931272280665
+    },
+    "num_direction_changes": {
+     "mean": 0.009441492628201131,
+     "se": 0.0018842118878582175,
+     "t": 5.010844422032211
+    },
+    "movement_duration": {
+     "mean": -0.007500118208632018,
+     "se": 0.0017739479076664926,
+     "t": -4.227924718769173
+    },
+    "time_to_peak_velocity": {
+     "mean": 0.0011413466343079724,
+     "se": 0.0008557345865888496,
+     "t": 1.3337624214274622
+    },
+    "angular_velocity_mean": {
+     "mean": 0.0011612599880821888,
+     "se": 0.0010666748105621006,
+     "t": 1.0886729269159783
+    },
+    "angular_velocity_std": {
+     "mean": 0.001799665372559705,
+     "se": 0.0010534843230177377,
+     "t": 1.7082981998294091
+    }
+   },
+   "winner_per_seed": [
+    "num_direction_changes",
+    "num_direction_changes",
+    "num_direction_changes",
+    "std_acceleration",
+    "num_direction_changes",
+    "num_direction_changes",
+    "num_direction_changes",
+    "num_direction_changes",
+    "num_direction_changes",
+    "velocity_skewness",
+    "num_direction_changes",
+    "mean_jerk"
+   ],
+   "n_first_target": 9,
+   "order": [
+    "num_direction_changes",
+    "mean_jerk",
+    "angular_velocity_std",
+    "angular_velocity_mean",
+    "time_to_peak_velocity",
+    "velocity_skewness",
+    "max_acceleration",
+    "std_acceleration",
+    "max_deviation",
+    "std_jerk",
+    "std_velocity",
+    "mean_velocity",
+    "max_velocity",
+    "mean_acceleration",
+    "curvature_mean",
+    "path_efficiency",
+    "curvature_std",
+    "movement_duration"
+   ]
+  },
+  "full": {
+   "baseline": {
+    "mean": 0.05912182409436803,
+    "se": 0.0028307948639806654,
+    "t": 20.88523786963174
+   },
+   "shrink": {
+    "mean_velocity": {
+     "mean": -0.002932625597835192,
+     "se": 0.0011232225312491886,
+     "t": -2.6109034641369604
+    },
+    "std_velocity": {
+     "mean": -0.0012756538141222046,
+     "se": 0.0006948142105469511,
+     "t": -1.8359639091405777
+    },
+    "max_velocity": {
+     "mean": -0.0018268986571150208,
+     "se": 0.0012765631603304007,
+     "t": -1.431107142902496
+    },
+    "velocity_skewness": {
+     "mean": -0.003021491213133135,
+     "se": 0.0010726323134487245,
+     "t": -2.8168937064915047
+    },
+    "mean_acceleration": {
+     "mean": 0.01307088413956635,
+     "se": 0.0017090880658279792,
+     "t": 7.647870464319269
+    },
+    "std_acceleration": {
+     "mean": -0.0011929000994716377,
+     "se": 0.0005837630621471619,
+     "t": -2.043466222552665
+    },
+    "max_acceleration": {
+     "mean": -0.00162120956473829,
+     "se": 0.0009751233807984349,
+     "t": -1.6625686519903122
+    },
+    "mean_jerk": {
+     "mean": -0.0004945287160256674,
+     "se": 0.0013852848886227664,
+     "t": -0.35698701406995204
+    },
+    "std_jerk": {
+     "mean": -0.002604373900235359,
+     "se": 0.0008424976306844153,
+     "t": -3.0912536788022273
+    },
+    "path_efficiency": {
+     "mean": 0.002120214015535946,
+     "se": 0.0012999049887969672,
+     "t": 1.631053064499857
+    },
+    "max_deviation": {
+     "mean": 0.00046481206151192657,
+     "se": 0.0009754914954253009,
+     "t": 0.4764901218429125
+    },
+    "curvature_mean": {
+     "mean": -0.0006424567450695832,
+     "se": 0.0008879332750926369,
+     "t": -0.7235416929301997
+    },
+    "curvature_std": {
+     "mean": -0.0016906288027592742,
+     "se": 0.0009268049040375397,
+     "t": -1.824147450444216
+    },
+    "num_direction_changes": {
+     "mean": 0.0050185279836599496,
+     "se": 0.0008338608491573477,
+     "t": 6.018423803841358
+    },
+    "movement_duration": {
+     "mean": 0.001823014463362016,
+     "se": 0.0011014939293230593,
+     "t": 1.6550381394134226
+    },
+    "time_to_peak_velocity": {
+     "mean": 0.0007533643275046374,
+     "se": 0.0011786354923724789,
+     "t": 0.6391834730754528
+    },
+    "angular_velocity_mean": {
+     "mean": 0.001795745362634607,
+     "se": 0.0008428559565068862,
+     "t": 2.1305483443183517
+    },
+    "angular_velocity_std": {
+     "mean": 0.0017664057691207942,
+     "se": 0.0010222188711784981,
+     "t": 1.7280113084630653
+    }
+   },
+   "winner_per_seed": [
+    "mean_acceleration",
+    "mean_acceleration",
+    "mean_acceleration",
+    "num_direction_changes",
+    "mean_acceleration",
+    "mean_acceleration",
+    "mean_acceleration",
+    "mean_acceleration",
+    "mean_acceleration",
+    "mean_acceleration",
+    "mean_acceleration",
+    "mean_acceleration"
+   ],
+   "n_first_target": 1,
+   "order": [
+    "mean_acceleration",
+    "num_direction_changes",
+    "path_efficiency",
+    "movement_duration",
+    "angular_velocity_mean",
+    "angular_velocity_std",
+    "time_to_peak_velocity",
+    "max_deviation",
+    "mean_jerk",
+    "curvature_mean",
+    "std_acceleration",
+    "std_velocity",
+    "max_acceleration",
+    "curvature_std",
+    "max_velocity",
+    "std_jerk",
+    "mean_velocity",
+    "velocity_skewness"
+   ]
+  }
+ },
+ "read1": true,
+ "read2": false,
+ "verdict": "PARTIAL, the size holds and the count does not. PARTIAL IS NOT REPLICATION (registered): the effect is the right size and less consistent per seed than A63 found",
+ "fraction_closed": 0.4592580355633129,
+ "non_contract_auc": true
+}
