@@ -1,6 +1,6 @@
 # Autoloop Leaderboard
 
-_Regenerated 2026-09-01T07:06:03+00:00_
+_Regenerated 2026-09-01T21:43:22+00:00_
 
 **Best-of-N tier1 scores are selection-biased; only tier2 confirmations are quotable.**
 
@@ -420,6 +420,12 @@ n_trials (tier1, status=ok): 0
 _(no completed tier1 runs)_
 
 ## w4_e1proj
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_e1prox
 
 n_trials (tier1, status=ok): 0
 
@@ -884,6 +890,12 @@ n_trials (tier1, status=ok): 1
 | 1 | w4_rowmap_2026-08-18T022511+0000_e78bbaad | 0.5895 | 0.0895 | UNCONFIRMED | n/a | ok | REPLICATION at an already recorded config, NOT a new candida |
 
 ## w4_scale_audit
+
+n_trials (tier1, status=ok): 0
+
+_(no completed tier1 runs)_
+
+## w4_screen
 
 n_trials (tier1, status=ok): 0
 
