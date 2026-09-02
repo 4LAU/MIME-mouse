@@ -91,6 +91,45 @@ def class_to_dt_ms(c: torch.Tensor) -> torch.Tensor:
     return torch.where(ms < 0.5, torch.full_like(ms, DT_ZERO_MS), ms)
 
 
+def _s_lobe_index(n_classes: int, device) -> torch.Tensor:
+    """Lobe label per speed class: 0 no motion marker, 1 a speed, 2 end of
+    trajectory.
+
+    The speed stream carries three different kinds of decision in one softmax.
+    TICK is the no motion marker and its rate is the pause structure, PAD ends
+    the trajectory and its rate is the event count, and the classes between
+    are an ordinal speed. A single divisor moves all three together, so
+    sharpening the speed shape also changes how often the model pauses and how
+    long it goes on for. `w4_occupancy` measured the served temperatures at
+    4.7185 still runs and 55.58 events per trajectory against a human 4.2168
+    and 52.41, with temperature 1 at 4.2378 and 54.42. Used only by the mass
+    preserving speed temperature; see `EventARModel.sample`.
+    """
+    lobe = torch.ones(n_classes, device=device, dtype=torch.long)
+    lobe[TICK_CLASS] = 0
+    lobe[S_PAD_CLASS:] = 2
+    return lobe
+
+
+def _th_lobe_index(n_classes: int, tau: int, device) -> torch.Tensor:
+    """Lobe label per direction class: 0 no turn marker, 1 small turn, 2 large.
+
+    BIN 0 IS ZERO TURN, not the middle of the range. `class_to_dtheta` maps bin
+    b to b steps for b < 128 and to b - 256 steps above, so the turn magnitude
+    in bins is min(b, 256 - b) and the largest turn, half a revolution, sits at
+    bin 128. tau = 64 is the quarter turn at which `w4_occupancy` counts a
+    reversal. Used only by the mass preserving direction temperature; see
+    `EventARModel.sample`.
+    """
+    lobe = torch.full((n_classes,), 2, device=device, dtype=torch.long)
+    b = torch.arange(TH_BINS, device=device)
+    mag = torch.minimum(b, TH_BINS - b)
+    lobe[:TH_BINS] = torch.where(mag <= tau, torch.ones_like(b),
+                                 torch.full_like(b, 2))
+    lobe[TH_BINS:] = 0
+    return lobe
+
+
 def prefix_state(s_cls: torch.Tensor, th_cls: torch.Tensor,
                  dt_ms: torch.Tensor, cond: torch.Tensor) -> torch.Tensor:
     """Exact geometric and temporal state BEFORE each position.
@@ -367,7 +406,8 @@ class EventARModel(nn.Module):
     def sample(self, cond, seq_len=None, temperature=1.0,
                th_temperature=None, dt_temperature=None, force=None,
                th_beta=None, dt_tilt=None, th_tilt=None, s_tilt=None,
-               tick_th_null=True, s_bias=None, th_bias=None, dt_bias=None):
+               tick_th_null=True, s_bias=None, th_bias=None, dt_bias=None,
+               th_lobe_tau=None, s_lobe=False):
         """One trajectory per row of cond, generated strictly left to right.
 
         No KV cache: each step re-runs the trunk over the prefix, which is
@@ -449,6 +489,29 @@ class EventARModel(nn.Module):
         a rate, and the fitting code centres each vector so the correction does
         not move the length distribution to first order.
 
+        `th_lobe_tau` is an integer turn magnitude in direction bins. When it
+        is set, the direction temperature is applied WITHIN turn magnitude
+        lobes and the mass of each lobe is held at its untempered value. The
+        lobes are: no turn marker, small turns of magnitude min(b, 256 - b)
+        at most tau bins, and large turns beyond tau. Sharpening a 256 way
+        direction distribution with one divisor pulls mass toward the mode,
+        which is a small turn, so it thins the large turn tail; `w4_occupancy` measured the served
+        temperatures making 0.4422 reversals per trajectory against a human
+        0.6660 and 0.6797 at temperature 1, so the whole deficit is the
+        divisor. Preserving the lobe masses keeps the reversal rate of
+        temperature 1 while still sharpening the shape inside each lobe, which
+        is what the temperature sweep was buying. tau = 64 is a quarter turn,
+        the reversal threshold the rate is measured at. None is exactly the
+        previous path, and this changes no rng draw: one multinomial either
+        way.
+
+        `s_lobe` does the same for the speed head, with the lobes fixed by
+        meaning rather than by a threshold: the no motion marker, the ordinal
+        speeds, and PAD. It holds the pause rate and the event count at their
+        temperature 1 values while still sharpening the speed shape. False is
+        exactly the previous path and, like `th_lobe_tau`, it changes no rng
+        draw.
+
         With force=None and every tilt None the only line below that differs
         from the pre 2026-08-10 sampler is the tick_th_null substitution.
         """
@@ -462,6 +525,8 @@ class EventARModel(nn.Module):
         th_cls = torch.full((B, T), TH_NULL_CLASS, device=dev, dtype=torch.long)
         dt_cls = torch.zeros((B, T), device=dev, dtype=torch.long)
         done = torch.zeros(B, dtype=torch.bool, device=dev)
+        th_lobe = None
+        s_lobe_ix = None
 
         for i in range(T):
             s_T = temperature[i] if isinstance(temperature, (list, tuple)) else temperature
@@ -513,6 +578,16 @@ class EventARModel(nn.Module):
                     # so its size means the same thing at any temperature.
                     s_lz = s_lz + s_bias
                 sp = torch.softmax(s_lz, dim=-1)
+                if s_lobe:
+                    if s_lobe_ix is None:
+                        s_lobe_ix = _s_lobe_index(s_z.shape[-1], s_z.device)
+                    p1 = torch.softmax(
+                        s_z + (s_bias if s_bias is not None else 0.0), dim=-1)
+                    tgt = torch.zeros(sp.shape[0], 3, device=sp.device,
+                                      dtype=sp.dtype).index_add_(1, s_lobe_ix, p1)
+                    cur = torch.zeros_like(tgt).index_add_(1, s_lobe_ix, sp)
+                    sp = sp * (tgt / cur.clamp(min=1e-30))[:, s_lobe_ix]
+                    sp = sp / sp.sum(-1, keepdim=True)
                 s_i = torch.multinomial(sp, 1).squeeze(-1)
 
                 th_z = self.th_logits(x1, s_i.unsqueeze(1)).squeeze(1)
@@ -541,6 +616,20 @@ class EventARModel(nn.Module):
                     # and it still emits one trajectory per row with no
                     # selection, so it is a serving time change and not a
                     # diagnostic.
+                    # THE SIGN OF THIS BASIS IS INVERTED AGAINST ITS NAME AND
+                    # IS LEFT THAT WAY ON PURPOSE. Bin 0 is ZERO turn and bin
+                    # 128 is half a revolution, so the true magnitude is
+                    # min(b, 256 - b) and the line below is its exact
+                    # complement, 1 - magnitude. A positive z therefore
+                    # STRAIGHTENS rather than sharpens. Every caller draws z
+                    # from a symmetric prior (w4_latent) or fits its coefficient
+                    # through this same basis (w4_hesit), so the family covered
+                    # and the numbers recorded are unchanged by the relabelling,
+                    # and correcting the arithmetic here would silently stop
+                    # those runs reproducing. Read a recorded th_tilt sign as
+                    # the opposite of what its comment says. Found 2026-09-02
+                    # while building the mass preserving direction temperature,
+                    # whose own lobe helper uses the true magnitude.
                     m = torch.arange(th_z.shape[-1], device=th_z.device,
                                      dtype=th_z.dtype)
                     m = (m - TH_BINS // 2).abs() / (TH_BINS // 2)
@@ -557,6 +646,21 @@ class EventARModel(nn.Module):
                 if th_bias is not None:
                     th_lz = th_lz + th_bias          # w4_margfix
                 thp = torch.softmax(th_lz, dim=-1)
+                if th_lobe_tau is not None:
+                    # Mass preserving direction temperature. Lobe masses are
+                    # read off the SAME logits at temperature 1, with the same
+                    # tilts and bias applied, so the only thing being undone is
+                    # the divisor's transport of mass between lobes.
+                    if th_lobe is None:
+                        th_lobe = _th_lobe_index(th_z.shape[-1], th_lobe_tau,
+                                                 th_z.device)
+                    p1 = torch.softmax(
+                        th_z + (th_bias if th_bias is not None else 0.0), dim=-1)
+                    tgt = torch.zeros(thp.shape[0], 3, device=thp.device,
+                                      dtype=thp.dtype).index_add_(1, th_lobe, p1)
+                    cur = torch.zeros_like(tgt).index_add_(1, th_lobe, thp)
+                    thp = thp * (tgt / cur.clamp(min=1e-30))[:, th_lobe]
+                    thp = thp / thp.sum(-1, keepdim=True)
                 th_i = torch.multinomial(thp, 1).squeeze(-1)
                 if tick_th_null:
                     # w4_ticknull. Training sets the turn token to NULL wherever
