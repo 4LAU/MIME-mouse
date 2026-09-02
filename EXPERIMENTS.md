@@ -4152,3 +4152,159 @@ GPU: two 2.5 minute generation runs, peak 59C, well under the 75C gate.
 Checkpoint MD5 verified unchanged after each.
 
 Ledger: W3_groundwork_2026-07-27T055552+0000_9852d77e
+
+## Where the running record lives, and where the headline actually is (September 2)
+
+This file stops at July 27 with a single-trajectory number of 0.6986 under the
+W3 detector. That number is not the current one and the detectors are not the
+same. Everything from August 6 onward was run against the contract scorer in
+`research/autoloop/scoring.py`, which is a random forest out-of-bag AUC against
+`data/human_val_features_grpo.npy`, and the day-to-day record for that era was
+kept outside the repo in `/home/aaronadmin/w4_arms`: `RESUME.md` for state,
+`FAILURE_MAP.md` for what is closed and why, `HANDOFF.md` for the running log,
+and one pre-registration file per registered claim. Sixty-five numbered
+amendments live in the git log. The current headline is **0.5795, se 0.0022**,
+one trajectory per request, no candidate pool and no selection, set by the
+amendment 19 serve and unchanged since.
+
+The entries below cover September 2 only. Reconstructing August into this file
+would mean rewriting six weeks from notes, and the notes are already written.
+
+## Two measuring scripts were comparing generated paths against the rows that produced them (September 2)
+
+`research/w4_occupancy.py` and `research/w4_planfit.py` both drew their real
+comparison rows and their generation conditions from the same pool. The
+condition sits inside the feature vector and is close to unique per row, so
+every generated row had a near twin on the other side, and out of bag the
+forest votes against that twin. Both scripts read below chance and the reading
+looked like a result.
+
+`w4_arms/ctrl_pair2.py` reproduces the mechanism with no model in it. Holding
+the dynamic part of the vector constant and pairing the conditions gives 0.0000
+against 0.5097 for disjoint conditions. Two live columns give 0.4360 against
+0.5095, six give 0.4960 against 0.5081. A reading below 0.5 is the signature.
+
+Both are fixed by conditioning the generated side on the disjoint pool. The
+contaminated outputs are renamed `*_SUPERSEDED_paired_conditions.json`. The
+corrected plan fit reads 0.5827 against a real-to-real floor of 0.4970, worse
+than the contaminated version, and the plan-only column moved from 0.5736 to
+0.5723, which is the check that only the affected arm changed. The plan family
+stays closed on its own oracle.
+
+## The chain does not drift; the drift is in our serving temperatures (September 2)
+
+State occupancy, 4,000 rows a side, one step per trajectory, the state being the
+last four events plus tick count, progress, step index and the two condition
+values. Real against real gives a floor of 0.5081. The served temperatures give
+0.5274 and temperature 1 gives 0.5281, so in total the two are the same.
+
+Split by position they are not the same at all. The gap above the floor at
+temperature 1 runs +0.0315, +0.0338, +0.0225, +0.0025, +0.0244, +0.0405,
++0.0374 across the seven position bands, a weighted slope of -0.0003 per band.
+On the served temperatures the same gap runs +0.0125 to +0.0725, a slope of
++0.0052 per band. Allowing for the fact that a single-draw forest AUC is
+noisier than the binomial spread, read that as two to three sigma rather than
+the 3.4 the arithmetic gives.
+
+So the model is uniformly slightly wrong from its first step and does not
+compound, and the compounding that the word drift describes is added by the
+divisors we serve with. This answers the question `FAILURE_MAP.md` was left on.
+
+Per-trajectory rates against the pool the rollouts were conditioned on, with
+spreads computed in closed form on 120,000 held-out rows and doubled to allow
+noise on both sides:
+
+```
+      rate     realB    served    z_S      pure    z_P
+    events    53.926    57.249  +3.36    55.580  +1.67
+    motion    48.880    51.443  +2.89    50.545  +1.88
+still_runs     4.436     4.972  +2.62     4.374  -0.30
+ reversals     0.645     0.441  -3.23     0.644  -0.03
+```
+
+At temperature 1 the reversal rate and the still-run rate are exact. The served
+divisors push them 3.2 and 2.6 sigma off. Three earlier statements of these
+significances in `HANDOFF.md` are withdrawn there; all three came from sizing a
+mean over 4,000 rows by redrawing the pool a dozen times instead of dividing the
+per-row spread by the square root of the row count. `w4_arms/chk_human_rates3.py`
+does it the closed-form way.
+
+The importance table printed by the old `w4_occupancy.py` is not readable.
+`log_dist` and `log_dur` are raw condition columns and the two real pools differ
+in them by construction, so they top the list whether or not the model is wrong
+about anything. The script now also takes the floor's importances and prints the
+excess over them.
+
+## Mass-preserving temperature: it works, and it does not pay (September 2)
+
+Both sampling heads carry unlike decisions inside one softmax. The speed head
+holds a no-motion marker, an ordinal speed, and the end-of-trajectory marker.
+The direction head holds a no-turn marker and 256 turn bins. One divisor cannot
+sharpen the shape of such a distribution without moving the relative mass of
+those groups, which is why serving at 0.95 and 0.90 costs a third of the
+reversals a person makes and adds pauses and events.
+
+The construction applies the divisor within groups of like meaning and restores
+each group's mass to its temperature 1 value. `models/event_ar.py` gains
+`th_lobe_tau` and `s_lobe` on `sample`. It is a serving-time change, one
+trajectory per row, no selection, and it consumes no random number, so the
+untouched arm in the same screen is an exact regression check. That check passed
+on all four runs: the served arm reproduced 0.5458765 on seed 90 and 0.52325 on
+seed 91 to the last digit.
+
+Screens at 1,000 rows, two seeds, paired against served on identical random
+streams. Negative is toward human.
+
+```
+             seed 90   seed 91
+  lobe64     -0.0011   -0.0023      direction lobes, tau 64 bins
+  lobe32     +0.0204   +0.0036      tau 32
+  lobe96     +0.0177   -0.0016      tau 96
+  slobe      +0.0171   +0.0079      speed lobes
+  bothlobe   +0.0049   -0.0006      both heads
+```
+
+Under the rule fixed before any arm ran, tau 64 is no result because both seeds
+sit inside the 0.006 band, tau 32 is dead, tau 96 is split, the speed head is
+worse on both seeds and closes, and both heads together are split. Nothing goes
+to a twelve-seed protocol and nothing changes about how the model is served.
+
+The mechanism is not in doubt. Paired on the same rows with the same random
+stream, tau 64 lifts reversals from 0.480 to 0.534 on seed 90 and from 0.377 to
+0.448 on seed 91, about a quarter of the gap to a person each time.
+
+The number worth keeping is the price. A quarter of a verified 3.2 sigma
+distributional defect is worth about two thousandths of AUC. A perfect fix looks
+worth under a hundredth, against 0.0795 still to close. This program has been
+run on the assumption that targeted defects trade far better than generic
+likelihood, at a ratio of order 845. That may hold for some defect, but it does
+not hold for this one, and the next targeted construction needs an argument for
+why its defect is worth more than this one was.
+
+A second thing closes with it. Giving sharpness back in order to repair a rate
+is now a tried route and it fails. The scorer is buying something from the
+sharpening and the three broken rates are its price. `w4_ownent.py` adds a
+detail nobody has explained: at real states the speed head is already slightly
+too sharp, about +0.02 nats at every one of ten confidence deciles against a
+near-zero control on the model's own draws, and sharpening it further still
+improves the contract score. Whatever the scorer rewards is not calibration.
+
+The cheapest thing left untried is a splice. At temperature 1 the state gap
+collapses to the floor at the 8 to 15 band, which is exactly where the first
+event leaves the four-event state window. Forcing event 0 to the row's real
+first event and rerunning the early bands would say whether the first step
+carries the early half of the gap. `EventARModel.sample` already takes a `force`
+argument, so no model change is needed. Note that `w4_occupancy.py` passes
+`q=None`, so its event 0 comes from the trunk and not from the first-event
+model that serving uses.
+
+GPU: five generation runs, peak 76C against a 75C between-run gate, one random
+libtorch import segfault caught by the retry loop. Protected checkpoint MD5
+`91326a29750789f3167055324ef377c5` verified unchanged after every run.
+
+Ledger: w4_planfit_2026-09-02T095735+0000_5036c737,
+w4_occupancy_2026-09-02T100713+0000_7489df69,
+w4_screen_2026-09-02T101919+0000_229e7935,
+w4_screen_2026-09-02T103348+0000_d8f9b5da,
+w4_screen_2026-09-02T104335+0000_002afc8d,
+w4_screen_2026-09-02T105427+0000_578b10f5
