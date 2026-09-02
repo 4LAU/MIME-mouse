@@ -1,6 +1,6 @@
 # Autoloop Leaderboard
 
-_Regenerated 2026-09-01T21:43:22+00:00_
+_Regenerated 2026-09-02T10:54:27+00:00_
 
 **Best-of-N tier1 scores are selection-biased; only tier2 confirmations are quotable.**
 
@@ -711,6 +711,14 @@ n_trials (tier1, status=ok): 0
 
 _(no completed tier1 runs)_
 
+## w4_occupancy
+
+n_trials (tier1, status=ok): 1
+
+| rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
+|---|---|---|---|---|---|---|---|
+| 1 | w4_occupancy_2026-09-02T100713+0000_7489df69 | 0.5274 | 0.0274 | UNCONFIRMED | n/a | ok | Diagnostic only, never a training signal and never a selecti |
+
 ## w4_order
 
 n_trials (tier1, status=ok): 0
@@ -784,6 +792,14 @@ n_trials (tier1, status=ok): 1
 | rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
 |---|---|---|---|---|---|---|---|
 | 1 | w4_plan_space_2026-07-27T094052+0000_d9c80213 | 0.5595 | 0.0595 | UNCONFIRMED | n/a | ok | THE PLAN LAYER IS NOT WHERE THE DEFICIT IS, which kills the  |
+
+## w4_planfit
+
+n_trials (tier1, status=ok): 1
+
+| rank | run_id | tier1 AUC | gap-to-0.5 | tier2 status | tier2 AUC | collapse | notes |
+|---|---|---|---|---|---|---|---|
+| 1 | w4_planfit_2026-09-02T095735+0000_5036c737 | 0.5827 | 0.0827 | UNCONFIRMED | n/a | ok | Diagnostic only, never a training signal. Rerun after the pa |
 
 ## w4_poskl
 
