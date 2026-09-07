@@ -110,7 +110,9 @@ def main():
     t_gen = time.time() - t0
 
     auc_raw, n_raw = score([p for p, _, _ in paths], a.seed)
-    landed = [generate._land_on_target(p, ex, ey) for p, ex, ey in paths]
+    # generate() rounds requests to whole pixels before drawing; the recorded
+    # run drew on fractional targets, so round only where the landing needs it.
+    landed = [generate._land_on_target(p, round(ex), round(ey)) for p, ex, ey in paths]
     auc_land, n_land = score(landed, a.seed)
     miss = np.array([math.hypot(p[-1, 0] - ex, p[-1, 1] - ey) for p, ex, ey in paths])
     dist = np.array([math.hypot(ex - p[0, 0], ey - p[0, 1]) for p, ex, ey in paths])

@@ -10,9 +10,11 @@ held out human rows nearest the requested distance, a first event drawn by
 the dedicated first event head, then the autoregressive model free running
 from that seed at its served temperatures. There is no oversampling and no
 selection: what the model draws is what you get. The events are decoded into
-a path, which is then rotated and scaled around the start point so the last
-point lands exactly on the target; typically a few percent, which leaves the
-path's character intact. Pass land=False (or --no-land) to see the raw
+a path on the whole pixel lattice, which usually misses the target by a few
+pixels (about two percent of the distance). The miss is then spent as single
+pixel changes on the path's longest steps, where one pixel bends the least
+angle, so the last point lands exactly on the target and every other step is
+exactly what the model drew. Pass land=False (or --no-land) to see the raw
 decoded path.
 
 Usage:
@@ -175,24 +177,35 @@ def _check_assets() -> None:
 
 
 def _land_on_target(traj: np.ndarray, ex: float, ey: float) -> np.ndarray:
-    """Rotate and scale a path around its start so its last point is (ex, ey).
+    """Make a decoded path end on (ex, ey) by whole pixel jogs on its longest
+    steps, leaving every other step exactly as the model drew it.
 
-    A similarity transform: multiply each point's offset from the start by the
-    complex ratio (desired end vector) / (raw end vector). Preserves every
-    turn angle and every relative timing; only the overall heading and length
-    change, both by whatever small amount the raw path missed by.
+    The operator research/w3_aiming_price.py::correct_jog settled on in July
+    2026: the miss, rounded to whole pixels per axis, is spent as single pixel
+    changes, one per step, longest steps first, where one pixel bends the
+    least angle. Rotating and scaling the path instead, or spreading the miss
+    as a sub pixel drift over every point, moves the whole path off the pixel
+    lattice or turns straight runs into staircases, and either costs about
+    0.1 AUC against the detector; this costs about 0.01. Timing is untouched.
+
+    ex and ey are whole pixels (generate() rounds its inputs), so the last
+    point is exactly (ex, ey).
     """
-    start = traj[0, :2]
-    raw_vec = complex(*(traj[-1, :2] - start))
-    if abs(raw_vec) < 1e-9:
-        return traj
-    ratio = complex(ex - start[0], ey - start[1]) / raw_vec
-    offsets = (traj[:, 0] - start[0]) + 1j * (traj[:, 1] - start[1])
-    moved = offsets * ratio
+    P = np.round(traj[:, :2])
+    d = np.diff(P, axis=0)
+    err = [ex, ey] - (P[0] + d.sum(0))
+    mag = np.hypot(d[:, 0], d[:, 1])
+    order = np.flatnonzero(mag > 0)
+    if len(order) == 0:
+        order = np.array([0])
+    order = order[np.argsort(-mag[order], kind="stable")]
+    for axis in (0, 1):
+        e = int(err[axis])
+        step = 1.0 if e > 0 else -1.0
+        for k in range(abs(e)):
+            d[order[k % len(order)], axis] += step
     out = traj.copy()
-    out[:, 0] = start[0] + moved.real
-    out[:, 1] = start[1] + moved.imag
-    out[-1, :2] = [ex, ey]  # kill floating-point residue on the endpoint
+    out[1:, :2] = P[0] + np.cumsum(d, axis=0)
     return out
 
 
@@ -208,17 +221,22 @@ def generate(
 ):
     """Generate trajectories from (start_x, start_y) to (end_x, end_y).
 
-    Returns one (m, 3) float array of columns [x, y, t_seconds] when n == 1,
-    or a list of n such arrays. With land=True (default) each path ends
-    exactly on the target; with land=False you get the raw decoded model
-    output. One draw per requested trajectory, no candidate selection. A row
+    Coordinates are screen pixels; fractional values are rounded to the
+    nearest pixel first, because every point of a path sits on the whole
+    pixel lattice, exactly as recording hardware writes it. Returns one
+    (m, 3) float array of columns [x, y, t_seconds] when n == 1, or a list of
+    n such arrays. With land=True (default) each path ends exactly on the
+    target, by whole pixel jogs on its longest steps; with land=False you get
+    the raw decoded model output. One draw per requested trajectory, no candidate selection. A row
     that decodes to fewer than 2 events is resampled, up to 3 attempts: that
     is a redo of a degenerate draw, not a choice between candidates.
     """
     _check_assets()
+    start_x, start_y, end_x, end_y = (float(round(v)) for v in
+                                      (start_x, start_y, end_x, end_y))
     dist = math.hypot(end_x - start_x, end_y - start_y)
-    if dist < 1e-6:
-        raise ValueError("start and end must differ by at least 1e-6 pixels")
+    if dist == 0.0:
+        raise ValueError("start and end round to the same pixel")
     ang = math.atan2(end_y - start_y, end_x - start_x)
     log_dist = math.log(dist)
 
@@ -300,7 +318,7 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Generate a human-like mouse trajectory between two points.",
     )
-    parser.add_argument("start_x", type=float)
+    parser.add_argument("start_x", type=float, help="Pixels; rounded to whole pixels")
     parser.add_argument("start_y", type=float)
     parser.add_argument("end_x", type=float)
     parser.add_argument("end_y", type=float)
