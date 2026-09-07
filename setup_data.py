@@ -35,6 +35,9 @@ RELEASE_ASSETS = [
     "trajectory_transformer_best.pt",
     "human_eval_features.npy",
     "human_distances.npy",
+    # The human reference the contract scorer compares against; verify_serve.py
+    # scores the served generator with it. Never the evaluation sample above.
+    "human_val_features_grpo.npy",
 ]
 
 OPTIONAL_ASSETS = [
@@ -45,7 +48,10 @@ OPTIONAL_ASSETS = [
 # candidate pools and winning picks land in the repo root (where the replay
 # commands expect them); the event-stream checkpoint lands in training/ so
 # the sampler can regenerate pools from scratch. Replaying the cached pools
-# needs no GPU and never loads the checkpoint.
+# needs no GPU and never loads the checkpoint. The last three training files
+# are what generate.py needs: the served autoregressive checkpoint, its
+# first event head, and the human duration pool it draws commanded durations
+# from. The two older training files stay for the replay commands.
 REPRO_ASSETS_ROOT = [
     "pool_s42_k16.npz",
     "pool_s43_k16.npz",
@@ -58,6 +64,9 @@ REPRO_ASSETS_ROOT = [
 REPRO_ASSETS_TRAINING = [
     "event_polar_4m_fc_v2.pt",
     "train_conditions.npy",
+    "event_ar_hm_mlp.pt",
+    "firsthead_q.pt",
+    "duration_pool.npy",
 ]
 
 # Balabit dataset

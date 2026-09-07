@@ -1,8 +1,19 @@
 """Generate a human-like mouse trajectory between two screen points.
 
-This is the front door to the trained MIME model. Give it a start point and
+This is the front door to the served MIME model. Give it a start point and
 an end point in pixels; it returns a trajectory that begins exactly at the
 start, ends exactly at the end, and moves like a person in between.
+
+Each requested trajectory is ONE draw from the autoregressive event recipe of
+research/w4_mserve.py arm mq1: a commanded duration sampled from the pool of
+held out human rows nearest the requested distance, a first event drawn by
+the dedicated first event head, then the autoregressive model free running
+from that seed at its served temperatures. There is no oversampling and no
+selection: what the model draws is what you get. The events are decoded into
+a path, which is then rotated and scaled around the start point so the last
+point lands exactly on the target; typically a few percent, which leaves the
+path's character intact. Pass land=False (or --no-land) to see the raw
+decoded path.
 
 Usage:
     python generate.py 200 600 1500 300
@@ -20,58 +31,140 @@ From Python:
     traj = generate(200, 600, 1500, 300)          # one (m, 3) array of x, y, t_seconds
     trajs = generate(200, 600, 1500, 300, n=5)    # list of five
 
-Needs `training/event_polar_4m_fc_v2.pt` and `training/train_conditions.npy`;
-`python setup_data.py` downloads both. Runs on CPU in about a second per
-trajectory.
+Seeds: with seed=g the commanded durations come from numpy's default_rng(g)
+and both sampling draws, first event then the rest, come from torch's
+generator seeded once with g. With no seed both are drawn from system
+entropy. The same seed and the same request reproduce the same trajectory.
 
-The raw model output heads the right way and covers roughly the right
-distance, but lands near the target rather than on it (the detectors it was
-evaluated against score how movement looks, not where it stops). The final
-landing is therefore a small rotate-and-scale of the whole path around the
-start point, typically a few percent, which leaves its character intact.
-Pass land=False (or --no-land) to see the raw output.
+Needs `training/event_ar_hm_mlp.pt`, `training/firsthead_q.pt` and
+`training/duration_pool.npy`; `python setup_data.py` downloads all three.
+The first call loads the models; after that a CPU run takes well under a
+second per trajectory.
+
+A row whose event stream decodes to fewer than two events is drawn again,
+up to three attempts. That is a resample of a degenerate row, not a quality
+selection: no draw is ever compared against another.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import sys
+from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-# Single-shot sampling recipe. This is the STABLE decoder (confidence order),
-# not the high-diversity gumbel recipe the README uses for step 4. That recipe
-# deliberately scatters samples wide because a downstream selection step then
-# cherry-picks the good ones out of a large pool; run one-shot with no
-# selection, it heads the wrong way about half the time. Confidence order
-# heads toward the target reliably, which is what a caller of this script
-# wants. setdefault so the environment can still override any knob.
-_RECIPE = {
-    "EVENT_CKPT": "event_polar_4m_fc_v2.pt",
-    "EVENT_ORDER": "conf",
-    "EVENT_CHOICE_TEMP": "0",
-    "EVENT_SNAP": "2.5",
-    "EVENT_DUR_STD": "1.0",
-    "DUR_EMPIRICAL": "1",
-}
-for _k, _v in _RECIPE.items():
-    os.environ.setdefault(_k, _v)
-
-# How many candidates to draw per requested trajectory. The model naturally
-# lands 10-30% off the target; we keep the candidate whose raw endpoint is
-# closest, so the landing correction stays small and the path's character is
-# barely touched. Override with MIME_OVERSAMPLE=1 to disable.
-_OVERSAMPLE = max(1, int(os.environ.get("MIME_OVERSAMPLE", "6")))
+if TYPE_CHECKING:
+    from models.event_ar import EventARModel
+    from models.firsthead import FirstHead
 
 _TRAIN_DIR = Path(os.environ.get("TRAIN_DIR", "./training"))
+
+# Sequence length of both served checkpoints and width of the force tensors.
+MAX_T = 256
+
+# Served sampling temperatures of the autoregressive model: speed, turn, dt.
+# research/w4_mserve.py arm mq1 and every w4 arm since w4_occupancy sampled
+# the contract at these.
+AR_TEMPS = (0.95, 0.90, 1.00)
+
+
+@dataclass
+class Serve:
+    """Everything generate() needs, built once and kept.
+
+    model is the autoregressive event model in eval mode, q the first event
+    head in eval mode, pool the (N, 2) array of held out human rows sorted by
+    column 0 (log distance, log duration), device where the models live.
+    """
+
+    model: "EventARModel"
+    q: "FirstHead"
+    pool: np.ndarray
+    device: str
+
+
+_SERVE: Serve | None = None
+
+
+def load_serve(device: str | None = None) -> Serve:
+    """Load the served models once and return the same Serve thereafter.
+
+    The first call fixes the device ("cuda" if available else "cpu", or the
+    one given) and every later call returns that cached instance.
+    """
+    global _SERVE
+    if _SERVE is None:
+        import torch
+
+        from models.event_ar import EventARModel
+        from models.firsthead import FirstHead
+
+        dev = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        ck = torch.load(_TRAIN_DIR / "event_ar_hm_mlp.pt", map_location=dev,
+                        weights_only=True)
+        model = EventARModel(**ck["config"]).to(dev).eval()
+        model.load_state_dict(ck["model_state_dict"])
+        qk = torch.load(_TRAIN_DIR / "firsthead_q.pt", map_location=dev,
+                        weights_only=True)
+        q = FirstHead(**qk["config"]).to(dev).eval()
+        q.load_state_dict(qk["model_state_dict"])
+        _SERVE = Serve(model=model, q=q, pool=np.load(_TRAIN_DIR / "duration_pool.npy"),
+                       device=dev)
+    return _SERVE
+
+
+def draw_log_durations(log_dist: np.ndarray, rng: np.random.Generator,
+                       k: int = 64) -> np.ndarray:
+    """One commanded log duration per requested log distance, in order.
+
+    The durmatch matcher of research/w4_mserve.py, verbatim: empirical
+    p(log dur | log dist) from held out human rows in the duration pool. For
+    each request, sample one of the k nearest pool rows by |log distance
+    difference| and take its log duration verbatim. One draw per request,
+    no selection.
+    """
+    serve = load_serve()
+    pd, pdur = serve.pool[:, 0], serve.pool[:, 1]
+    out = np.empty(len(log_dist), dtype=np.float64)
+    for i, ld in enumerate(log_dist):
+        j = np.searchsorted(pd, ld)
+        lo, hi = max(0, j - k), min(len(pd), j + k)
+        cand = np.arange(lo, hi)
+        near = cand[np.argsort(np.abs(pd[cand] - ld), kind="stable")[:k]]
+        out[i] = pdur[near[rng.integers(len(near))]]
+    return out
+
+
+def first_event_force(q: "FirstHead", cond) -> tuple:
+    """Draw the first event from q and wrap it as a force tuple for
+    EventARModel.sample: PAD/NULL/zero streams with column 0 replaced by the
+    draw, and a mask making exactly that column forced."""
+    import torch
+
+    from models.event_ar import DT_MAX_MS
+    from models.event_stream_polar import S_PAD_CLASS, TH_NULL_CLASS
+
+    qs, qth, qdt = q.sample(cond, 1.0, 1.0, 1.0)
+    b = cond.shape[0]
+    fs = torch.full((b, MAX_T), S_PAD_CLASS, device=cond.device, dtype=torch.long)
+    fth = torch.full((b, MAX_T), TH_NULL_CLASS, device=cond.device, dtype=torch.long)
+    fdt = torch.zeros((b, MAX_T), device=cond.device, dtype=torch.long)
+    fs[:, 0], fth[:, 0], fdt[:, 0] = qs, qth, qdt.clamp(max=DT_MAX_MS)
+    mask = torch.zeros((b, MAX_T), device=cond.device, dtype=torch.bool)
+    mask[:, 0] = True
+    return fs, fth, fdt, mask
 
 
 def _check_assets() -> None:
     missing = [
         p.name
-        for p in (_TRAIN_DIR / os.environ["EVENT_CKPT"], _TRAIN_DIR / "train_conditions.npy")
+        for p in (_TRAIN_DIR / "event_ar_hm_mlp.pt", _TRAIN_DIR / "firsthead_q.pt",
+                  _TRAIN_DIR / "duration_pool.npy")
         if not p.exists()
     ]
     if missing:
@@ -117,46 +210,72 @@ def generate(
 
     Returns one (m, 3) float array of columns [x, y, t_seconds] when n == 1,
     or a list of n such arrays. With land=True (default) each path ends
-    exactly on the target; with land=False you get the raw model output.
+    exactly on the target; with land=False you get the raw decoded model
+    output. One draw per requested trajectory, no candidate selection. A row
+    that decodes to fewer than 2 events is resampled, up to 3 attempts: that
+    is a redo of a degenerate draw, not a choice between candidates.
     """
     _check_assets()
+    dist = math.hypot(end_x - start_x, end_y - start_y)
+    if dist < 1e-6:
+        raise ValueError("start and end must differ by at least 1e-6 pixels")
+    ang = math.atan2(end_y - start_y, end_x - start_x)
+    log_dist = math.log(dist)
+
+    # torch, and the model modules that pull it in, are imported inside the
+    # functions that need them so --help, --help-adjacent failures and the
+    # asset check above stay cheap.
+    import torch
+
+    from models.event_ar import class_to_dt_ms
+    from models.event_stream_polar import decode_events
+
+    serve = load_serve()
     if seed is not None:
-        import torch
-
-        np.random.seed(seed)
+        rng = np.random.default_rng(seed)
         torch.manual_seed(seed)
+    else:
+        rng = np.random.default_rng()
 
-    # Imported here, not at module top, so that --help and asset checks do not
-    # pay the cost of loading torch and the checkpoint. The module prints a
-    # one-line config banner to stdout at import; send it to stderr so it never
-    # lands in the JSON/CSV a caller is parsing from stdout.
-    import contextlib
+    paths: list[np.ndarray | None] = [None] * n
 
-    with contextlib.redirect_stdout(sys.stderr):
-        from experiments.event_stream_polar import generate_paths
+    def draw(rows: list[int]) -> None:
+        """Sample and decode one event stream per index in rows, in place.
 
-    # Draw _OVERSAMPLE candidates per requested output in one batched call.
-    k = _OVERSAMPLE
-    specs = [(start_x, start_y, end_x, end_y)] * (n * k)
-    raw = generate_paths(specs)
+        All of a request's rows share the one spec, so every pass is a single
+        batched call: durations, condition, first event, autoregressive body.
+        """
+        cond = np.stack([
+            np.full(len(rows), log_dist),
+            draw_log_durations(np.full(len(rows), log_dist), rng),
+            np.full(len(rows), math.cos(ang)),
+            np.full(len(rows), math.sin(ang)),
+        ], 1).astype(np.float32)
+        cond_t = torch.from_numpy(cond).to(serve.device)
+        force = first_event_force(serve.q, cond_t)
+        with torch.no_grad():
+            s_cls, th_cls, dt_cls = serve.model.sample(
+                cond_t, temperature=AR_TEMPS[0], th_temperature=AR_TEMPS[1],
+                dt_temperature=AR_TEMPS[2], force=force, kv_cache=True)
+        s_np, th_np, dt_np = (s_cls.cpu().numpy(), th_cls.cpu().numpy(),
+                              dt_cls.cpu().numpy())
+        for row, i in enumerate(rows):
+            dt_ms = class_to_dt_ms(torch.from_numpy(dt_np[row])).numpy()
+            paths[i] = decode_events(s_np[row], th_np[row], dt_ms,
+                                     start_x, start_y, ang)
 
-    target = np.array([end_x, end_y])
-    out = []
-    for g in range(n):
-        best, best_miss = None, np.inf
-        for t in raw[g * k : (g + 1) * k]:
-            arr = np.asarray(t, dtype=float)
-            if arr.ndim != 2 or arr.shape[0] < 2:
-                continue
-            miss = float(np.hypot(*(arr[-1, :2] - target)))
-            if miss < best_miss:
-                best, best_miss = arr, miss
-        if best is None:
-            continue
-        out.append(_land_on_target(best, end_x, end_y) if land else best)
+    pending = list(range(n))
+    for _ in range(4):  # the initial draw plus up to 3 resamples of bad rows
+        if not pending:
+            break
+        draw(pending)
+        pending = [i for i, p in enumerate(paths) if p is None]
+    if pending:
+        raise RuntimeError(
+            f"{len(pending)} of {n} row(s) decoded to fewer than 2 events on "
+            "4 draws each; try a different seed")
 
-    if not out:
-        raise RuntimeError("model returned no usable trajectory; try a different seed")
+    out = [_land_on_target(p, end_x, end_y) if land else p for p in paths]
     return out[0] if n == 1 else out
 
 

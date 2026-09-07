@@ -66,6 +66,7 @@ from models.event_ar import (DT_MAX_MS, N_DT_CLASSES, EventARModel,  # noqa: E40
 from models.event_stream_polar import (N_S_CLASSES, N_TH_CLASSES,  # noqa: E402
                                        S_PAD_CLASS, TH_NULL_CLASS, TICK_CLASS,
                                        dth_lattice_to_class, s2_to_class)
+from models.firsthead import FirstHead  # noqa: E402
 
 TRAIN_PICK_SEED = 123
 N_TRAIN_DEFAULT = 1_500_000
@@ -105,49 +106,6 @@ def pos0_tokens():
     np.savez(POS0_CACHE, s=s, th=th, dt=d)
     print(f"  position 0 tokens cached, {time.time() - t0:.0f}s, empty rows {int(empty.sum())}")
     return s, th, d
-
-
-class FirstHead(nn.Module):
-    """q(e0 | cond) = p(s) p(th | s) p(dt | s, th), the AR model's own within
-    step chain, on a Fourier featured condition."""
-
-    def __init__(self, d=512, n_freq=6):
-        super().__init__()
-        self.register_buffer("freqs", 2.0 ** torch.arange(n_freq).float() * np.pi / 4)
-        inp = 4 + 4 * 2 * n_freq
-        self.inp = nn.Sequential(nn.Linear(inp, d), nn.GELU(), nn.Linear(d, d),
-                                 nn.GELU(), nn.Linear(d, d), nn.GELU())
-        self.s_head = nn.Linear(d, N_S_CLASSES)
-        self.s_emb = nn.Embedding(N_S_CLASSES, d)
-        self.th_norm = nn.LayerNorm(d)
-        self.th_head = nn.Linear(d, N_TH_CLASSES)
-        self.th_emb = nn.Embedding(N_TH_CLASSES, d)
-        self.dt_norm = nn.LayerNorm(d)
-        self.dt_head = nn.Linear(d, N_DT_CLASSES)
-
-    def feat(self, cond):
-        x = cond.unsqueeze(-1) * self.freqs
-        return torch.cat([cond, torch.sin(x).flatten(1), torch.cos(x).flatten(1)], -1)
-
-    def forward(self, cond, s, th):
-        h = self.inp(self.feat(cond))
-        zs = self.s_head(h)
-        zth = self.th_head(self.th_norm(h + self.s_emb(s)))
-        zdt = self.dt_head(self.dt_norm(h + self.s_emb(s) + self.th_emb(th)))
-        return zs, zth, zdt
-
-    @torch.no_grad()
-    def sample(self, cond, s_temp, th_temp, dt_temp):
-        h = self.inp(self.feat(cond))
-        s = torch.multinomial(torch.softmax(self.s_head(h) / s_temp, -1), 1).squeeze(-1)
-        th = torch.multinomial(torch.softmax(
-            self.th_head(self.th_norm(h + self.s_emb(s))) / th_temp, -1), 1).squeeze(-1)
-        motion = (s > TICK_CLASS) & (s < S_PAD_CLASS)
-        th = torch.where(motion, th, torch.full_like(th, TH_NULL_CLASS))
-        dt = torch.multinomial(torch.softmax(
-            self.dt_head(self.dt_norm(h + self.s_emb(s) + self.th_emb(th))) / dt_temp, -1),
-            1).squeeze(-1)
-        return s, th, dt
 
 
 def ce_triplet(zs, zth, zdt, s, th, dt):
