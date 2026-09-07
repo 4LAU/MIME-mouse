@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import math
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -80,6 +81,45 @@ def class_to_dtheta(c: torch.Tensor) -> torch.Tensor:
     b = torch.where(c >= TH_BINS // 2, c - TH_BINS, c)
     ang = b.float() * (2.0 * math.pi / TH_BINS)
     return torch.where(c >= TH_NULL_CLASS, torch.zeros_like(ang), ang)
+
+
+def decode_events(s_cls, th_cls, dt_ms, sx, sy, angle, *, snap=2.5, round_px=True):
+    """Decode one sampled event stream to an (m, 3) float64 array of x, y,
+    t_seconds, the served decoder for `generate.py`.
+
+    Same decode contract as `experiments/event_stream_polar.py::_decode`:
+    truncate at the first PAD on the speed stream, heading is the conditioning
+    angle plus the cumulative turn of the motion events, positions are the
+    cumulative sum of s * (cos, sin) rounded to whole pixels, slow steps are
+    emitted on the pixel lattice at the heading's nearest realizable direction
+    while the integrated heading stays continuous. Two differences: dt_ms is
+    milliseconds per event, not a z scored log duration, and there is no tick
+    merge branch. Returns None when fewer than 2 events survive truncation.
+    """
+    pad = s_cls >= S_PAD_CLASS
+    n = int(np.argmax(pad)) if pad.any() else len(s_cls)
+    if n < 2:
+        return None
+
+    s = class_to_speed(torch.from_numpy(s_cls[:n].astype(np.int64))).numpy()
+    dth = class_to_dtheta(torch.from_numpy(th_cls[:n].astype(np.int64))).numpy()
+
+    motion = s_cls[:n] > TICK_CLASS
+    heading = angle + np.cumsum(np.where(motion, dth, 0.0))
+    dx = np.where(motion, s * np.cos(heading), 0.0)
+    dy = np.where(motion, s * np.sin(heading), 0.0)
+    slow = motion & (s > 0) & (s < snap)
+    dx = np.where(slow, np.round(dx), dx)
+    dy = np.where(slow, np.round(dy), dy)
+
+    dt_s = np.clip(dt_ms[:n], 0.1, 1000.0) / 1000.0
+    x = np.concatenate([[sx], sx + np.cumsum(dx)])
+    y = np.concatenate([[sy], sy + np.cumsum(dy)])
+    if round_px:
+        x = np.round(x)
+        y = np.round(y)
+    t = np.concatenate([[0.0], np.cumsum(dt_s)])
+    return np.stack([x, y, t], axis=1)
 
 
 class EventStreamPolarModel(nn.Module):

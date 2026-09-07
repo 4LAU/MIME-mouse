@@ -3,7 +3,8 @@ name: verify
 # Reproduce the headline result from the published release assets on every
 # push: download the cached candidate pools and winning picks, replay them
 # through the evaluator on CPU, and check each seed's RF OOB AUC against the
-# published value. No GPU, no model weights, about five minutes.
+# published value, then draw one trajectory from the served model. No GPU,
+# about five minutes.
 
 on:
   push:
@@ -40,3 +41,14 @@ jobs:
 
       - name: Replay all three seeds and check against published values
         run: python verify_headline.py
+
+      # The served generator, from a clean checkout on a CPU box: download the
+      # three files generate.py needs and draw one path with it.
+      - name: Generate one trajectory with the served model
+        run: |
+          BASE=https://github.com/4LAU/MIME-mouse/releases/latest/download
+          mkdir -p training
+          for f in event_ar_hm_mlp.pt firsthead_q.pt duration_pool.npy; do
+            curl -sSL $BASE/$f -o training/$f
+          done
+          python generate.py 200 600 1500 300 --seed 7 | head -c 300; echo

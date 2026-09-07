@@ -29,25 +29,23 @@ pip install -e .
 ```
 
 1. **Install the project.** The three commands above clone the repository, move into it, and install its Python dependencies.
-2. **Download the data.** `python setup_data.py` pulls the trained model checkpoints, the evaluation data, and a bundle of cached results, all from the GitHub release, into `./data` and a couple of expected root locations. Nothing here requires a GPU.
+2. **Download the data.** `python setup_data.py` pulls the trained model checkpoints, the evaluation data, and a bundle of cached results, all from the GitHub release, into `./data`, `./training` and a couple of expected root locations. Nothing here requires a GPU.
 3. **Generate a trajectory.** Give the model a start point and an end point in screen pixels; it returns a human-like path between them.
 
    ```bash
    python generate.py 200 600 1500 300
    ```
 
-   That prints a list of `{"x", "y", "delay"}` points, where `delay` is the wait in milliseconds before each move, ready to feed straight into an input-replay layer. The path starts exactly on the start point and ends exactly on the end point. Add `--n 5` for several variations, `--seed 7` to make a run repeatable, `--format csv` for spreadsheet-friendly output, or `--plot out.png` to save a picture of the paths. It runs on CPU in a couple of seconds. From Python, `from generate import generate` gives you the same thing as arrays.
+   That prints a list of `{"x", "y", "delay"}` points, where `delay` is the wait in milliseconds before each move, ready to feed straight into an input-replay layer. The path starts exactly on the start point and ends exactly on the end point. Add `--n 5` for several variations, `--seed 7` to make a run repeatable, `--format csv` for spreadsheet-friendly output, or `--plot out.png` to save a picture of the paths. From Python, `from generate import generate` gives you the same thing as arrays.
 
-4. **Check the headline number.** `python verify_headline.py` replays the cached, already-selected trajectories for three seeds through the same evaluator used throughout the project and confirms each one matches the published score. It runs on CPU in about two minutes and never touches the model itself.
-5. **Measure the detector against fresh samples.** The command below samples new trajectories straight from the model and prints the detector's AUC against held-out human data. On its own the model lands around 0.65; the selection step that closes the rest of the gap is a separate offline process, described under Reproduce below.
+   Each path is one draw from the model behind the current single-trajectory headline (0.5795, see below): the model is asked once and whatever it draws is what you get, with no second candidates and no picking. The raw path usually misses the target by a few pixels (about two percent of the distance); the only edit after the draw spends that miss as single-pixel changes on the path's longest steps so the last point lands on the requested pixel and every other step is exactly what the model drew. `--no-land` shows the uncorrected path.
 
-   ```bash
-   EVENT_CKPT=event_polar_4m_fc_v2.pt EVENT_ORDER=gumbel EVENT_CHOICE_TEMP=10 \
-   EVENT_SNAP=2.5 EVENT_DUR_STD=1.0 DUR_EMPIRICAL=1 \
-   python evaluate.py --experiment experiments.event_stream_polar --no-raw-nn
-   ```
+   It runs on a laptop CPU. The first call in a process loads the model (a second or two); after that one trajectory takes about a third of a second, and asking for many at once is much cheaper per path (`n=50` costs about 70 ms each on a desktop CPU). A GPU is not needed and makes a single trajectory no faster; it only helps when generating hundreds at a time.
 
-Everything above runs on CPU. Generating trajectories is fast either way; the checkpoint sampling in steps 3 and 5 is quicker with a GPU, see [pytorch.org](https://pytorch.org/get-started/locally/) for a CUDA-enabled install if you have one.
+4. **Check that what you installed matches the record.** `python verify_serve.py` regenerates 2000 trajectories for one recorded seed through the same code `generate.py` uses, scores them with the project's detector against the human reference, and compares the result to the value logged when the headline was set. It passes when the two agree within draw noise. A few minutes on a CPU.
+5. **Check the older selection headline.** `python verify_headline.py` replays the cached, already-selected trajectories for three seeds through the same evaluator used throughout the project and confirms each one matches the published 0.504. It runs on CPU in about two minutes and never touches a model.
+
+Everything above runs on CPU, including on an Apple laptop. If you have an NVIDIA GPU, a CUDA build of PyTorch (see [pytorch.org](https://pytorch.org/get-started/locally/)) speeds up bulk generation and the older experiments under Reproduce below.
 
 ## Results
 
@@ -90,7 +88,7 @@ The July 26 change is worth explaining because the mechanism was a surprise. The
 
 These numbers come from a different scorer and a different human reference set than the table above, so they are not directly comparable to the 0.652 row. They are internally consistent with each other.
 
-Since August 2026 this line runs on a different model, an autoregressive event model (`models/event_ar.py`) that emits one token at a time rather than filling in a masked stream, and that needs no endpoint correction. It reads 0.6215. The number to read that against is not 0.50, and this turned out to matter more than expected. Feeding real recorded human trajectories, taken from the training corpus rather than from the evaluation set, through the identical encoding and decoding scores 0.533 against the same reference. In other words a perfect model of this training corpus would still read about 0.53, because the people in the training data and the people in the reference set are not the same people and were not recorded on the same hardware. So the quantity actually left to close is roughly 0.09, not 0.12.
+Since August 2026 this line runs on a different model, an autoregressive event model (`models/event_ar.py`) that emits one token at a time rather than filling in a masked stream, and that needs no endpoint correction. Its first version read 0.6215. The number to read that against is not 0.50, and this turned out to matter more than expected. Feeding real recorded human trajectories, taken from the training corpus rather than from the evaluation set, through the identical encoding and decoding scores 0.533 against the same reference. In other words a perfect model of this training corpus would still read about 0.53, because the people in the training data and the people in the reference set are not the same people and were not recorded on the same hardware. So the quantity actually left to close is roughly 0.09, not 0.12.
 
 Two findings from that work are worth stating here because they are general rather than specific to this project.
 
@@ -99,6 +97,8 @@ Two findings from that work are worth stating here because they are general rath
 **Every individual decision the model makes is correct; the error is made entirely by running it forward on its own output.** Fed real recorded human history and asked what it would do next, all three of the model's prediction heads reproduce the true answer to three or four decimal places, in every situation tested. Fed its own output, the same model produces sub-millisecond pauses 1.68 times too often, and that propagates into a small, consistent, mutually reinforcing distortion of all eighteen measurements the detector reads. This is compounding error, or exposure bias, and it is a known failure mode of models that generate a step at a time. It means no amount of further training on recorded data fixes it, because on recorded data there is nothing to fix.
 
 **Training the model on its own output helps, and it is the remedy that diagnosis points to.** If the error is only made when the model runs forward on itself, then the training signal has to be built from what the model itself generates. Since August 2026 that line works: the model is trained against the distance between the whole distribution of the eighteen measurements it generates and the human one, with the gradient pushed back through the sampling process. On repeat samples it moves the detector from 0.6301 to 0.5990, about five times the measurement noise. Six of the eighteen measurements are deliberately kept out of the training signal as a check, and they improve slightly faster than the twelve that are in it, so the model is not simply learning to flatter the score it is shown. For scale, real recorded trajectories from the training corpus read 0.5455 through the same measurement, so roughly a third of the reachable distance is now closed and 0.054 remains.
+
+**The current headline, and what `generate.py` serves, is 0.5795** (standard error 0.0022 over ten seeds of 2000 requests each, one trajectory per request, no candidates and no selection). The model is the autoregressive one above with one architectural change, a direction head that also reads the speed the model has just chosen (`training/event_ar_hm_mlp.pt`, the only change to the network that has ever moved this detector, 0.6340 to 0.6145 over five seeds). It is sampled at temperatures 0.95 for speed, 0.90 for direction and 1.00 for timing, the best point of a sweep, with two additions to the serving recipe that were tested against a pre-registered threshold before being adopted: the commanded duration of each request is drawn from real human movements of about the same length instead of from a fitted curve, and the first event of each path comes from a small separate model trained only on how human movements begin (`training/firsthead_q.pt`). Together those two are worth 0.010 on the paired test. Under the same detector, real recorded human movement from the training corpus reads about 0.5455, so the remaining gap is 0.034. Every number in this paragraph was measured on raw model output, which misses the target by a median of about 4 pixels. `generate.py` draws the same token streams and decodes them with exact millisecond timestamps, where the research decoder behind the record left nanosecond offsets from a single precision round trip (30 ms came back as 30.000004 ms); over the same ten seeds the exact timestamps read 0.5817 raw (standard error 0.0029), the same as the record within draw noise, though single seeds swing either way by up to 0.013. Making a served path end on its target pixel, by whole-pixel changes on its longest steps, costs 0.006 on average over those ten seeds (0.5817 raw against 0.5874 landed, seed by seed anywhere from a 0.005 gain to a 0.020 loss); rotating and scaling the path instead, which is what a first version of this tool did, put every point off the pixel grid and cost 0.12. `verify_serve.py` prints the landing cost next to the raw score so it is never hidden inside the headline.
 
 Two cautions on that number, since both cost real time to find. Matching each measurement's average and spread separately, rather than the joint distribution, is worth almost nothing: a full run of it returned 0.008, inside the noise. And the first version of the result above read three times larger, because each evaluation was a single sample and the two that framed the headline happened to fall at opposite extremes. Anything measured by generating fresh trajectories needs at least two independent draws on each side before it means anything.
 
@@ -120,7 +120,9 @@ For the complete account, including why every continuous architecture family fai
 
 ## Reproduce the current results
 
-**Verify the headline in minutes, no GPU.** `setup_data.py` downloads the cached candidate pools and the winning picks for all three tuning seeds. Replaying them through the evaluator reproduces the confirmed numbers (0.5095 / 0.5030 / 0.4993, mean 0.504; exact on the original platform, within 0.001 across OS and BLAS differences) without loading the model:
+**Verify the served model, no GPU.** `python verify_serve.py --seed 20` regenerates the recorded seed 20 run of the current headline (2000 requests) through the code `generate.py` uses and scores it with `research/autoloop/scoring.py`, a random forest out-of-bag AUC against the human reference in `data/human_val_features_grpo.npy`. The record for that seed is 0.5777 (`research/w4_mserve_s20.json`; seed 21 is 0.5782). It prints three numbers from one set of sampled token streams: the served paths as `generate.py` decodes them, the same rows after landing, and the same tokens decoded with the record's timestamp arithmetic. On the machine the record was made on, that third number returned all ten logged seed values to four decimals, so the token streams are the record's. On other hardware the random draws differ, so the check passes within 0.025 rather than to the fourth decimal. The registered research run itself is `research/w4_mserve.py`.
+
+**Verify the selection headline in minutes, no GPU.** `setup_data.py` downloads the cached candidate pools and the winning picks for all three tuning seeds. Replaying them through the evaluator reproduces the confirmed numbers (0.5095 / 0.5030 / 0.4993, mean 0.504; exact on the original platform, within 0.001 across OS and BLAS differences) without loading the model:
 
 ```bash
 EVENT_POOL_LOAD=pool_s42_k16.npz \
@@ -130,7 +132,7 @@ python evaluate.py --experiment experiments.event_stream_polar --seed 42 --no-ra
 
 Repeat with `s43`/`--seed 43` and `s44`/`--seed 44` for the other two seeds, or run `python verify_headline.py` to do all three and check them against the published values in one command. The same check runs in CI on every push (the verify badge at the top of this page). The human class in this replay is the held-out evaluation sample no part of selection ever saw; the pool files contain only model-generated trajectories, so nothing here can leak the answer. Drop `--no-raw-nn` to also run the raw-sequence neural detector (slower; needs the training data split).
 
-**Rebuild everything from scratch.** All of the current-generation numbers come from one checkpoint, `event_polar_4m_fc_v2.pt` (downloaded to `training/` by `setup_data.py`), run through `experiments/event_stream_polar.py` with different environment variables controlling the sampler and the selection layer. The exact locked recipe, and every knob that was tried and rejected along the way, is logged in [EXPERIMENTS.md](EXPERIMENTS.md); the commands below are the short version.
+**Rebuild the selection results from scratch.** All of the selection-era numbers come from one checkpoint, `event_polar_4m_fc_v2.pt` (downloaded to `training/` by `setup_data.py`), run through `experiments/event_stream_polar.py` with different environment variables controlling the sampler and the selection layer. The exact locked recipe, and every knob that was tried and rejected along the way, is logged in [EXPERIMENTS.md](EXPERIMENTS.md); the commands below are the short version.
 
 **Pure model, no selection (AUC ~0.652):**
 
@@ -148,7 +150,7 @@ with environment variables `EVENT_CKPT=event_polar_4m_fc_v2.pt EVENT_ORDER=gumbe
 
 ### Hardware
 
-Developed on an RTX 4070 (12GB VRAM). A single consumer GPU is sufficient for all experiments. CPU-only inference works for corpus replay, corpus rotate, and verifying the headline.
+Developed on an RTX 4070 (12GB VRAM). A single consumer GPU is sufficient for all experiments. Generating trajectories, `verify_serve.py`, corpus replay, corpus rotate and `verify_headline.py` all run CPU-only, including on Apple silicon.
 
 ## Repository structure
 
@@ -165,6 +167,7 @@ MIME-mouse/
 ├── tune_trust.py                     # Selection-recipe search
 ├── regenerate_human_features.py      # Rebuild the human reference feature cache
 ├── setup_data.py                     # Downloads checkpoints, eval data, and the reproduce bundle
+├── verify_serve.py                   # One-command check that generate.py reproduces the 0.5795 record
 ├── verify_headline.py                # One-command check of the 0.504 headline against published values
 ├── generate_figures.py               # Regenerate the figures embedded in this page
 ├── test_*.py                         # Unit tests
@@ -181,7 +184,8 @@ MIME-mouse/
 │   └── ...                           # 20+ additional experiment variants
 ├── models/
 │   ├── event_stream_polar.py         # Masked-token event-stream architecture
-│   ├── event_ar.py                   # Autoregressive event model, the current single-trajectory line
+│   ├── event_ar.py                   # Autoregressive event model, the current single-trajectory line (served by generate.py)
+│   ├── firsthead.py                  # First-event model that seeds each served trajectory
 │   ├── zimt.py                       # ZIMT architecture (historical)
 │   ├── temporal_unet.py              # 1D U-Net for diffusion / flow matching (historical)
 │   ├── vqvae.py                      # Vector-quantized variational autoencoder (historical)

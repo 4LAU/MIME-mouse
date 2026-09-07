@@ -217,6 +217,38 @@ class CausalBlock(nn.Module):
         x = x + self.ff(self.norm2(x))
         return x
 
+    def forward_step(self, x_i, cond_emb, entry, i) -> torch.Tensor:
+        """Position i only, attending over the cached keys and values.
+
+        `entry` is this layer's cache slot, [K, V, gain, shift], filled by
+        `EventARModel.trunk_step` on the first step: K and V are (B, n_heads,
+        max_len, d_head) buffers, this step's key and value are written at
+        column i and attention reads columns 0 to i; gain is 1 + FiLM scale
+        and shift the FiLM shift, computed once per sampling call because the
+        conditioning never changes within one. The single query IS the last
+        position, so attending to every earlier column with no mask is
+        exactly the causal attention `forward` applies. Attention is two
+        small matmuls rather than the fused kernel, which handles a one query
+        batch badly. The dropout modules are skipped, they are identities in
+        eval mode, which is the only mode this runs in. The numbers differ
+        from `forward` only by float rounding.
+        """
+        K, V, gain, shift = entry
+        h = self.norm1(x_i)
+        B, _, D = h.shape
+        q, k, v = (self.qkv(h).view(B, 1, 3, self.n_heads, self.d_head)
+                   .permute(2, 0, 3, 1, 4).unbind(0))
+        K[:, :, i] = k[:, :, 0]
+        V[:, :, i] = v[:, :, 0]
+        att = torch.softmax((q @ K[:, :, :i + 1].transpose(-1, -2))
+                            / math.sqrt(self.d_head), dim=-1)
+        a = (att @ V[:, :, :i + 1]).transpose(1, 2).reshape(B, 1, D)
+        x_i = x_i + self.proj(a)
+        x_i = x_i * gain + shift
+        lin1, act, _, lin2, _ = self.ff
+        x_i = x_i + lin2(act(lin1(self.norm2(x_i))))
+        return x_i
+
 
 class EventARModel(nn.Module):
 
@@ -343,6 +375,42 @@ class EventARModel(nn.Module):
             x = layer(x, c)
         return self.norm(x)
 
+    def new_cache(self) -> list:
+        """A fresh per layer cache for `trunk_step`: one entry per CausalBlock,
+        each entry [K, V, gain, shift], all None until the first step fills
+        them for the batch. Mutated in place by `trunk_step`; discard and
+        rebuild per sampling call."""
+        return [[None, None, None, None] for _ in self.layers]
+
+    def trunk_step(self, s_prev_i, th_prev_i, dt_prev_i, state_i, cond,
+                   cache, i) -> torch.Tensor:
+        """Row i of the trunk computed incrementally, the KV cached serving
+        step behind `sample(..., kv_cache=True)`.
+
+        s_prev_i/th_prev_i/dt_prev_i are the SHIFTED inputs for position i,
+        i.e. column i of what `shift_inputs` returns (the BOS class at i == 0).
+        state_i is prefix_state(...)[:, i]. Returns the same value as
+        `self.trunk(s_prev[:, :i + 1], th_prev[:, :i + 1], dt_prev[:, :i + 1],
+        state[:, :i + 1], cond)[:, -1]`, to float rounding in attention only.
+        """
+        assert not self.training
+        x = (
+            self.s_embed(s_prev_i)
+            + self.th_embed(th_prev_i)
+            + self.dt_embed(dt_prev_i)
+            + self.pos_embed(torch.arange(i, i + 1, device=s_prev_i.device))
+            + self.state_proj(state_i)
+        )
+        c = self.cond_embed(cond)
+        if cache[0][0] is None:
+            for layer, entry in zip(self.layers, cache):
+                shape = (x.shape[0], layer.n_heads, self.max_seq_len, layer.d_head)
+                scale, shift = layer.film(c).unsqueeze(1).chunk(2, dim=-1)
+                entry[:] = [x.new_zeros(shape), x.new_zeros(shape), 1.0 + scale, shift]
+        for layer, entry in zip(self.layers, cache):
+            x = layer.forward_step(x.unsqueeze(1), c, entry, i).squeeze(1)
+        return self.norm(x)
+
     def _s_emb(self, s):
         return self.s_ctx_embed(s.clamp(max=N_S_CLASSES - 1))
 
@@ -407,13 +475,19 @@ class EventARModel(nn.Module):
                th_temperature=None, dt_temperature=None, force=None,
                th_beta=None, dt_tilt=None, th_tilt=None, s_tilt=None,
                tick_th_null=True, s_bias=None, th_bias=None, dt_bias=None,
-               th_lobe_tau=None, s_lobe=False):
+               th_lobe_tau=None, s_lobe=False, kv_cache: bool = False):
         """One trajectory per row of cond, generated strictly left to right.
 
         No KV cache: each step re-runs the trunk over the prefix, which is
         exact and has no cache-invalidation surface. Returns integer class
         tensors (s_cls, th_cls, dt_cls), all (B, T), PAD-terminated on the
         speed stream exactly as the serving decoder expects.
+
+        `kv_cache=True` computes the same trunk output incrementally with
+        cached keys and values; it is the serving path used by generate.py.
+        It is float equal to the legacy path to about 1e-4, not bit equal, so
+        any multinomial draw can differ; research scripts that reproduce
+        recorded rows must keep the default False.
 
         `force` is (s, th, dt, mask), four tensors, the first three (B, T)
         class streams and mask a bool. Wherever mask is set the token is
@@ -527,15 +601,35 @@ class EventARModel(nn.Module):
         done = torch.zeros(B, dtype=torch.bool, device=dev)
         th_lobe = None
         s_lobe_ix = None
+        if kv_cache:
+            cache = self.new_cache()
 
         for i in range(T):
             s_T = temperature[i] if isinstance(temperature, (list, tuple)) else temperature
             th_T = th_temp[i] if isinstance(th_temp, (list, tuple)) else th_temp
             dt_T = dt_temp[i] if isinstance(dt_temp, (list, tuple)) else dt_temp
-            s_prev, th_prev, dt_prev = self.shift_inputs(s_cls, th_cls, dt_cls)
-            state = prefix_state(s_cls, th_cls, dt_cls, cond)
-            x = self.trunk(s_prev[:, :i + 1], th_prev[:, :i + 1],
-                           dt_prev[:, :i + 1], state[:, :i + 1], cond)[:, -1]
+            if kv_cache:
+                # column i of shift_inputs, without materialising the shift:
+                # the token just emitted, or BOS at the first position.
+                if i == 0:
+                    s_prev_i = torch.full((B,), S_BOS_CLASS, device=dev,
+                                          dtype=torch.long)
+                    th_prev_i = torch.full((B,), TH_BOS_CLASS, device=dev,
+                                           dtype=torch.long)
+                    dt_prev_i = torch.full((B,), DT_BOS_CLASS, device=dev,
+                                           dtype=torch.long)
+                else:
+                    s_prev_i = s_cls[:, i - 1]
+                    th_prev_i = th_cls[:, i - 1]
+                    dt_prev_i = dt_cls[:, i - 1]
+                state_i = prefix_state(s_cls, th_cls, dt_cls, cond)[:, i]
+                x = self.trunk_step(s_prev_i, th_prev_i, dt_prev_i, state_i,
+                                    cond, cache, i)
+            else:
+                s_prev, th_prev, dt_prev = self.shift_inputs(s_cls, th_cls, dt_cls)
+                state = prefix_state(s_cls, th_cls, dt_cls, cond)
+                x = self.trunk(s_prev[:, :i + 1], th_prev[:, :i + 1],
+                               dt_prev[:, :i + 1], state[:, :i + 1], cond)[:, -1]
 
             x1 = x.unsqueeze(1)
             if self.emit_order == "dt_s_th":
