@@ -1,42 +1,39 @@
 """Check that generate.py serves the recorded headline recipe, one command.
 
-Regenerates the served arm of ledger run w4_q2serve (arm "mq2": a commanded
-duration matched from the held out human pool, the first event from the
-coupled q2 head, the autoregressive model at temperatures 0.95 / 0.90 / 1.00,
-one draw per request, no selection) for one seed and 2000 requests, through
+Regenerates the served recipe (a commanded duration matched from the held out
+human pool, the first event from the coupled q2 head, the autoregressive model
+at temperatures 0.95 / 0.90 / 1.00, one draw per request, no selection, every
+motion step rounded to whole pixels) for one seed and 2000 requests, through
 the same functions generate.py uses, and scores the result with the contract
-scorer against the human reference. The recorded values live in
-research/w4_q2serve_s<seed>.json: seed 20 reads 0.5627, seed 21 reads 0.5646,
-and the ten seed mean is 0.5686 with standard error 0.0015. The same files
-carry arm "mq1", the earlier 0.5795 recipe on the same requests, which the
-run reproduced from its own record (research/w4_mserve_s<seed>.json) to four
-decimals on every seed.
+scorer against the human reference. The record for the served decoder is
+research/w4_snapdecode.json (arm D1 raw, D1L landed; seed 20 reads 0.5653 raw
+and 0.5697 landed, seed 21 0.5522 and 0.5506; the ten seed means are 0.5622
+se 0.0035 raw and 0.5658 se 0.0030 landed). The token streams behind it are
+the ones logged in research/w4_q2serve_s<seed>.json, arm mq2, whose decoder
+rounded only steps shorter than 2.5 px and took each dwell through a single
+precision round trip; that record is kept here as the proof that the token
+streams reproduce.
 
     python verify_serve.py                 # seed 20, 2000 rows
     python verify_serve.py --seed 21
 
-Three numbers come out, all from one set of sampled token streams.
+Four numbers come out, all from one set of sampled token streams.
 
   served sampler, raw paths      what generate.py decodes, before landing
   served sampler, landed         the same rows after the whole pixel landing
-  record decoder, same tokens    the rows decoded the way the record was made
+  record decoder, same tokens    the rows decoded the way the A69 record was
+                                 made (snap 2.5, the record's dwell arithmetic)
+  recorded values                D1 and D1L for this seed, and the A69 mq2 value
 
-The record's decoder (experiments/event_stream_polar.py::_decode) took each
-event's whole millisecond dwell through a single precision log, a z score and
-an exp on the way to seconds, so 107 of the 1001 dwell classes come back off
-by a few nanoseconds (30 ms decodes as 30.000004 ms). generate.py keeps the
-exact dwell. The detector's random forest reads those offsets on any one
-seed (seed 20: 0.5627 with the record's timestamps, 0.5700 with exact ones),
-but over the ten recorded seeds the two read the same within draw noise,
-0.5686 against 0.5717 with standard errors near 0.003. The third arm
-reproduces the record's arithmetic bit for bit, so on the recording machine
-it returns the logged value to four decimals (it did for all ten seeds),
-which proves the token streams are the record's; on other hardware the
-random draws differ and every arm lands within draw noise, about 0.01 to
-0.02.
+On the machine the records were made on, the first two return the D1 and
+D1L values to four decimals and the third returns the A69 value to four
+decimals, which proves the token streams are the record's. On other
+hardware the random draws differ and every arm lands within draw noise: a
+CPU only run on the recording machine, a different draw, read seed 20 at
+0.5412 raw (0.024 under its record) and seed 21 at 0.5595 (0.007 over).
 
-Exits 0 when the served sampler is within 0.025 of the recorded value. Needs
-the release assets (python setup_data.py) and a few minutes on a CPU.
+Exits 0 when the served raw paths are within 0.03 of the recorded D1 value.
+Needs the release assets (python setup_data.py) and a few minutes on a CPU.
 """
 from __future__ import annotations
 
@@ -61,7 +58,7 @@ from models.event_ar import class_to_dt_ms                        # noqa: E402
 from models.event_stream_polar import decode_events               # noqa: E402
 from phase_a_baseline import make_specs                           # noqa: E402
 
-TOLERANCE = 0.025
+TOLERANCE = 0.03
 
 # dt_mean and dt_std of training/event_polar_best.pt, the constants the
 # record's decoder z scored dwell times with. Only their float rounding
@@ -91,10 +88,16 @@ def main():
     ap.add_argument("--batch", type=int, default=200)
     a = ap.parse_args()
 
-    recorded = None
-    rec_path = f"research/w4_q2serve_s{a.seed}.json"
+    recorded = rec_landed = rec_a69 = None
+    rec_path = "research/w4_snapdecode.json"
     if os.path.exists(rec_path):
-        recorded = float(json.load(open(rec_path))["arms"]["mq2"]["contract"])
+        cells = json.load(open(rec_path))["cells"]
+        if str(a.seed) in cells:
+            recorded = float(cells[str(a.seed)]["D1"]["official"])
+            rec_landed = float(cells[str(a.seed)]["D1L"]["official"])
+    a69_path = f"research/w4_q2serve_s{a.seed}.json"
+    if os.path.exists(a69_path):
+        rec_a69 = float(json.load(open(a69_path))["arms"]["mq2"]["contract"])
 
     serve = generate.load_serve()
     print(f"device {serve.device}, seed {a.seed}, n {a.n}, batch {a.batch}")
@@ -131,7 +134,7 @@ def main():
         dt_ms = class_to_dt_ms(dt.cpu()).numpy()
         for i in range(s.shape[0]):
             sx, sy, ex, ey, ang = meta[c0 + i]
-            p = decode_events(s[i], th[i], dt_ms[i], sx, sy, ang)
+            p = decode_events(s[i], th[i], dt_ms[i], sx, sy, ang, snap=generate.STEP_SNAP)
             if p is not None:
                 paths.append((p, ex, ey))
                 rec_paths.append(decode_events(s[i], th[i], record_dwell_ms(dt_ms[i]),
@@ -153,7 +156,10 @@ def main():
     print(f"  {'served sampler, landed on target':>34}  {auc_land:8.4f}  {n_land:5d}")
     print(f"  {'record decoder, same tokens':>34}  {auc_rec:8.4f}  {n_rec:5d}")
     if recorded is not None:
-        print(f"  {'recorded mq2, this seed':>34}  {recorded:8.4f}")
+        print(f"  {'recorded D1 raw, this seed':>34}  {recorded:8.4f}")
+        print(f"  {'recorded D1L landed, this seed':>34}  {rec_landed:8.4f}")
+    if rec_a69 is not None:
+        print(f"  {'recorded A69 mq2, this seed':>34}  {rec_a69:8.4f}")
     print(f"  generation {t_gen:.0f} s for {B} requests on {serve.device}")
     print(f"  raw endpoint miss, px: median {np.median(miss):.1f}, "
           f"p90 {np.percentile(miss, 90):.1f}; as a share of the requested "
@@ -163,9 +169,12 @@ def main():
     if recorded is None:
         print(f"no record for seed {a.seed}; nothing to check against")
         sys.exit(0)
-    print(f"  served minus recorded {auc_raw - recorded:+.4f}, tolerance {TOLERANCE}")
-    print(f"  record decoder minus recorded {auc_rec - recorded:+.4f}"
-          + ("  (the record's token streams, reproduced)" if abs(auc_rec - recorded) < 5e-5 else ""))
+    print(f"  served minus recorded {auc_raw - recorded:+.4f}, tolerance {TOLERANCE}"
+          + ("  (the record's rows, reproduced)" if abs(auc_raw - recorded) < 5e-5 else ""))
+    print(f"  landed minus recorded {auc_land - rec_landed:+.4f}")
+    if rec_a69 is not None:
+        print(f"  record decoder minus A69 {auc_rec - rec_a69:+.4f}"
+              + ("  (the record's token streams, reproduced)" if abs(auc_rec - rec_a69) < 5e-5 else ""))
     ok = abs(auc_raw - recorded) <= TOLERANCE
     print("PASS" if ok else "FAIL")
     sys.exit(0 if ok else 1)

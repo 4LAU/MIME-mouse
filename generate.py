@@ -10,8 +10,9 @@ held out human rows nearest the requested distance, a first event drawn by
 the dedicated first event head, then the autoregressive model free running
 from that seed at its served temperatures. There is no oversampling and no
 selection: what the model draws is what you get. The events are decoded into
-a path on the whole pixel lattice, which usually misses the target by a few
-pixels (about two percent of the distance). The miss is then spent as single
+a path on the whole pixel lattice, every motion step rounded to whole pixels
+before it is added, the way a mouse reports movement (STEP_SNAP below), which
+usually misses the target by a few pixels (about two percent of the distance). The miss is then spent as single
 pixel changes on the path's longest steps, where one pixel bends the least
 angle, so the last point lands exactly on the target and every other step is
 exactly what the model drew. Pass land=False (or --no-land) to see the raw
@@ -73,6 +74,14 @@ MAX_T = 256
 # research/w4_mserve.py arm mq1 and every w4 arm since w4_occupancy sampled
 # the contract at these.
 AR_TEMPS = (0.95, 0.90, 1.00)
+
+# Every motion step is rounded to whole pixels before it is added to the
+# path. The research decoder behind the A69 record rounded only steps shorter
+# than 2.5 px and let longer ones accumulate fractional positions; rounding
+# every step read 0.0071 (se 0.0006) closer to human on the same token
+# streams over twenty two seeds (AMENDMENT 70 in the research log,
+# research/w4_snapdecode.json). Human token streams read the same either way.
+STEP_SNAP = math.inf
 
 
 @dataclass
@@ -280,7 +289,7 @@ def generate(
         for row, i in enumerate(rows):
             dt_ms = class_to_dt_ms(torch.from_numpy(dt_np[row])).numpy()
             paths[i] = decode_events(s_np[row], th_np[row], dt_ms,
-                                     start_x, start_y, ang)
+                                     start_x, start_y, ang, snap=STEP_SNAP)
 
     pending = list(range(n))
     for _ in range(4):  # the initial draw plus up to 3 resamples of bad rows
