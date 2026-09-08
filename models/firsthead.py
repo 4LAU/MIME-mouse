@@ -5,8 +5,9 @@ event as p(s) p(th | s) p(dt | s, th), the AR model's own within step chain.
 It exists because position 0 is the one position whose context is the four
 number condition alone, and `models.event_ar.EventARModel` is measurably the
 wrong conditional there: it is trained by `research/w4_firsthead.py` on the
-position 0 tokens of the corpus (checkpoint `training/firsthead_q.pt`) and
-served by `generate.py`, which forces its draw into position 0 of
+position 0 tokens of the corpus (served checkpoint `training/firsthead_q2.pt`,
+head_mlp True, head_dropout 0.2; the earlier additive head is
+`training/firsthead_q.pt`) and served by `generate.py`, which forces its draw into position 0 of
 `EventARModel.sample` so the free running stream starts from the better
 conditional.
 """
@@ -23,9 +24,22 @@ from models.event_stream_polar import (N_S_CLASSES, N_TH_CLASSES,
 
 class FirstHead(nn.Module):
     """q(e0 | cond) = p(s) p(th | s) p(dt | s, th), the AR model's own within
-    step chain, on a Fourier featured condition."""
+    step chain, on a Fourier featured condition.
 
-    def __init__(self, d=512, n_freq=6):
+    head_mlp swaps the th and dt heads from a single Linear to
+    Linear, GELU, Dropout, Linear over the same LayerNormed sums: one Linear
+    over LayerNorm(h + s_emb + th_emb) is additive and cannot couple dwell
+    with step, angle and geometry together, which is where the served head's
+    first event is detectable (AMENDMENT 68 in the research log), the same
+    defect w4_headmlp
+    found and fixed in the AR trunk. The coupled head reads 0.013 closer to
+    human on the contract detector over twelve paired seeds (AMENDMENT 68)
+    and is what generate.py serves. With the defaults the module is
+    identical, parameter names included, so training/w4_firsthead_q.pt still
+    loads strict.
+    """
+
+    def __init__(self, d=512, n_freq=6, head_mlp=False, head_dropout=0.0):
         super().__init__()
         self.register_buffer("freqs", 2.0 ** torch.arange(n_freq).float() * np.pi / 4)
         inp = 4 + 4 * 2 * n_freq
@@ -34,10 +48,18 @@ class FirstHead(nn.Module):
         self.s_head = nn.Linear(d, N_S_CLASSES)
         self.s_emb = nn.Embedding(N_S_CLASSES, d)
         self.th_norm = nn.LayerNorm(d)
-        self.th_head = nn.Linear(d, N_TH_CLASSES)
         self.th_emb = nn.Embedding(N_TH_CLASSES, d)
         self.dt_norm = nn.LayerNorm(d)
-        self.dt_head = nn.Linear(d, N_DT_CLASSES)
+        if head_mlp:
+            self.th_head = nn.Sequential(nn.Linear(d, d), nn.GELU(),
+                                         nn.Dropout(head_dropout),
+                                         nn.Linear(d, N_TH_CLASSES))
+            self.dt_head = nn.Sequential(nn.Linear(d, d), nn.GELU(),
+                                         nn.Dropout(head_dropout),
+                                         nn.Linear(d, N_DT_CLASSES))
+        else:
+            self.th_head = nn.Linear(d, N_TH_CLASSES)
+            self.dt_head = nn.Linear(d, N_DT_CLASSES)
 
     def feat(self, cond):
         x = cond.unsqueeze(-1) * self.freqs

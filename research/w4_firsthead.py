@@ -127,13 +127,14 @@ def load_ar(ckpt, dev):
 
 
 def cmd_train(a):
+    a.out = a.out or Q_PATH
     dev = esp._DEVICE
     lengths, trained, held = splits()
     s, th, d = pos0_tokens()
     cond = np.load("training/events_cond.npy")[:, :4].astype(np.float32)
     val = np.sort(np.random.default_rng(VAL_ROWS_SEED).choice(held, N_VAL, replace=False))
     torch.manual_seed(a.seed)
-    q = FirstHead(d=a.d).to(dev)
+    q = FirstHead(d=a.d, head_mlp=a.head_mlp, head_dropout=a.head_dropout).to(dev)
     opt = torch.optim.AdamW(q.parameters(), lr=a.lr, weight_decay=0.01)
     steps = a.epochs * (len(trained) // a.batch)
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=a.lr, total_steps=steps, pct_start=0.05)
@@ -172,9 +173,11 @@ def cmd_train(a):
               f"  sum {sum(v):.4f}", flush=True)
         if best is None or sum(v) < best["val_sum"]:
             best = hist[-1]
-            torch.save(dict(config=dict(d=a.d), model_state_dict=q.state_dict(), hist=hist,
-                            best=best, seed=a.seed), Q_PATH)
-    print(f"  best epoch {best['epoch']} val sum {best['val_sum']:.4f}  saved {Q_PATH}")
+            torch.save(dict(config=dict(d=a.d, head_mlp=a.head_mlp,
+                                        head_dropout=a.head_dropout),
+                            model_state_dict=q.state_dict(), hist=hist,
+                            best=best, seed=a.seed), a.out)
+    print(f"  best epoch {best['epoch']} val sum {best['val_sum']:.4f}  saved {a.out}")
 
 
 def cmd_nll(a):
@@ -361,6 +364,8 @@ def main():
     ap.add_argument("cmd", choices=["train", "nll", "gen"])
     ap.add_argument("--ckpt", default="event_ar_hm_mlp.pt")
     ap.add_argument("--d", type=int, default=512)
+    ap.add_argument("--head-mlp", action="store_true")
+    ap.add_argument("--head-dropout", type=float, default=0.0)
     ap.add_argument("--epochs", type=int, default=12)
     ap.add_argument("--batch", type=int, default=4096)
     ap.add_argument("--lr", type=float, default=1e-3)

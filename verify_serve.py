@@ -1,13 +1,16 @@
 """Check that generate.py serves the recorded headline recipe, one command.
 
-Regenerates the served arm of ledger run w4_mserve (arm "mq1": a commanded
-duration matched from the held out human pool, the first event from the q
-head, the autoregressive model at temperatures 0.95 / 0.90 / 1.00, one draw
-per request, no selection) for one seed and 2000 requests, through the same
-functions generate.py uses, and scores the result with the contract scorer
-against the human reference. The recorded values live in
-research/w4_mserve_s<seed>.json: seed 20 reads 0.5777, seed 21 reads 0.5782,
-and the ten seed mean is 0.5795 with standard error 0.0022.
+Regenerates the served arm of ledger run w4_q2serve (arm "mq2": a commanded
+duration matched from the held out human pool, the first event from the
+coupled q2 head, the autoregressive model at temperatures 0.95 / 0.90 / 1.00,
+one draw per request, no selection) for one seed and 2000 requests, through
+the same functions generate.py uses, and scores the result with the contract
+scorer against the human reference. The recorded values live in
+research/w4_q2serve_s<seed>.json: seed 20 reads 0.5627, seed 21 reads 0.5646,
+and the ten seed mean is 0.5686 with standard error 0.0015. The same files
+carry arm "mq1", the earlier 0.5795 recipe on the same requests, which the
+run reproduced from its own record (research/w4_mserve_s<seed>.json) to four
+decimals on every seed.
 
     python verify_serve.py                 # seed 20, 2000 rows
     python verify_serve.py --seed 21
@@ -23,9 +26,9 @@ event's whole millisecond dwell through a single precision log, a z score and
 an exp on the way to seconds, so 107 of the 1001 dwell classes come back off
 by a few nanoseconds (30 ms decodes as 30.000004 ms). generate.py keeps the
 exact dwell. The detector's random forest reads those offsets on any one
-seed (seed 20: 0.5777 with the record's timestamps, 0.5698 with exact ones),
+seed (seed 20: 0.5627 with the record's timestamps, 0.5700 with exact ones),
 but over the ten recorded seeds the two read the same within draw noise,
-0.5794 against 0.5817 with standard errors near 0.003. The third arm
+0.5686 against 0.5717 with standard errors near 0.003. The third arm
 reproduces the record's arithmetic bit for bit, so on the recording machine
 it returns the logged value to four decimals (it did for all ten seeds),
 which proves the token streams are the record's; on other hardware the
@@ -89,9 +92,9 @@ def main():
     a = ap.parse_args()
 
     recorded = None
-    rec_path = f"research/w4_mserve_s{a.seed}.json"
+    rec_path = f"research/w4_q2serve_s{a.seed}.json"
     if os.path.exists(rec_path):
-        recorded = float(json.load(open(rec_path))["arms"]["mq1"]["contract"])
+        recorded = float(json.load(open(rec_path))["arms"]["mq2"]["contract"])
 
     serve = generate.load_serve()
     print(f"device {serve.device}, seed {a.seed}, n {a.n}, batch {a.batch}")
@@ -150,7 +153,7 @@ def main():
     print(f"  {'served sampler, landed on target':>34}  {auc_land:8.4f}  {n_land:5d}")
     print(f"  {'record decoder, same tokens':>34}  {auc_rec:8.4f}  {n_rec:5d}")
     if recorded is not None:
-        print(f"  {'recorded mq1, this seed':>34}  {recorded:8.4f}")
+        print(f"  {'recorded mq2, this seed':>34}  {recorded:8.4f}")
     print(f"  generation {t_gen:.0f} s for {B} requests on {serve.device}")
     print(f"  raw endpoint miss, px: median {np.median(miss):.1f}, "
           f"p90 {np.percentile(miss, 90):.1f}; as a share of the requested "

@@ -1,0 +1,84 @@
+{
+ "ckpt": "event_ar_hm_mlp.pt",
+ "seed": 116,
+ "n_rows": 2000,
+ "temps": [
+  0.95,
+  0.9,
+  1.0
+ ],
+ "md5": {
+  "event_ar_hm_mlp.pt": "4bd4627f1e5e7d509204728b17ba8f76",
+  "w4_firsthead_q.pt": "0830e841445ed199af2d474eb4cf860b",
+  "w4_firsthead_q2.pt": "98129385fe6c9cf34d04b7fa41685d8b"
+ },
+ "kv_cache": true,
+ "q2": {
+  "path": "training/w4_firsthead_q2.pt",
+  "md5": "98129385fe6c9cf34d04b7fa41685d8b",
+  "best_epoch": 35,
+  "config": {
+   "d": 512,
+   "head_mlp": true,
+   "head_dropout": 0.2
+  }
+ },
+ "arms": {
+  "mq1": {
+   "contract": 0.5843787500000001,
+   "ten_order": [
+    0.5931795,
+    0.58172275,
+    0.575546,
+    0.5800682500000001,
+    0.581884625,
+    0.580267125,
+    0.5898272499999999,
+    0.565979625,
+    0.5783968749999999,
+    0.577619375
+   ],
+   "ten_mean": 0.5804491375,
+   "n": 2000,
+   "collapse": true,
+   "collapse_features": [
+    "mean_acceleration",
+    "std_acceleration",
+    "max_acceleration",
+    "mean_jerk"
+   ],
+   "len_p50": 42.0,
+   "e0_tick_frac": 0.1495,
+   "e0_pad_frac": 0.0
+  },
+  "mq2": {
+   "contract": 0.57493875,
+   "ten_order": [
+    0.577266375,
+    0.5675901250000001,
+    0.5665524999999999,
+    0.57755075,
+    0.5713349999999999,
+    0.573915,
+    0.5793181249999999,
+    0.567873125,
+    0.575762875,
+    0.566614
+   ],
+   "ten_mean": 0.5723777875,
+   "n": 2000,
+   "collapse": true,
+   "collapse_features": [
+    "max_acceleration",
+    "mean_jerk"
+   ],
+   "len_p50": 42.0,
+   "e0_tick_frac": 0.145,
+   "e0_pad_frac": 0.0
+  }
+ },
+ "diff": {
+  "contract": -0.009440000000000004,
+  "ten_mean": -0.008071350000000033
+ }
+}

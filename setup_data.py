@@ -66,6 +66,7 @@ REPRO_ASSETS_TRAINING = [
     "train_conditions.npy",
     "event_ar_hm_mlp.pt",
     "firsthead_q.pt",
+    "firsthead_q2.pt",
     "duration_pool.npy",
 ]
 

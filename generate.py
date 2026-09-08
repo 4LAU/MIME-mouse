@@ -38,7 +38,7 @@ and both sampling draws, first event then the rest, come from torch's
 generator seeded once with g. With no seed both are drawn from system
 entropy. The same seed and the same request reproduce the same trajectory.
 
-Needs `training/event_ar_hm_mlp.pt`, `training/firsthead_q.pt` and
+Needs `training/event_ar_hm_mlp.pt`, `training/firsthead_q2.pt` and
 `training/duration_pool.npy`; `python setup_data.py` downloads all three.
 The first call loads the models; after that a CPU run takes well under a
 second per trajectory.
@@ -111,7 +111,7 @@ def load_serve(device: str | None = None) -> Serve:
                         weights_only=True)
         model = EventARModel(**ck["config"]).to(dev).eval()
         model.load_state_dict(ck["model_state_dict"])
-        qk = torch.load(_TRAIN_DIR / "firsthead_q.pt", map_location=dev,
+        qk = torch.load(_TRAIN_DIR / "firsthead_q2.pt", map_location=dev,
                         weights_only=True)
         q = FirstHead(**qk["config"]).to(dev).eval()
         q.load_state_dict(qk["model_state_dict"])
@@ -165,7 +165,7 @@ def first_event_force(q: "FirstHead", cond) -> tuple:
 def _check_assets() -> None:
     missing = [
         p.name
-        for p in (_TRAIN_DIR / "event_ar_hm_mlp.pt", _TRAIN_DIR / "firsthead_q.pt",
+        for p in (_TRAIN_DIR / "event_ar_hm_mlp.pt", _TRAIN_DIR / "firsthead_q2.pt",
                   _TRAIN_DIR / "duration_pool.npy")
         if not p.exists()
     ]
